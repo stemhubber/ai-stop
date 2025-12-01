@@ -1,0 +1,12 @@
+.voice-btn {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 8px;
+  transition: 0.2s;
+}
+
+.voice-btn:hover {
+  transform: scale(1.12);
+}

@@ -1,0 +1,79 @@
+.vu-container {
+  padding: 20px;
+  background: rgba(255,255,255,0.55);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.07);
+}
+
+.vu-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.vu-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.15);
+  margin-bottom: 15px;
+}
+
+.vu-upload-btn {
+  display: inline-block;
+  background: #6366f1;
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 14px;
+  transition: 0.25s;
+}
+
+.vu-upload-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.vu-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.vu-progress-fill {
+  height: 100%;
+  background: #6366f1;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.vu-preview {
+  width: 100%;
+  border-radius: 14px;
+  margin-top: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.vu-save-btn {
+  margin-top: 18px;
+  background: #10b981;
+  padding: 12px 18px;
+  color: white;
+  border-radius: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.vu-save-btn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}

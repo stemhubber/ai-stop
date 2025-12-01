@@ -1,0 +1,195 @@
+/* ---------------------------------------------------
+   LIGHT MODE + GLASSMORPHISM — PROFILE (2030 Edition)
+------------------------------------------------------ */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-muted: rgba(255, 255, 255, 0.35);
+  --border-glass: rgba(255, 255, 255, 0.25);
+  --blur: 18px;
+
+  --primary: #6366f1;
+  --primary-soft: #eef2ff;
+
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+
+  --radius: 18px;
+  --shadow-soft: 0 10px 32px rgba(0, 0, 0, 0.06);
+}
+
+/* --------------------
+   MAIN CONTAINER
+--------------------- */
+.pLight-container {
+  max-width: 780px;
+  margin: 50px auto;
+  padding: 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-radius: var(--radius);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-soft);
+
+  font-family: "Inter", sans-serif;
+  color: var(--text-dark);
+}
+
+/* --------------------
+   HEADER
+--------------------- */
+.pLight-header h1 {
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.pLight-header p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* --------------------
+   ERROR MESSAGE
+--------------------- */
+.pLight-error {
+  background: rgba(255, 220, 220, 0.7);
+  color: #b91c1c;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 180, 180, 0.9);
+  margin-bottom: 24px;
+}
+
+/* --------------------
+   PROFILE CARD
+--------------------- */
+.pLight-profile-card {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.pLight-avatar {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  border: 3px solid var(--primary-soft);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.18);
+  object-fit: cover;
+}
+
+.pLight-upload-btn {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.25s;
+}
+
+.pLight-upload-btn:hover {
+  background: #e0e7ff;
+}
+
+.pLight-username {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 14px;
+}
+
+.pLight-email {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* --------------------
+   FORM FIELDS
+--------------------- */
+.pLight-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pLight-field label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.pLight-input {
+  width: 100%;
+  padding: 14px;
+  background: var(--glass-muted);
+  border-radius: var(--radius);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  border: 1px solid var(--border-glass);
+  font-size: 15px;
+  transition: 0.25s;
+}
+
+.pLight-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.pLight-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------
+   BUTTONS
+--------------------- */
+.pLight-save-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.25s;
+}
+
+.pLight-save-btn:hover {
+  background: #4f46e5;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+}
+
+.pLight-logout-btn {
+  background: rgba(255, 226, 226, 0.7);
+  padding: 16px;
+  border-radius: var(--radius);
+  color: #b91c1c;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: 0.25s;
+}
+
+.pLight-logout-btn:hover {
+  background: rgba(255, 180, 180, 0.9);
+}
+
+/* --------------------
+   LOADING
+--------------------- */
+.pLight-loading {
+  text-align: center;
+  font-size: 20px;
+  color: var(--text-muted);
+  margin-top: 180px;
+}

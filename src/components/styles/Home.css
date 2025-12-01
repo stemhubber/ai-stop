@@ -1,0 +1,143 @@
+:root {
+  --primary: #6366f1;
+  --primary-soft: #eef2ff;
+
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+
+  --radius: 20px;
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-soft: rgba(255, 255, 255, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --blur: 18px;
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
+}
+
+.home2030-container {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 60px 24px;
+  font-family: "Inter", sans-serif;
+  color: var(--text-dark);
+}
+
+/* ---------------- HERO ---------------- */
+.home2030-hero {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.home2030-title {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.home2030-title span {
+  color: var(--primary);
+}
+
+.home2030-subtitle {
+  margin: 20px auto;
+  max-width: 620px;
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.home2030-cta {
+  display: inline-block;
+  margin-top: 32px;
+  padding: 16px 30px;
+  background: var(--primary);
+  color: white;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.25s;
+}
+
+.home2030-cta:hover {
+  background: #4f46e5;
+}
+
+/* ---------------- STORY ---------------- */
+.home2030-story {
+  max-width: 780px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 80px;
+}
+
+.home2030-story h2 {
+  font-size: 30px;
+  margin-bottom: 14px;
+}
+
+/* ---------------- VALUE GRID ---------------- */
+.home2030-value h2 {
+  font-size: 30px;
+  text-align: center;
+}
+
+.home2030-value-grid {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.value-card {
+  padding: 26px;
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.value-card h3 {
+  margin-bottom: 10px;
+  color: var(--primary);
+}
+
+/* ---------------- SUBSCRIBE ---------------- */
+.home2030-subscribe {
+  text-align: center;
+  margin: 100px auto;
+  max-width: 700px;
+}
+
+.home2030-highlight {
+  margin: 20px auto;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.home2030-cta-secondary {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 14px 28px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 16px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.25s;
+}
+
+.home2030-cta-secondary:hover {
+  background: #dce1ff;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
+@media (max-width: 700px) {
+  .home2030-subtitle {
+    font-size: 1rem;
+  }
+
+  .value-card {
+    padding: 22px;
+  }
+}

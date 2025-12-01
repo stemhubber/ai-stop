@@ -1,0 +1,375 @@
+/* ============================================================
+   2030 NEXT-GEN GLASS UI FOR SITE STUDIO
+   Crisp, premium, mobile-first, FA icons ready
+   ------------------------------------------------------------
+*/
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-soft: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --foreground: #111827;
+  --muted: #6b7280;
+  --primary: #6366f1;
+  --primary-light: #e0e7ff;
+  --danger: #dc2626;
+  --radius: 18px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --blur: 18px;
+}
+
+/* RESET BODY */
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #eef2ff, #fafafa);
+  font-family: 'Inter', sans-serif;
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   LAYOUT WRAPPER
+============================================================ */
+.studio2030-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   LEFT PANEL (GLASS SIDEBAR)
+============================================================ */
+.studio2030-panel {
+  width: 350px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur));
+  border-right: 1px solid var(--glass-border);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: width 0.3s ease, padding 0.3s ease;
+  box-shadow: var(--shadow);
+  height: 100vh;
+  overflow: scroll;
+}
+
+/* Collapsed Panel */
+.studio2030-panel.collapsed {
+  width: 70px;
+  padding: 20px 10px;
+}
+
+/* Collapse Button */
+.studio2030-collapse {
+  position: absolute;
+  right: -7px;
+  top: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: var(--primary);
+  color: white;
+  font-size: 15px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.studio2030-collapse:hover {
+  transform: scale(1.1);
+}
+
+/* Inner Panel Content */
+.studio2030-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 40px;
+}
+
+/* Title */
+.studio2030-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--foreground);
+}
+
+/* Labels */
+.studio2030-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+/* Inputs */
+.studio2030-input,
+.studio2030-textarea,
+.studio2030-color {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+  backdrop-filter: blur(calc(var(--blur) * 0.7));
+  font-size: 14px;
+  color: var(--foreground);
+  transition: 0.2s;
+}
+
+.studio2030-input:focus,
+.studio2030-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Textarea Default */
+.studio2030-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Color Picker */
+.studio2030-color {
+  width: 80px;
+  height: 45px;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid var(--glass-border);
+}
+
+/* Generate Button */
+.studio2030-generate {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  font-size: 15px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 12px;
+  transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.studio2030-generate:hover {
+  background: #4f46e5;
+}
+
+/* Error Box */
+.studio2030-error {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: #fee2e2;
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  font-size: 14px;
+}
+
+/* Loading */
+.studio2030-loading {
+  font-size: 14px;
+  color: var(--primary);
+}
+
+/* ============================================================
+   RIGHT SIDE — EDITOR + PREVIEW
+============================================================ */
+.studio2030-preview {
+  flex: 1;
+  padding: 30px;
+  position: relative;
+  overflow-y: auto;
+  backdrop-filter: blur(6px);
+}
+
+/* Placeholder */
+.studio2030-empty {
+  border: 2px dashed rgba(0,0,0,0.15);
+  padding: 60px;
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.studio2030-empty i {
+  font-size: 40px;
+  margin-bottom: 15px;
+  color: #aab2c5;
+}
+
+/* Floating Publish Button */
+.studio2030-publish {
+  position: fixed;
+  bottom: 34px;
+  right: 40px;
+  padding: 16px 26px;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 12px 25px rgba(99, 102, 241, 0.35);
+  transition: 0.25s ease;
+}
+
+.studio2030-publish:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+============================================================ */
+@media (max-width: 900px) {
+  .studio2030-panel {
+    position: absolute;
+    z-index: 40;
+    height: 100vh;
+    border-radius: 0px;
+  }
+
+  .studio2030-preview {
+    padding: 18px;
+    margin-left: 0 !important;
+  }
+
+  .studio2030-publish {
+    right: 20px;
+    bottom: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .studio2030-title {
+    font-size: 18px;
+  }
+
+  .studio2030-panel {
+    width: 300px;
+  }
+}
+
+.studio2030-extra-btn {
+  position: fixed;
+  bottom: 120px;
+  right: 40px;
+  padding: 14px 22px;
+  background: rgba(255,255,255,0.45);
+  border-radius: 50px;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  transition: 0.2s ease;
+}
+
+.studio2030-extra-btn:hover {
+  transform: translateY(-3px);
+}
+/* -----------------------------
+   2030 TEXT INPUT WITH VOICE UI
+--------------------------------*/
+.studio2030-text-prompt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(14px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  margin-bottom: 18px;
+}
+
+/* Textarea */
+.studio2030-textarea {
+  flex: 1;
+  height: 110px;
+  resize: vertical;
+  padding: 14px 16px;
+  font-size: 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  color: #111;
+  font-family: "Inter", sans-serif;
+  transition: 0.25s;
+}
+
+.studio2030-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.studio2030-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  background: white;
+}
+
+/* Voice button */
+.studio2030-voice-btn {
+  min-width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(99,102,241,0.15);
+  color: #4f46e5;
+  font-size: 20px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: 0.25s;
+}
+
+.studio2030-voice-btn:hover {
+  background: rgba(99,102,241,0.25);
+}
+
+.studio2030-voice-btn.recording {
+  background: rgba(239,68,68,0.25);
+  color: #dc2626;
+  box-shadow: 0 0 12px rgba(239,68,68,0.4);
+}
+
+
+.studio2030-voice-btn.recording {
+  animation: pulseMic 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(239,68,68,0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0.0); }
+}
+

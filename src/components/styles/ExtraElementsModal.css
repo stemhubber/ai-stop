@@ -1,0 +1,184 @@
+/* ------------------------------------------
+   BACKDROP — Frosted full-screen overlay
+------------------------------------------- */
+.extra-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: grid;
+  place-items: center;
+  z-index: 999;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ------------------------------------------
+   MODAL — Soft glass panel
+------------------------------------------- */
+.extra-modal {
+  width: 520px;
+  max-width: 92%;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border-radius: 22px;
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.15);
+  animation: slideUp 0.3s ease;
+}
+
+/* Title styling */
+.extra-modal h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 700;
+  font-size: 22px;
+  color: #1f2937;
+}
+
+/* ------------------------------------------
+   GRID FOR ITEM SELECTION
+------------------------------------------- */
+.extra-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+/* Individual item */
+.extra-item {
+  padding: 22px 16px;
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: 0.25s ease;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+.extra-item:hover {
+  background: rgba(255, 255, 255, 0.65);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+}
+
+/* Icon inside grid card */
+.extra-item i {
+  font-size: 30px;
+  color: #4f46e5;
+  margin-bottom: 10px;
+}
+
+/* Label text */
+.extra-item p {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+/* ------------------------------------------
+   FORM INPUTS
+------------------------------------------- */
+.extra-form input,
+.extra-form textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  margin-bottom: 16px;
+  font-size: 14px;
+  background: rgba(255,255,255,0.75);
+  transition: 0.2s;
+}
+
+.extra-form input:focus,
+.extra-form textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  background: white;
+}
+
+/* ------------------------------------------
+   BUTTON BAR
+------------------------------------------- */
+.extra-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+/* Buttons */
+.extra-buttons button {
+  padding: 12px 20px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: 0.25s ease;
+}
+
+/* Back button */
+.extra-buttons button:first-child {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.extra-buttons button:first-child:hover {
+  background: #d1d5db;
+}
+
+/* Insert button */
+.extra-buttons button:last-child {
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.25);
+}
+
+.extra-buttons button:last-child:hover {
+  background: #4f46e5;
+}
+
+/* ------------------------------------------
+   CLOSE BUTTON (Top-right)
+------------------------------------------- */
+.extra-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.5);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 15px;
+  color: #374151;
+  transition: 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.extra-close-btn:hover {
+  background: rgba(255,255,255,0.75);
+  transform: rotate(90deg);
+}
+
+/* ------------------------------------------
+   ANIMATIONS
+------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; } 
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
