@@ -1,0 +1,111 @@
+.blockeditor-container {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  background: white;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+/* Inline editing content */
+.blockeditor-content.editing {
+  outline: 2px solid #4f46e5;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Buttons */
+.blockeditor-edit-btn,
+.blockeditor-save-btn,
+.blockeditor-cancel-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+.blockeditor-edit-btn {
+  background: #4f46e5;
+}
+
+.blockeditor-save-btn {
+  background: #16a34a;
+}
+
+.blockeditor-cancel-btn {
+  background: #dc2626;
+}
+
+.blockeditor-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Image wrapper */
+.blockeditor-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.blockeditor-replace-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #4f46e5;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.blockeditor-image-wrapper:hover .blockeditor-replace-btn {
+  opacity: 1;
+}
+
+/* Text editing */
+.blockeditor-textnode:focus {
+  outline: 2px dashed #4f46e5;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+/* Modal */
+.blockeditor-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.blockeditor-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  text-align: center;
+}
+
+.blockeditor-modal-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.blockeditor-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}

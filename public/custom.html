@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name - Cape Town Developer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+    
+    <style>
+        /* ---------------------------------- */
+        /* CSS STYLES HERE           */
+        /* ---------------------------------- */
+        :root {
+            --primary-color: #00bcd4; /* A bright, modern cyan/blue */
+            --secondary-color: #ff9800; /* A contrasting orange for accents */
+            --background-dark: #1e1e1e; /* Dark background */
+            --text-light: #ffffff;
+            --card-background: #2a2a2a;
+            --font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- Header/Navigation --- */
+        header {
+            background: var(--card-background);
+            padding: 10px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+
+        nav ul li {
+            display: inline;
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary-color);
+        }
+
+        /* --- Hero Section --- */
+        #hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, var(--background-dark) 0%, #004d40 100%);
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+        #hero h1 {
+            font-size: 3em;
+            margin-bottom: 0.2em;
+        }
+
+        #hero p {
+            font-size: 1.2em;
+            color: #ccc;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: var(--background-dark);
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #fb8c00;
+        }
+
+        /* --- Section Styling --- */
+        section {
+            padding: 60px 0;
+        }
+
+        section h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 40px;
+            font-size: 2em;
+            border-bottom: 2px solid var(--primary-color);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        
+        /* Center section titles */
+        .section-header-wrapper {
+            text-align: center;
+        }
+
+        /* --- Skills Section --- */
+        #skills ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        #skills ul li {
+            background-color: var(--card-background);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 3px solid var(--secondary-color);
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        #skills ul li:hover {
+            transform: translateY(-3px);
+            background-color: #333;
+        }
+
+        /* --- Projects Section --- */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.7);
+        }
+
+        .project-card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .project-card .tags {
+            font-size: 0.8em;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .project-card a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* --- Contact Section --- */
+        #contact {
+            text-align: center;
+        }
+
+        #contact form {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #contact input[type="text"],
+        #contact input[type="email"],
+        #contact textarea {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: var(--text-light);
+            outline: none;
+            border: 1px solid #444;
+        }
+        
+        #contact textarea {
+            resize: vertical;
+        }
+
+        #contact button {
+            background-color: var(--primary-color);
+            color: var(--background-dark);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        #contact button:hover {
+            background-color: #00a4b8;
+        }
+        
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-top: 5px solid var(--secondary-color);
+            margin-top: 40px;
+            font-size: 0.9em;
+        }
+        
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            #hero {
+                padding: 60px 10px;
+            }
+            #hero h1 {
+                font-size: 2.5em;
+            }
+            nav ul li {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="#hero">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#skills">Skills</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section id="hero">
+            <h1>Hi, I'm **[Your Name Here]**</h1>
+            <p>A passionate **Full-Stack Developer** based in the beautiful **Cape Town, South Africa**.</p>
+            <p id="tagline-output">Developing solutions, from the mountain to the sea.</p>
+            <a href="#projects" class="cta-button">View My Work</a>
+        </section>
+
+        <section id="about">
+            <div class="section-header-wrapper">
+                <h2>About Me 🇿🇦</h2>
+            </div>
+            <p>I specialize in building responsive, efficient, and user-friendly applications. My journey in development began [X] years ago, and I love the challenge of turning complex problems into elegant code. Based in Cape Town, I draw inspiration from the city's vibrant tech scene and stunning landscape. I'm currently focused on [Your Current Focus/Technology].</p>
+            <p>I'm always open to new opportunities and collaborations. Let's build something amazing together!</p>
+        </section>
+
+        <section id="skills">
+            <div class="section-header-wrapper">
+                <h2>Technical Skills 🛠️</h2>
+            </div>
+            <ul>
+                <li>JavaScript (ES6+)</li>
+                <li>React / Vue / Angular</li>
+                <li>Node.js / Express</li>
+                <li>Python / Django / Flask</li>
+                <li>SQL / MongoDB</li>
+                <li>HTML5 & CSS3</li>
+                <li>AWS / Azure / Docker</li>
+                <li>Git & GitHub</li>
+            </ul>
+        </section>
+
+        <section id="projects">
+            <div class="section-header-wrapper">
+                <h2>Featured Projects 📂</h2>
+            </div>
+            <div class="project-grid">
+                
+                <div class="project-card" data-project-id="1">
+                    <h3>Project Nexus</h3>
+                    <div class="tags">#React #Node.js #MongoDB</div>
+                    <p>A full-stack project management application with real-time updates. Implemented secure user authentication and a responsive Kanban board interface.</p>
+                    <p><a href="[Link to Live Demo]" target="_blank">Live Demo</a> | <a href="[Link to GitHub]" target="_blank">GitHub Repo</a></p>
+                </div>
+
+                <div class="project-card" data-project-id="2">
+                    <h3>Cape Weather API</h3>
+                    <div class="tags">#Python #Flask #DataScience</div>
+                    <p>A microservice that scrapes and processes hyperlocal weather data for the Cape Peninsula. Optimized the data fetching process, reducing latency by 40%.</p>
+                    <p><a href="[Link to Live Demo]" target="_blank">Live Demo</a> | <a href="[Link to GitHub]" target="_blank">GitHub Repo</a></p>
+                </div>
+                
+                <div class="project-card" data-project-id="3">
+                    <h3>[Your Third Project]</h3>
+                    <div class="tags">#[Tech 1] #[Tech 2]</div>
+                    <p>Brief description of your third project and what you achieved.</p>
+                    <p><a href="[Link to Live Demo]" target="_blank">Live Demo</a> | <a href="[Link to GitHub]" target="_blank">GitHub Repo</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="section-header-wrapper">
+                <h2>Get In Touch 👋</h2>
+            </div>
+            <p>I'm available for freelance work and full-time opportunities. Send me a message!</p>
+            
+            <form action="#" method="POST" id="contact-form">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="email" name="email" placeholder="Your Email" required>
+                <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+                <p id="form-message" style="margin-top: 15px; color: var(--primary-color); display: none;">Thank you for your message!</p>
+            </form>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year"></span> Your Name. Built with ❤️ from Cape Town.</p>
+            <p><a href="[Your LinkedIn URL]">LinkedIn</a> | <a href="[Your GitHub URL]">GitHub</a> | <a href="mailto:[Your Email Address]">Email</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Set current year in the footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // 2. Simple form submission handler (client-side only)
+            const form = document.getElementById('contact-form');
+            const formMessage = document.getElementById('form-message');
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); // Stop the form from submitting normally
+                
+                // --- Replace this with actual backend logic if you use one! ---
+                
+                // Simulate form submission success
+                formMessage.style.display = 'block';
+                console.log('Form data captured (simulated submit):', new FormData(form));
+                form.reset(); // Clear the form fields
+                
+                // Hide the success message after a few seconds
+                setTimeout(() => {
+                    formMessage.style.display = 'none';
+                }, 5000); 
+                
+            });
+            
+            // 3. Simple interactive console log for fun
+            console.log("Hello from Cape Town! Check out the code.");
+        });
+    </script>
+</body>
+</html>

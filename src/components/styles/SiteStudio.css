@@ -1,0 +1,167 @@
+.sitestudio-container {
+  display: flex;
+  height: 100vh;
+  background: #f9f9fb;
+  font-family: "Inter", sans-serif;
+}
+
+/* PANEL */
+.sitestudio-panel {
+  width: 350px;
+  background: white;
+  padding: 24px;
+  box-shadow: 4px 0px 20px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sitestudio-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #4f46e5;
+  margin-bottom: 10px;
+}
+
+.sitestudio-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-top: 10px;
+}
+
+.sitestudio-input {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+}
+
+.sitestudio-color {
+  width: 80px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+}
+
+/* Prompt box */
+.sitestudio-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid #ddd;
+  resize: vertical;
+}
+
+/* Button */
+.sitestudio-generate-btn {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background: #4f46e5;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sitestudio-generate-btn:hover {
+  background: #4338ca;
+}
+
+.sitestudio-loading {
+  color: #4f46e5;
+  font-size: 14px;
+}
+
+.sitestudio-error {
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* PREVIEW AREA */
+.sitestudio-preview {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.sitestudio-empty-placeholder {
+  border: 2px dashed #ddd;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  color: #777;
+}
+
+.sitestudio-preview-title {
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.sitestudio-preview-block {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.05);
+}
+
+/* MOBILE */
+@media (max-width: 830px) {
+  .sitestudio-container {
+    flex-direction: column;
+  }
+
+  .sitestudio-panel {
+    width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* Sidebar Base */
+.sitestudio-panel {
+  width: 350px;
+  background: white;
+  padding: 24px;
+  box-shadow: 4px 0px 20px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: width 0.25s ease, padding 0.25s ease;
+}
+
+/* When collapsed */
+.sitestudio-panel.collapsed {
+  width: 60px;
+  padding: 20px 10px;
+  overflow: hidden;
+}
+
+/* Collapse button */
+.sitestudio-collapse-btn {
+  position: absolute;
+  top: 12px;
+  right: -20px;
+  width: 32px;
+  height: 32px;
+  background: #4f46e5;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+  transition: 0.25s;
+}
+
+.sitestudio-collapse-btn:hover {
+  background: #4338ca;
+}
