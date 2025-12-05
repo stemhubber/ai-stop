@@ -21,7 +21,7 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      window.location.href = "/studio";
+      window.location.href = "/";
     } catch (err) {
       setError("Incorrect login details.");
     }
@@ -102,7 +102,7 @@ export function Register() {
         sites: []
       });
 
-      window.location.href = "/studio";
+      window.location.href = "/";
     } catch (err) {
       console.log(err);
       setError("Could not register.");

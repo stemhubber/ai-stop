@@ -1,0 +1,129 @@
+.more-button {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.more-button:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.05);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-card {
+  width: 520px;
+  height: 70vh;
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(20px);
+  padding: 20px 25px;
+  color: white;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(255,255,255,0.4);
+}
+
+.scroll-area {
+  height: 55vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.category-label {
+  margin-top: 15px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.element-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.element-item {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.element-item i {
+  font-size: 22px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.element-item:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-3px);
+}
+
+.form-section input,
+.form-section textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.18);
+  color: white;
+  outline: none;
+  margin-bottom: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.cancel-btn,
+.add-btn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+}
+
+.cancel-btn {
+  background: rgba(255,255,255,0.2);
+}
+
+.add-btn {
+  background: #00d1ff;
+  box-shadow: 0 0 12px #00d1ffaa;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}

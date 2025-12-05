@@ -1,9 +1,3 @@
-//
-// 2030 NEXT-GEN SITE STUDIO
-// -----------------------------------------------------
-// Uses FA icons, glassmorphism, premium UI, mobile-first
-//
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { generateSite } from "../controllers/AiController";
@@ -11,9 +5,11 @@ import BlockEditor from "./BlockEditor";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getPublishedSite } from "../controllers/SiteController";
-import "./styles/SiteStudio.css";
+import StudioBackground from "./StudioBackground";
 import ExtraElementsModal from "./ExtraElementsModal";
 import VoiceInput from "./VoiceInput";
+
+import "./styles/SiteStudio.css";
 
 export default function SiteStudio() {
   const [prompt, setPrompt] = useState("");
@@ -31,27 +27,36 @@ export default function SiteStudio() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Check permissions for editing
+  const [theme, setTheme] = useState(
+    localStorage.getItem("data-theme") || "light"
+  );
+
+  // Apply theme on mount + change
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("data-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  // Check edit permissions
   useEffect(() => {
     async function checkAccess() {
-      if (!siteName) return;
-      const siteDoc = await getPublishedSite(siteName);
+      if (!siteName || !user) return;
 
-      if (!siteDoc) {
-        window.location.href = `/site/${siteName}`;
-        return;
-      }
-      if (siteDoc.owner !== user.uid) {
+      const siteDoc = await getPublishedSite(siteName);
+      if (!siteDoc || siteDoc.owner !== user.uid) {
         window.location.href = `/site/${siteName}`;
         return;
       }
       setSite({ html: siteDoc.html });
     }
-
-    if (user) checkAccess();
+    checkAccess();
   }, [siteName, user]);
 
-  // Generate website
+  // Generate site
   const handleGenerate = async () => {
     setLoading(true);
     setError("");
@@ -59,7 +64,7 @@ export default function SiteStudio() {
 
     try {
       const result = await generateSite({
-        promptText: `${prompt}`,
+        promptText: prompt,
         siteType,
         themeColor
       });
@@ -78,10 +83,9 @@ export default function SiteStudio() {
     }
   };
 
-  const rebuild = async ()=>{
+  const rebuild = async () => {
     setLoading(true);
     setError("");
-    setSite(null);
     setNeedEnhancement(false);
 
     try {
@@ -99,22 +103,35 @@ export default function SiteStudio() {
       setCollapsed(true);
       setSite(result);
     } catch (err) {
-      setError("Unexpected error building your website.");
+      setError("Unexpected error rebuilding the site.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="studio2030-container">
+    <div className={`studio2030-container theme-${theme}`}>
 
-      {/* SIDEBAR PANEL --------------------------------------------------- */}
+      {/* Dark-mode 3D Background */}
+      {<StudioBackground />}
+      {/* FLOATING THEME TOGGLE BUTTON */}
+              <button
+                className="studio2030-theme-toggle-floating"
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? (
+                  <i className="fa fa-moon-o"></i>
+                ) : (
+                  <i className="fa fa-sun-o"></i>
+                )}
+              </button>
+
+      {/* SIDEBAR -------------------------------------------------------- */}
       <motion.div
         className={`studio2030-panel ${collapsed ? "collapsed" : ""}`}
         initial={{ x: -40, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
-        {/* Collapse Icon Button */}
         <button
           className="studio2030-collapse"
           onClick={() => setCollapsed(!collapsed)}
@@ -122,7 +139,6 @@ export default function SiteStudio() {
           <i className={`fa ${collapsed ? "fa-chevron-right" : "fa-chevron-left"}`}></i>
         </button>
 
-        {/* Panel Content */}
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -135,7 +151,9 @@ export default function SiteStudio() {
                 <i className="fa fa-wand-magic-sparkles"></i> AI Website Studio
               </h1>
 
-              {/* Site Type */}
+              
+
+
               <p className="studio2030-label">Site Type</p>
               <select
                 className="studio2030-input"
@@ -143,14 +161,13 @@ export default function SiteStudio() {
                 onChange={(e) => setSiteType(e.target.value)}
               >
                 <option value="portfolio">Portfolio</option>
-                <option value="landing-page">Landing Page</option>
+                <option value="landing-page">Landing</option>
                 <option value="ecommerce">E-Commerce</option>
                 <option value="blog">Blog</option>
                 <option value="agency">Agency</option>
                 <option value="restaurant">Restaurant</option>
               </select>
 
-              {/* Theme */}
               <p className="studio2030-label">Theme Color</p>
               <input
                 type="color"
@@ -159,29 +176,20 @@ export default function SiteStudio() {
                 onChange={(e) => setThemeColor(e.target.value)}
               />
 
-              {/* Prompt */}
               <p className="studio2030-label">Describe Your Website</p>
+
               <div className="studio2030-text-prompt">
                 <textarea
                   className="studio2030-textarea"
+                  placeholder="Describe your vision..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your vision..."
                 />
-
-                <VoiceInput 
-                  onTranscribed={(text) => setPrompt(prev => prev + " " + text)} 
-                  className="studio2030-voice-btn"
-                />
+                <VoiceInput onTranscribed={(text) => setPrompt((p) => p + " " + text)} />
               </div>
 
-
               {loading && (
-                <motion.p
-                  className="studio2030-loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
+                <motion.p className="studio2030-loading" animate={{ opacity: 1 }}>
                   <i className="fa fa-spinner fa-spin"></i> Building your site...
                 </motion.p>
               )}
@@ -191,33 +199,26 @@ export default function SiteStudio() {
                   <i className="fa fa-circle-exclamation"></i> {error}
                 </p>
               )}
-              
-
 
               <button
                 className="studio2030-generate"
-                onClick={needEnhancement? rebuild :handleGenerate}
+                onClick={needEnhancement ? rebuild : handleGenerate}
                 disabled={loading}
               >
                 <i className="fa fa-robot"></i>
-                {needEnhancement && !loading ? "AI retouch": loading ? " Generating..." : " Generate Website"}
+                {needEnhancement ? "AI Retouch" : loading ? "Generating..." : "Generate Website"}
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* MAIN EDITOR AREA ------------------------------------------------ */}
-      <motion.div
-        className="studio2030-preview"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      {/* MAIN PREVIEW ---------------------------------------------------- */}
+      <motion.div className="studio2030-preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {!site && (
           <div className="studio2030-empty">
             <i className="fa fa-window-maximize"></i>
             <p>Your website preview will appear here.</p>
-            
           </div>
         )}
 
@@ -228,12 +229,9 @@ export default function SiteStudio() {
               onChange={(newHtml) => setSite({ ...site, html: newHtml })}
             />
 
-            {/* Floating Publish Button */}
             <motion.button
               className="studio2030-publish"
-              onClick={() =>
-                navigate("/publish", { state: { siteHtml: site.html } })
-              }
+              onClick={() => navigate("/publish", { state: { siteHtml: site.html } })}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.1 }}
@@ -241,27 +239,24 @@ export default function SiteStudio() {
             >
               <i className="fa fa-rocket"></i> Publish
             </motion.button>
-            <button
-                className="studio2030-extra-btn"
-                onClick={() => setExtraModal(true)}
-              >
-                <i className="fa fa-puzzle-piece"></i>
-                Extras
-              </button>
+
+            <button className="studio2030-extra-btn" onClick={() => setExtraModal(true)}>
+              <i className="fa fa-puzzle-piece"></i>
+              Extras
+            </button>
           </>
         )}
 
-{extraModal && (
-  <ExtraElementsModal
-    onClose={() => setExtraModal(false)}
-    onInsert={(html) => {
-      setNeedEnhancement(true);
-      setSite({ ...site, html: site.html + html });
-    }}
-    siteId={siteName}
-  />
-)}
-
+        {extraModal && (
+          <ExtraElementsModal
+            onClose={() => setExtraModal(false)}
+            onInsert={(html) => {
+              setNeedEnhancement(true);
+              setSite({ ...site, html: site.html + html });
+            }}
+            siteId={siteName}
+          />
+        )}
       </motion.div>
     </div>
   );

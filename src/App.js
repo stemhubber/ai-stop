@@ -9,8 +9,22 @@ import Login, { Register } from "./components/Login.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Profile from "./components/Profile.jsx";
+import { useEffect, useState } from "react";
 
 function App() {
+
+  // Load theme on first render
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+
+    if (saved === "light" || saved === "dark") {
+      document.documentElement.setAttribute("data-theme", saved);
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+  }, []);
+
   return (
     <Router>
       <div className="App">

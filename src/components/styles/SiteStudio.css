@@ -4,27 +4,49 @@
    ------------------------------------------------------------
 */
 
+/* -------------------------------
+   LIGHT MODE (DEFAULT)
+-------------------------------- */
 :root {
+  --bg: #eef2ff;
   --glass-bg: rgba(255, 255, 255, 0.45);
   --glass-bg-soft: rgba(255, 255, 255, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --foreground: #111827;
+  --glass-border: rgba(0, 0, 0, 0.15);
+
+  --foreground: #1b1d21;
   --muted: #6b7280;
+
   --primary: #6366f1;
-  --primary-light: #e0e7ff;
-  --danger: #dc2626;
-  --radius: 18px;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  --blur: 18px;
+  --primary-light: #c7d2fe;
+
+  --panel-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+  --editor-bg: white;
 }
 
-/* RESET BODY */
+/* -------------------------------
+   DARK MODE 
+-------------------------------- */
+html[data-theme="dark"] {
+  --bg: #0c0d10;
+  --glass-bg: rgba(20, 22, 26, 0.45);
+  --glass-bg-soft: rgba(20, 22, 26, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --foreground: #f1f3f5;
+  --muted: #9aa0a6;
+
+  --primary: #7d8aff;
+  --primary-light: #3b3c50;
+
+  --panel-shadow: 0 8px 35px rgba(0, 0, 0, 0.55);
+
+  --editor-bg: #1a1c22;
+}
+
 body {
-  margin: 0;
-  background: linear-gradient(135deg, #eef2ff, #fafafa);
-  font-family: 'Inter', sans-serif;
-  color: var(--foreground);
-  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================================
@@ -132,6 +154,70 @@ body {
   background: rgba(255, 255, 255, 0.55);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
+
+/* ============================================================
+   FLOATING THEME TOGGLE BUTTON (TOP RIGHT)
+   Apple-like glass button · soft blur · premium shadow
+===============================================================*/
+.studio2030-theme-toggle-floating {
+  position: fixed;
+  top: 22px;
+  right: 26px;
+  z-index: 9999;
+
+  width: 48px;
+  height: 48px;
+
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 20px;
+  color: var(--foreground);
+  cursor: pointer;
+
+  box-shadow: 0 6px 22px rgba(0,0,0,0.15);
+
+  transition: 
+    background 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+
+/* HOVER GLOW */
+.studio2030-theme-toggle-floating:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* DARK MODE ENHANCEMENT */
+html[data-theme="dark"] .studio2030-theme-toggle-floating:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--primary);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.4);
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .studio2030-theme-toggle-floating {
+    top: 16px;
+    right: 16px;
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+}
+
 
 /* Textarea Default */
 .studio2030-textarea {
@@ -366,6 +452,52 @@ body {
 .studio2030-voice-btn.recording {
   animation: pulseMic 1.2s infinite ease-in-out;
 }
+
+.streaming-progress {
+  margin-top: 10px;
+}
+
+.progress-wrapper {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  transition: width 0.3s ease;
+}
+
+.stream-status {
+  font-size: 13px;
+  color: #c4b5fd;
+  margin-top: 4px;
+}
+
+.stream-output {
+  background: rgba(255,255,255,0.06);
+  padding: 10px;
+  border-radius: 10px;
+  color: white;
+  font-size: 11px;
+  margin-top: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.live-stream-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+  border-radius: 10px;
+}
+
 
 @keyframes pulseMic {
   0% { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0.4); }
