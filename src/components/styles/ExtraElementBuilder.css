@@ -118,3 +118,79 @@
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* =======================================
+   RESPONSIVE ENHANCEMENTS
+========================================== */
+
+/* ---------- Small devices (phones) ---------- */
+@media (max-width: 480px) {
+  .builder2030-container {
+    max-width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+    padding: 18px;
+    box-shadow: none;
+  }
+
+  .builder2030-header h2 {
+    font-size: 18px;
+  }
+
+  .builder2030-close {
+    width: 34px;
+    height: 34px;
+  }
+
+  .builder2030-body {
+    max-height: calc(100dvh - 120px);
+    padding-right: 4px;
+  }
+
+  .builder2030-label {
+    font-size: 13px;
+  }
+
+  .builder2030-input,
+  .builder2030-textarea {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .builder2030-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+  }
+}
+
+/* ---------- Medium devices (tablets) ---------- */
+@media (max-width: 768px) {
+  .builder2030-container {
+    max-width: 92%;
+    padding: 22px;
+  }
+
+  .builder2030-header h2 {
+    font-size: 20px;
+  }
+
+  .builder2030-body {
+    max-height: 70vh;
+  }
+}
+
+/* ---------- Large screens (desktops & up) ---------- */
+@media (min-width: 1024px) {
+  .builder2030-container {
+    max-width: 680px;
+  }
+}
+
+/* ---------- Touch improvements ---------- */
+@media (hover: none) {
+  .builder2030-btn:hover,
+  .builder2030-close:hover {
+    transform: none;
+  }
+}

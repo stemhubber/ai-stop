@@ -1,0 +1,121 @@
+/* ================================
+   PAGE SELECTOR (Minimal Builder)
+================================ */
+
+.page-selector {
+  width: 100%;
+  margin-top: 16px;
+  position: relative;
+  font-family: inherit;
+}
+
+/* Toggle button */
+.page-selector-toggle {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.page-selector-toggle:hover {
+  background: rgba(255,255,255,0.95);
+}
+
+.arrow {
+  transition: transform 0.25s ease;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.page-selector-options {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 14px 35px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+/* Category */
+.page-category {
+  margin-bottom: 18px;
+}
+
+.page-category:last-child {
+  margin-bottom: 0;
+}
+
+.page-category-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+/* Grid */
+.page-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+/* Page buttons */
+.page-option-btn {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.6);
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.page-option-btn:hover {
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+}
+
+/* Selected */
+.page-option-btn.selected {
+  background: #6366f1;
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+}
+
+/* ================================
+   MOBILE TWEAKS
+================================ */
+
+@media (max-width: 640px) {
+  .page-selector-options {
+    padding: 14px;
+  }
+
+  .page-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-option-btn {
+    text-align: left;
+  }
+}

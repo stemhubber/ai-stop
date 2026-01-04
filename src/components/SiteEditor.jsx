@@ -10,6 +10,8 @@ import ExtraElementsModal from "./ExtraElementsModal";
 import VoiceInput from "./VoiceInput";
 
 import "./styles/SiteStudio.css";
+import WebsiteCreatedModal from "./WebsiteCreatedModal";
+import HelpTrigger from "../context/help/HelpTrigger";
 
 export default function SiteStudio() {
   const [prompt, setPrompt] = useState("");
@@ -22,6 +24,8 @@ export default function SiteStudio() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [collapsed, setCollapsed] = useState(false);
+  const [showModalWebCreated, setShowModalWebCreated] = useState(false);
+  const [modalStep, setModalStep] = useState("intro");
 
   const { siteName } = useParams();
   const { user } = useAuth();
@@ -44,7 +48,11 @@ export default function SiteStudio() {
   // Check edit permissions
   useEffect(() => {
     async function checkAccess() {
-      if (!siteName || !user) return;
+      if (!siteName || !user) {
+        setModalStep('intro');
+        setShowModalWebCreated(true);
+        return;
+      }
 
       const siteDoc = await getPublishedSite(siteName);
       if (!siteDoc || siteDoc.owner !== user.uid) {
@@ -58,8 +66,13 @@ export default function SiteStudio() {
 
   // Generate site
   const handleGenerate = async () => {
-    setLoading(true);
     setError("");
+    if (!prompt || prompt.trim().length < 30) {
+      setError('Description is too short');
+      return;
+    }
+
+    setLoading(true);
     setSite(null);
 
     try {
@@ -76,6 +89,7 @@ export default function SiteStudio() {
 
       setCollapsed(true);
       setSite(result);
+      handleWebsiteCreated();
     } catch (err) {
       setError("Unexpected error building your website.");
     } finally {
@@ -109,6 +123,14 @@ export default function SiteStudio() {
     }
   };
 
+  const handleWebsiteCreated = () => {
+    // After website/page creation
+    setModalStep('created');
+    setShowModalWebCreated(true);
+  };
+
+
+
   return (
     <div className={`studio2030-container theme-${theme}`}>
 
@@ -126,6 +148,11 @@ export default function SiteStudio() {
                 )}
               </button>
 
+<WebsiteCreatedModal
+  show={showModalWebCreated} // each click goes to next step
+  step={modalStep}
+  onClose={()=> setShowModalWebCreated(false)}
+/>
       {/* SIDEBAR -------------------------------------------------------- */}
       <motion.div
         className={`studio2030-panel ${collapsed ? "collapsed" : ""}`}
@@ -176,6 +203,7 @@ export default function SiteStudio() {
                 onChange={(e) => setThemeColor(e.target.value)}
               />
 
+              
               <p className="studio2030-label">Describe Your Website</p>
 
               <div className="studio2030-text-prompt">
@@ -228,7 +256,7 @@ export default function SiteStudio() {
               html={site.html}
               onChange={(newHtml) => setSite({ ...site, html: newHtml })}
             />
-
+            
             <motion.button
               className="studio2030-publish"
               onClick={() => navigate("/publish", { state: { siteHtml: site.html } })}
@@ -237,13 +265,14 @@ export default function SiteStudio() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.92 }}
             >
-              <i className="fa fa-rocket"></i> Publish
+              <i className="fa fa-rocket"></i><HelpTrigger help={{ text: "Share with the world" }}> Publish</HelpTrigger>
+              
             </motion.button>
 
-            <button className="studio2030-extra-btn" onClick={() => setExtraModal(true)}>
+            {/* <button className="studio2030-extra-btn" onClick={() => setExtraModal(true)}>
               <i className="fa fa-puzzle-piece"></i>
-              Extras
-            </button>
+              Add more
+            </button> */}
           </>
         )}
 

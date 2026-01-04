@@ -4,6 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { v4 as uuid } from "uuid";
 
 import "./styles/BlockEditor.css";
+import HelpTrigger from "../context/help/HelpTrigger";
 
 export default function BlockEditor({ html, onChange }) {
   const [localHtml, setLocalHtml] = useState(html);
@@ -14,8 +15,10 @@ export default function BlockEditor({ html, onChange }) {
 
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
+  const modalRef = useRef(null);
 
   const containerRef = useRef(null);
+  
 
   useEffect(() => {
     setLocalHtml(html);
@@ -116,6 +119,14 @@ export default function BlockEditor({ html, onChange }) {
     setActiveImageEl(img);
     setImageUrlInput(img.src);
     setShowImageModal(true);
+
+    // Wait for modal to render
+  setTimeout(() => {
+    if (modalRef.current) {
+      modalRef.current.focus({ preventScroll: false });
+      modalRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 50);
   };
 
   // ============= UPLOAD FILE TO FIREBASE ============
@@ -160,54 +171,67 @@ export default function BlockEditor({ html, onChange }) {
     <div className="blockeditor-container">
       {/* ======================= MODAL ======================== */}
       {showImageModal && (
-        <div className="blockeditor-modal-backdrop">
-          <div className="blockeditor-modal">
-            <h3>Replace Image</h3>
+        <div className="blockeditor-modal-backdrop" ref={modalRef}
+  tabIndex={-1}>
+            <div className="blockeditor-modal">
+              <h3 className="blockeditor-modal-title">Replace Image</h3>
 
-            <input
-              type="text"
-              placeholder="Paste image URL"
-              className="blockeditor-modal-input"
-              value={imageUrlInput}
-              onChange={(e) => setImageUrlInput(e.target.value)}
-            />
+              
 
-            <p style={{ margin: "10px 0 4px" }}>Or Upload Image</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => uploadNewImage(e.target.files[0])}
-            />
+              <input
+                type="file"
+                accept="image/*"
+                className="blockeditor-modal-file"
+                onChange={(e) => uploadNewImage(e.target.files[0])}
+              />
+              <p className="blockeditor-modal-subtitle">Or paste url</p>
+              <input
+                type="text"
+                placeholder="Paste image URL"
+                className="blockeditor-modal-input"
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value)}
+              />
 
-            {uploading && <p>Uploading...</p>}
+              {uploading && <p className="blockeditor-modal-uploading">Uploading...</p>}
 
-            <div className="blockeditor-modal-actions">
-              <button className="blockeditor-save-btn" onClick={handleApplyImage}>
-                Apply
-              </button>
-              <button
-                className="blockeditor-cancel-btn"
-                onClick={() => setShowImageModal(false)}
-              >
-                Cancel
-              </button>
+              <div className="blockeditor-modal-actions">
+                <button
+                  className="blockeditor-save-btn"
+                  onClick={handleApplyImage}
+                  disabled={uploading}
+                >
+                  Apply
+                </button>
+                <button
+                  className="blockeditor-cancel-btn"
+                  onClick={() => setShowImageModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+
       )}
 
       {/* ======================= EDIT / SAVE ======================== */}
       {!editing ? (
-        <button className="blockeditor-edit-btn" onClick={enableEditing}>
-          ✏️ Edit Website
-        </button>
+        <div>
+          <HelpTrigger help={{ text: "Edit text and pictures on your site" }}>
+  <button className="blockeditor-edit-btn" onClick={enableEditing}>
+    <i className="fa fa-pencil"></i> Edit Website
+  </button>
+</HelpTrigger>
+
+        </div>
       ) : (
         <div className="blockeditor-controls">
           <button className="blockeditor-save-btn" onClick={handleSave}>
-            💾 Save
+            <i className="fa fa-check-circle" aria-hidden="true"></i> Save
           </button>
           <button className="blockeditor-cancel-btn" onClick={handleCancel}>
-            ✖ Cancel
+            <i className="fa fa-times" aria-hidden="true"></i> Cancel
           </button>
         </div>
       )}

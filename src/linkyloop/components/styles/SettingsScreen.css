@@ -1,0 +1,39 @@
+.settings-screen {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-screen h2 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.settings-input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  width: 100%;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #5b5ef7;
+}
+
+.settings-save-btn {
+  background: #5b5ef7;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settings-save-btn:hover {
+  background: #4a4ed1;
+}

@@ -2,9 +2,12 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import ExtraElementBuilder from "./ExtraElementBuilder";
 import "./styles/ExtraElementsModal.css";
+import PageSelector from "./PageSelector";
 
 export default function ExtraElementsModal({ onClose, onInsert, siteId }) {
   const [selectedType, setSelectedType] = useState(null);
+  const [selectedPages, setSelectedPages] = useState([]);
+
 
   const ELEMENTS = [
     { id: "map", label: "Google Map", icon: "fa-map" },
@@ -26,6 +29,12 @@ export default function ExtraElementsModal({ onClose, onInsert, siteId }) {
         <button className="extra-close-btn" onClick={onClose}>
           <i className="fa fa-times"></i>
         </button>
+
+        <PageSelector
+        selectedPages={selectedPages}
+        setSelectedPages={setSelectedPages}
+      />
+
 
         {/* STEP 1 — ELEMENT MENU */}
         {!selectedType && (

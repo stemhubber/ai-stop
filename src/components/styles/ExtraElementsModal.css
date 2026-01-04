@@ -182,3 +182,97 @@
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+
+/* ------------------------------------------
+   RESPONSIVE MODAL ENHANCEMENTS
+------------------------------------------- */
+
+/* ---------- Small devices (phones) ---------- */
+@media (max-width: 480px) {
+  .extra-modal {
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+    padding: 20px;
+    box-shadow: none;
+  }
+
+  .extra-modal h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .extra-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .extra-item {
+    padding: 18px 12px;
+  }
+
+  .extra-item i {
+    font-size: 26px;
+    margin-bottom: 6px;
+  }
+
+  .extra-item p {
+    font-size: 13px;
+  }
+
+  .extra-form input,
+  .extra-form textarea {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .extra-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .extra-buttons button {
+    width: 100%;
+  }
+
+  .extra-close-btn {
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ---------- Medium devices (tablets) ---------- */
+@media (max-width: 768px) {
+  .extra-modal {
+    max-width: 90%;
+    padding: 25px;
+  }
+
+  .extra-modal h2 {
+    font-size: 20px;
+  }
+
+  .extra-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+/* ---------- Large screens (desktops & up) ---------- */
+@media (min-width: 1024px) {
+  .extra-modal {
+    width: 520px;
+  }
+}
+
+/* ---------- Touch devices (disable hover transforms) ---------- */
+@media (hover: none) {
+  .extra-item:hover,
+  .extra-close-btn:hover,
+  .extra-buttons button:hover {
+    transform: none;
+  }
+}

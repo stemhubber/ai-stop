@@ -1,0 +1,146 @@
+/* WebsiteCreatedModal.css */
+
+/* 1. Backdrop with blur */
+.wcm-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.75); /* Darker, sophisticated overlay */
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px; /* Prevents touching edges on mobile */
+}
+
+/* 2. Responsive Container */
+.wcm-container {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 32px;
+  max-width: 450px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+  /* Smooth internal transitions */
+  transition: all 0.3s ease;
+}
+
+/* 3. Floating Icon Animation */
+.wcm-icon-wrapper {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.wcm-icon {
+  font-size: 2.5rem;
+  color: #6366f1;
+  background: #f5f7ff;
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: wcm-float 3s ease-in-out infinite;
+}
+
+@keyframes wcm-float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* 4. Typography */
+.wcm-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 16px;
+  letter-spacing: -0.025em;
+}
+
+.wcm-body {
+  margin-bottom: 32px;
+}
+
+.wcm-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4b5563;
+  margin-bottom: 14px;
+}
+
+.wcm-link {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+  transition: border-color 0.2s;
+}
+
+.wcm-link:hover {
+  border-color: #6366f1;
+}
+
+/* 5. Modern Button */
+.wcm-btn {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.wcm-btn:active {
+  transform: scale(0.98);
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+
+@media (max-width: 480px) {
+  .wcm-container {
+    padding: 32px 20px;
+    border-radius: 20px;
+  }
+
+  .wcm-title {
+    font-size: 1.35rem;
+  }
+
+  .wcm-icon {
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    font-size: 2rem;
+  }
+
+  .wcm-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* For very small devices / landscape */
+@media (max-height: 500px) {
+  .wcm-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .wcm-icon-wrapper { margin-bottom: 10px; }
+  .wcm-icon { width: 50px; height: 50px; line-height: 50px; font-size: 1.5rem; }
+  .wcm-body { margin-bottom: 15px; }
+}

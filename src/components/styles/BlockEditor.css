@@ -73,34 +73,156 @@
   border-radius: 4px;
 }
 
-/* MODAL */
+/* ------------------------------------------
+   BACKDROP
+------------------------------------------- */
 .blockeditor-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 999;
+  animation: fadeIn 0.2s ease;
 }
 
+/* ------------------------------------------
+   MODAL
+------------------------------------------- */
 .blockeditor-modal {
-  background: white;
-  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
   border-radius: 12px;
-  width: 420px;
+  padding: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUp 0.25s ease;
 }
 
-.blockeditor-modal-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
+/* Title */
+.blockeditor-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Subtitle */
+.blockeditor-modal-subtitle {
+  font-size: 13px;
+  color: #555;
+  margin: 4px 0 0;
+}
+
+/* Input fields */
+.blockeditor-modal-input,
+.blockeditor-modal-file {
+  width: 80%;
+  padding: 10px 12px;
   border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.blockeditor-modal-input:focus,
+.blockeditor-modal-file:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Uploading text */
+.blockeditor-modal-uploading {
+  font-size: 13px;
+  color: #777;
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+/* Actions */
+.blockeditor-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
   margin-top: 10px;
 }
 
-.blockeditor-modal-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
+/* Buttons */
+.blockeditor-save-btn,
+.blockeditor-cancel-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.blockeditor-save-btn {
+  background: #6366f1;
+  color: white;
+}
+
+.blockeditor-save-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.blockeditor-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.blockeditor-cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.blockeditor-cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+/* ------------------------------------------
+   ANIMATIONS
+------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ------------------------------------------
+   RESPONSIVE
+------------------------------------------- */
+@media (max-width: 480px) {
+  .blockeditor-modal {
+    max-width: 90%;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .blockeditor-modal-title {
+    font-size: 16px;
+  }
+
+  .blockeditor-modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .blockeditor-save-btn,
+  .blockeditor-cancel-btn {
+    width: 100%;
+  }
 }

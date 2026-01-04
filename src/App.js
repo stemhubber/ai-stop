@@ -10,6 +10,9 @@ import RequireAuth from "./components/RequireAuth.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Profile from "./components/Profile.jsx";
 import { useEffect, useState } from "react";
+import MessagingMain from "./linkyloop/components/MessagingMain.jsx";
+import BillingPage from "./Billing/BillingPage.jsx";
+import PaymentComplete from "./Billing/PaymentComplete.jsx";
 
 function App() {
 
@@ -37,6 +40,13 @@ function App() {
           <Route path="/sites/:siteId" element={<RequireAuth><SiteViewer /></RequireAuth>} />
           <Route path="/publish" element={<RequireAuth><PublishNewSite /></RequireAuth>} />
           <Route path="/site/:siteName" element={<PublicSite />} />
+
+          {/* LINKYLOOP */}
+          <Route path="/messaging" element={<MessagingMain/>} />
+
+          {/* Billing */}
+          <Route path="billing" element={<BillingPage/>}/>
+          <Route path="payment-complete" element={<PaymentComplete/>}/>
           <Route
   path="/studio"
   element={

@@ -1,0 +1,85 @@
+.today-screen {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.today-title {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.today-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.today-loading,
+.today-empty {
+  font-size: 14px;
+  text-align: center;
+  color: var(--muted);
+  padding: 12px 0;
+}
+
+.today-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+
+.today-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 320px;
+}
+
+.today-table th,
+.today-table td {
+  padding: 12px 8px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.today-table th {
+  background: var(--glass-bg-soft);
+  font-weight: 600;
+}
+
+.today-table tr:nth-child(even) {
+  background: var(--glass-bg-soft);
+}
+
+.today-table tr:hover {
+  background: var(--glass-bg);
+}
+
+.today-primary-btn {
+  margin-top: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.today-primary-btn:hover {
+  background: var(--primary-light);
+}
+
+/* Responsive for mobile */
+@media (max-width: 480px) {
+  .today-table th,
+  .today-table td {
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+}

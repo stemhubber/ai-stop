@@ -1,0 +1,217 @@
+/* -------------------------------
+   LIGHT MODE (DEFAULT)
+-------------------------------- */
+:root {
+  --bg: #eef2ff;
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-soft: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(0, 0, 0, 0.15);
+
+  --foreground: #1b1d21;
+  --muted: #6b7280;
+
+  --primary: #6366f1;
+  --primary-light: #c7d2fe;
+
+  --panel-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+  --editor-bg: white;
+  --danger: rgb(235, 58, 58);
+}
+
+/* -------------------------------
+   DARK MODE 
+-------------------------------- */
+html[data-theme="dark"] {
+  --bg: #0c0d10;
+  --glass-bg: rgba(20, 22, 26, 0.45);
+  --glass-bg-soft: rgba(20, 22, 26, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --foreground: #f1f3f5;
+  --muted: #9aa0a6;
+
+  --primary: #7d8aff;
+  --primary-light: #3b3c50;
+
+  --panel-shadow: 0 8px 35px rgba(0, 0, 0, 0.55);
+
+  --editor-bg: #1a1c22;
+}
+
+/* -------------------------------
+   GLOBAL
+-------------------------------- */
+body {
+  background: var(--bg);
+  color: var(--foreground);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.dashboard-screen {
+  padding: 16px;
+  max-width: 480px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.dashboard-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-icon-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dashboard-icon-btn:hover {
+  background: var(--primary-light);
+}
+
+/* Menu */
+.dashboard-menu {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  right: 16px;
+  top: 60px;
+  background: var(--glass-bg);
+  border-radius: 10px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.dashboard-menu-item {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dashboard-menu-item:hover {
+  background: var(--glass-bg-soft);
+}
+
+.dashboard-subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Tabs */
+.dashboard-tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+.dashboard-tab-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--glass-bg);
+  color: var(--foreground);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-tab-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Content */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Modal */
+.dashboard-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.dashboard-modal-content {
+  background: var(--editor-bg);
+  color: var(--foreground);
+  border-radius: 16px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: var(--panel-shadow);
+}
+
+.dashboard-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.dashboard-modal-close:hover {
+  color: var(--foreground);
+}
+
+/* Floating Theme Toggle */
+.studio2030-theme-toggle-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 16px;
+  z-index: 3000;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: var(--panel-shadow);
+  transition: all 0.2s;
+}
+
+.studio2030-theme-toggle-floating:hover {
+  background: var(--primary-light);
+}

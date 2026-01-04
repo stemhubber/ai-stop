@@ -1,0 +1,39 @@
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.contact-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+  color: var(--foreground);
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: border 0.2s, background 0.2s;
+}
+
+.contact-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--glass-bg);
+}
+
+.contact-list-item {
+  cursor: default;
+}
+
+.contact-list-item.clickable {
+  cursor: pointer;
+}
+
+.contact-empty {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 12px 0;
+}

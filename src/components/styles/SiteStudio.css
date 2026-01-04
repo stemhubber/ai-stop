@@ -22,6 +22,7 @@
   --panel-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 
   --editor-bg: white;
+  --danger: rgb(235, 58, 58);
 }
 
 /* -------------------------------
@@ -78,7 +79,7 @@ body {
 
 /* Collapsed Panel */
 .studio2030-panel.collapsed {
-  width: 70px;
+  width: 50px;
   padding: 20px 10px;
 }
 
@@ -216,6 +217,11 @@ html[data-theme="dark"] .studio2030-theme-toggle-floating:hover {
     height: 42px;
     font-size: 18px;
   }
+  /* Collapsed Panel */
+.studio2030-panel.collapsed {
+  width: 8px;
+  padding: 5px 2px;
+}
 }
 
 

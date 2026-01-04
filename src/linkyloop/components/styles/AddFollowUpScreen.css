@@ -1,0 +1,137 @@
+/* AddFollowUpScreen.css */
+
+/* -------------------------------
+   LIGHT MODE (DEFAULT)
+-------------------------------- */
+:root {
+  --bg: #eef2ff;
+  --input-bg: #fff;
+  --input-border: rgba(0,0,0,0.1);
+  --input-focus: #6366f1;
+  --text-color: #1b1d21;
+  --muted: #6b7280;
+  --primary: #6366f1;
+  --danger: #eb3a3a;
+  --card-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* -------------------------------
+   DARK MODE
+-------------------------------- */
+html[data-theme="dark"] {
+  --bg: #0c0d10;
+  --input-bg: #1a1c22;
+  --input-border: rgba(255,255,255,0.15);
+  --input-focus: #7d8aff;
+  --text-color: #f1f3f5;
+  --muted: #9aa0a6;
+  --primary: #7d8aff;
+  --danger: #f25c5c;
+  --card-shadow: 0 6px 18px rgba(0,0,0,0.55);
+}
+
+.add-followup-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 16px;
+  max-width: 400px;
+  margin: auto;
+  color: var(--text-color);
+}
+
+.add-followup-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.add-input {
+  width: 80%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-color);
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.add-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+.add-primary-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.add-primary-btn:hover:not(:disabled) {
+  background: #4a4ed1;
+  transform: translateY(-1px);
+}
+
+.add-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.add-primary-btn i.fa-spinner {
+  animation: spinxx 1s linear infinite;
+}
+
+/* Error message */
+.add-followup-error {
+  background: rgba(235, 58, 58, 0.1);
+  color: var(--danger);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+
+/* Spinner animation */
+@keyframes spinxx {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Textarea fix */
+.add-input[type="textarea"] {
+  resize: none;
+}
+
+/* Responsive spacing */
+@media (max-width: 480px) {
+  .add-followup-screen {
+    padding: 12px;
+    gap: 10px;
+  }
+  .add-followup-title {
+    font-size: 20px;
+  }
+  .add-primary-btn {
+    font-size: 15px;
+    padding: 10px;
+  }
+}
