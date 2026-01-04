@@ -42,11 +42,11 @@ function App() {
           <Route path="/site/:siteName" element={<PublicSite />} />
 
           {/* LINKYLOOP */}
-          <Route path="/messaging" element={<MessagingMain/>} />
+          <Route path="/messaging" element={<RequireAuth><MessagingMain/></RequireAuth>} />
 
           {/* Billing */}
-          <Route path="billing" element={<BillingPage/>}/>
-          <Route path="payment-complete" element={<PaymentComplete/>}/>
+          <Route path="/billing" element={<RequireAuth><BillingPage/></RequireAuth>}/>
+          <Route path="/payment-complete" element={<RequireAuth><PaymentComplete/></RequireAuth>}/>
           <Route
   path="/studio"
   element={
