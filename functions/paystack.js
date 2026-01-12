@@ -15,7 +15,7 @@ async function initializePayment({ email, amount, userId, metadata = {} }) {
       email,
       amount: Number(amount) * 100,
       metadata,
-      callback_url: "http://127.0.0.1:3000/payment-complete"
+      callback_url: "https://webilo.co.za/payment-complete"
     },
     {
       headers: {
