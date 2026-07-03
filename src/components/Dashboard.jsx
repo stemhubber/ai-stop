@@ -41,7 +41,7 @@ export default function Dashboard() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [user.uid]);
 
   if (loading) return <div className="dash2030-loading">Loading…</div>;
 
@@ -62,9 +62,11 @@ export default function Dashboard() {
           <div className="topnav-links">
             <a href="/studio" className="topnav-link active">Dashboard</a>
             <a href="/profile" className="topnav-link">Profile</a>
-            <a className="topnav-link">Billing</a>
-            <a className="topnav-link">Messages</a>
-            <a className="topnav-link">Settings</a>
+            <a href="/billing" className="topnav-link">Billing</a>
+            <a href="/messaging" className="topnav-link">Messages</a>
+            <button className="topnav-link topnav-link-button" type="button">
+              Settings
+            </button>
           </div>
 
           {/* Theme toggle */}
@@ -92,9 +94,11 @@ export default function Dashboard() {
             <div className="topnav-mobile-menu">
               <a href="/studio">Dashboard</a>
               <a href="/profile">Profile</a>
-              <a>Billing</a>
-              <a>Messages</a>
-              <a>Settings</a>
+              <a href="/billing">Billing</a>
+              <a href="/messaging">Messages</a>
+              <button className="topnav-mobile-link" type="button">
+                Settings
+              </button>
               <button onClick={logout} className="mobile-logout-btn">
                 Logout
               </button>

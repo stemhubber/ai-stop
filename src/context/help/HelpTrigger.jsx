@@ -10,7 +10,7 @@ export default function HelpTrigger({ help, children }) {
       // Register tooltip on mount
       registerHelp({ ...help, element: ref.current });
     }
-  }, [help]);
+  }, [help, registerHelp]);
 
   return (
     <span ref={ref} style={{ display: "inline-flex" }}>

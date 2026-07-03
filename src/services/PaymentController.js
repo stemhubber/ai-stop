@@ -1,6 +1,6 @@
-import { useState } from "react";
-
-const functionsUrl = "https://api-koacwaodbq-uc.a.run.app"; // replace with your deployed Firebase URL
+import { useCallback, useState } from "react";
+import { auth } from "./firebase.config";
+import { apiBaseUrl as functionsUrl } from "./apiConfig";
 
 export function usePayment() {
   const [loading, setLoading] = useState(false);
@@ -12,21 +12,29 @@ export function usePayment() {
    * @param {number} amount - amount in Rands
    * @param {object} metadata - optional extra data
    */
-  const initiatePayment = async ({ email, amount, userId, metadata = {} }) => {
+  const initiatePayment = useCallback(async ({ email, amount, userId, metadata = {} }) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${functionsUrl}/paystack/init`, {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Sign in before starting a payment.");
+      const response = await fetch(`${functionsUrl}/payments/init`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, amount, userId, metadata }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          email,
+          amount,
+          userId,
+          metadata,
+          callbackUrl: `${window.location.origin}/payment-complete`,
+        }),
       });
 
       const data = await response.json();
 
-      if (!data.authorization_url) {
-        throw new Error("Payment initialization failed: "+data);
+      if (!response.ok || !data.authorization_url) {
+        throw new Error(data.error || "Payment initialization failed");
       }
 
       // Redirect user to Paystack checkout page
@@ -40,19 +48,27 @@ export function usePayment() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Verifies a Paystack payment after completion
    * @param {string} reference - payment reference
    */
-  const verifyPayment = async (reference) => {
+  const verifyPayment = useCallback(async (reference) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${functionsUrl}/paystack/verify/${reference}`);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Sign in before verifying a payment.");
+      const response = await fetch(`${functionsUrl}/payments/verify/${reference}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Payment verification failed");
+      }
 
       if (data.status === "success") {
         return { success: true, data };
@@ -66,7 +82,7 @@ export function usePayment() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     initiatePayment,

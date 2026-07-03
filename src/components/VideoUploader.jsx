@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { storage } from "../services/firebase.config";
+import { auth, storage } from "../services/firebase.config";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { v4 as uuid } from "uuid";
 import "./styles/VideoUploader.css";
@@ -12,10 +12,11 @@ export default function VideoUploader({ onGenerated }) {
   const [uploaded, setUploaded] = useState(false);
 
   const uploadVideo = async (file) => {
+    if (!auth.currentUser) return;
     setUploaded(false);
     setProgress(0);
 
-    const fileRef = ref(storage, `videos/${uuid()}`);
+    const fileRef = ref(storage, `users/${auth.currentUser.uid}/videos/${uuid()}`);
     const uploadTask = uploadBytesResumable(fileRef, file);
 
     uploadTask.on(

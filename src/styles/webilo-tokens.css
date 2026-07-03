@@ -1,0 +1,117 @@
+/* ============================================================
+   webilo-tokens.css
+   Design tokens for the Webilo design system.
+   Import this first, before webilo.css.
+   ============================================================ */
+
+:root {
+  /* --- Color: neutrals --- */
+  --wb-ink-1:       #18181B;   /* primary text, primary button bg */
+  --wb-ink-2:       #3F3F46;   /* strong secondary text           */
+  --wb-ink-3:       #71717A;   /* secondary text                  */
+  --wb-ink-4:       #A1A1AA;   /* muted / placeholder             */
+  --wb-ink-5:       #D4D4D8;   /* disabled                        */
+
+  --wb-border:      #E4E4E7;   /* default hairline                 */
+  --wb-border-hover:#A1A1AA;   /* hover / focus ring              */
+
+  --wb-surface:     #FFFFFF;   /* cards, inputs                   */
+  --wb-canvas:      #FAFAF9;   /* page background                 */
+
+  /* --- Color: accent (warm amber — use sparingly) --- */
+  --wb-accent:      #B45309;
+  --wb-accent-hover:#92400E;
+  --wb-accent-bg:   #FEF3C7;
+  --wb-accent-text: #92400E;
+
+  /* --- Color: semantic --- */
+  --wb-success:     #16A34A;
+  --wb-success-bg:  #F0FDF4;
+  --wb-success-text:#15803D;
+
+  --wb-danger:      #DC2626;
+  --wb-danger-bg:   #FEF2F2;
+  --wb-danger-text: #B91C1C;
+  --wb-danger-border:#FECACA;
+
+  --wb-warning:     #D97706;
+  --wb-warning-bg:  #FFFBEB;
+  --wb-warning-text:#92400E;
+  --wb-warning-border:#FDE68A;
+
+  /* --- Typography --- */
+  --wb-font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+  --wb-font-mono:   'IBM Plex Mono', 'Fira Code', monospace;
+
+  --wb-text-xs:     11px;
+  --wb-text-sm:     12px;
+  --wb-text-base:   14px;
+  --wb-text-md:     16px;
+  --wb-text-lg:     18px;
+  --wb-text-xl:     22px;
+  --wb-text-2xl:    28px;
+  --wb-text-3xl:    36px;
+
+  /* --- Spacing --- */
+  --wb-space-1:  4px;
+  --wb-space-2:  8px;
+  --wb-space-3:  12px;
+  --wb-space-4:  16px;
+  --wb-space-5:  20px;
+  --wb-space-6:  24px;
+  --wb-space-8:  32px;
+  --wb-space-10: 40px;
+  --wb-space-12: 48px;
+
+  /* --- Radius --- */
+  --wb-radius-sm: 4px;
+  --wb-radius:    8px;
+  --wb-radius-lg: 12px;
+  --wb-radius-xl: 16px;
+  --wb-radius-full: 9999px;
+
+  /* --- Shadows (use sparingly) --- */
+  --wb-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --wb-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+
+  /* --- Motion --- */
+  --wb-dur-fast:   80ms;
+  --wb-dur-base:   150ms;
+  --wb-dur-slow:   300ms;
+  --wb-dur-enter:  400ms;
+
+  --wb-ease:       cubic-bezier(0.16, 1, 0.3, 1);
+  --wb-ease-out:   ease-out;
+  --wb-ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- Control sizing --- */
+  --wb-control-h-sm: 28px;
+  --wb-control-h:    36px;
+  --wb-control-h-lg: 44px;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wb-ink-1:       #FAFAFA;
+    --wb-ink-2:       #D4D4D8;
+    --wb-ink-3:       #A1A1AA;
+    --wb-ink-4:       #71717A;
+    --wb-ink-5:       #3F3F46;
+
+    --wb-border:      #27272A;
+    --wb-border-hover:#52525B;
+
+    --wb-surface:     #1C1C1E;
+    --wb-canvas:      #111111;
+
+    --wb-accent:      #FBBF24;
+    --wb-accent-hover:#FCD34D;
+    --wb-accent-bg:   #292318;
+    --wb-accent-text: #FDE68A;
+
+    --wb-success-bg:  #052E16;
+    --wb-danger-bg:   #1C0A0A;
+    --wb-warning-bg:  #1C1306;
+  }
+}

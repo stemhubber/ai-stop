@@ -1,0 +1,128 @@
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "./firebase.config";
+import { slugify } from "../utils/product";
+
+const MODULES = [
+  "website", "commerce", "bookings", "customers", "orders",
+  "messages", "marketing", "analytics", "ai", "payments",
+];
+
+export async function createBusiness(userId, input) {
+  const ref = doc(collection(db, "businesses"));
+  const baseSlug = slugify(input.name) || `business-${ref.id.slice(0, 6)}`;
+  let slug = baseSlug;
+  await runTransaction(db, async (transaction) => {
+    let counter = 1;
+    let slugRef = doc(db, "businessSlugs", slug);
+    while ((await transaction.get(slugRef)).exists()) {
+      counter += 1;
+      slug = `${baseSlug}-${counter}`;
+      slugRef = doc(db, "businessSlugs", slug);
+    }
+    transaction.set(ref, {
+    id: ref.id,
+    ownerId: userId,
+    name: input.name.trim(),
+    slug,
+    category: input.category,
+    description: input.description?.trim() || "",
+    audience: input.audience?.trim() || "",
+    goal: input.goal?.trim() || "",
+    phone: input.phone?.trim() || "",
+    email: input.email?.trim() || "",
+    address: { city: input.city?.trim() || "", country: "South Africa" },
+    status: "active",
+    plan: "starter",
+    websitePreferences: input.websitePreferences || {},
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    });
+    transaction.set(slugRef, { businessId: ref.id, ownerId: userId, createdAt: serverTimestamp() });
+  });
+  await setDoc(doc(db, "businesses", ref.id, "members", userId), {
+    userId, role: "owner", permissions: ["*"], joinedAt: serverTimestamp(),
+  });
+  await Promise.all(MODULES.map((moduleId) =>
+    setDoc(doc(db, "businesses", ref.id, "modules", moduleId), {
+      moduleId,
+      enabled: ["website", "customers", "ai"].includes(moduleId) ||
+        input.modules?.includes(moduleId),
+      config: {},
+      updatedAt: serverTimestamp(),
+    })
+  ));
+  return { id: ref.id, ...input, slug };
+}
+
+export async function listBusinesses(userId) {
+  const snap = await getDocs(query(collection(db, "businesses"), where("ownerId", "==", userId)));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export async function getBusiness(id) {
+  const snap = await getDoc(doc(db, "businesses", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function getBusinessBySlug(slug) {
+  const slugSnap = await getDoc(doc(db, "businessSlugs", slug));
+  return slugSnap.exists() ? getBusiness(slugSnap.data().businessId) : null;
+}
+
+export function updateBusiness(id, data) {
+  return updateDoc(doc(db, "businesses", id), { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function listModules(businessId) {
+  const snap = await getDocs(collection(db, "businesses", businessId, "modules"));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export function setModuleEnabled(businessId, moduleId, enabled) {
+  return setDoc(doc(db, "businesses", businessId, "modules", moduleId), {
+    moduleId, enabled, updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+function subcollection(businessId, resource) {
+  return collection(db, "businesses", businessId, resource);
+}
+
+export async function listRecords(businessId, resource) {
+  const snap = await getDocs(query(subcollection(businessId, resource), orderBy("createdAt", "desc"), limit(100)));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export async function createRecord(businessId, resource, data) {
+  const ref = await addDoc(subcollection(businessId, resource), {
+    ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export function updateRecord(businessId, resource, id, data) {
+  return updateDoc(doc(db, "businesses", businessId, resource, id), {
+    ...data, updatedAt: serverTimestamp(),
+  });
+}
+
+export function deleteRecord(businessId, resource, id) {
+  return deleteDoc(doc(db, "businesses", businessId, resource, id));
+}
+
+export { MODULES, slugify };

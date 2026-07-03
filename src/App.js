@@ -9,25 +9,18 @@ import Login, { Register } from "./components/Login.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Profile from "./components/Profile.jsx";
-import { useEffect, useState } from "react";
 import MessagingMain from "./linkyloop/components/MessagingMain.jsx";
 import BillingPage from "./Billing/BillingPage.jsx";
 import PaymentComplete from "./Billing/PaymentComplete.jsx";
+import ProductWorkspace from "./components/product/ProductWorkspace";
+import BusinessOnboarding from "./components/product/BusinessOnboarding";
+import PublicBusinessPage from "./components/product/PublicBusinessPage";
+import WebsiteDashboard from "./features/websites/WebsiteDashboard";
+import CreateWebsiteFlow from "./features/websites/CreateWebsiteFlow";
+import WebsiteEditor from "./features/websites/WebsiteEditor";
+import PublicWebsite from "./features/websites/PublicWebsite";
 
 function App() {
-
-  // Load theme on first render
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-
-    if (saved === "light" || saved === "dark") {
-      document.documentElement.setAttribute("data-theme", saved);
-    } else {
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    }
-  }, []);
-
   return (
     <Router>
       <div className="App">
@@ -35,7 +28,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/studio/new" element={<RequireAuth><SiteEditor /></RequireAuth>} />
+          <Route path="/studio/new" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />
           <Route path="/studio/edit/:siteName" element={<RequireAuth><SiteEditor /></RequireAuth>} />
           <Route path="/sites/:siteId" element={<RequireAuth><SiteViewer /></RequireAuth>} />
           <Route path="/publish" element={<RequireAuth><PublishNewSite /></RequireAuth>} />
@@ -47,14 +40,15 @@ function App() {
           {/* Billing */}
           <Route path="/billing" element={<RequireAuth><BillingPage/></RequireAuth>}/>
           <Route path="/payment-complete" element={<RequireAuth><PaymentComplete/></RequireAuth>}/>
-          <Route
-  path="/studio"
-  element={
-    <RequireAuth>
-      <Dashboard />
-    </RequireAuth>
-  }
-/>
+          <Route path="/app" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
+          <Route path="/create" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />
+          <Route path="/editor/:projectId" element={<RequireAuth><WebsiteEditor /></RequireAuth>} />
+          <Route path="/w/:slug" element={<PublicWebsite />} />
+          <Route path="/business" element={<RequireAuth><ProductWorkspace /></RequireAuth>} />
+          <Route path="/onboarding" element={<RequireAuth><BusinessOnboarding /></RequireAuth>} />
+          <Route path="/b/:slug" element={<PublicBusinessPage />} />
+          <Route path="/studio" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
+          <Route path="/legacy-studio" element={<RequireAuth><Dashboard /></RequireAuth>} />
 <Route
   path="/profile"
   element={

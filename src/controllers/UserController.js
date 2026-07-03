@@ -8,7 +8,6 @@ import {
   deleteDoc,
   getDoc, updateDoc
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export async function getUserSites(uid) {
   const q = query(

@@ -1,329 +1,72 @@
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import * as THREE from "three";
+import { Icon } from "../features/websites/components/WebiloUI";
 import "./styles/Home.css";
 
-/* ----------------------------------------------- */
-/*  FLOATING PARTICLES (CANVAS BACKGROUND)         */
-/* ----------------------------------------------- */
-function FloatingParticles() {
-  const canvasRef = useRef(null);
+const featureCards = [
+  ["sparkles", "Start with a conversation", "Tell Webilo about your business in plain language. It turns your answers into a focused website plan before generating anything."],
+  ["layers", "Edit the structure, not code", "Change the words, reorder sections, add pages, and tune your theme in one calm, visual workspace."],
+  ["desktop", "Preview every screen", "Check desktop, tablet, and mobile as you work. Your site stays connected to the same project from first draft to publish."],
+];
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    let w = (canvas.width = window.innerWidth);
-    let h = (canvas.height = window.innerHeight);
-
-    const particles = Array.from({ length: 60 }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 2 + 1,
-      dx: (Math.random() - 0.5) * 0.6,
-      dy: (Math.random() - 0.5) * 0.6,
-    }));
-
-    const draw = () => {
-      const isDark =
-        document.documentElement.getAttribute("data-theme") === "dark";
-
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = isDark
-        ? "rgba(255,255,255,0.35)"
-        : "rgba(0,0,0,0.2)";
-
-      particles.forEach((p) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        p.x += p.dx;
-        p.y += p.dy;
-
-        if (p.x < 0 || p.x > w) p.dx *= -1;
-        if (p.y < 0 || p.y > h) p.dy *= -1;
-      });
-
-      requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    window.addEventListener("resize", () => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    });
-  }, []);
-
-  return <canvas ref={canvasRef} className="webilo-particles"></canvas>;
-}
-
-
-/* ----------------------------------------------- */
-/*  MOVING GRADIENT BEAMS (BACKGROUND)             */
-/* ----------------------------------------------- */
-function GradientBeams() {
-  const isDark =
-    document.documentElement.getAttribute("data-theme") === "dark";
-
-  return (
-    <div
-      className="webilo-gradient-beams"
-      style={{
-        filter: isDark ? "blur(120px)" : "blur(90px)",
-      }}
-    >
-      <div
-        className="beam b1"
-        style={{
-          opacity: isDark ? 0.12 : 0.18,
-          background: isDark
-            ? "linear-gradient(135deg, #f3f4ff, #cdd8ff)"
-            : "linear-gradient(135deg, #b8c0ff, #e0e7ff)",
-        }}
-      />
-      <div
-        className="beam b2"
-        style={{
-          opacity: isDark ? 0.1 : 0.15,
-          background: isDark
-            ? "linear-gradient(130deg, #eef1ff, #d6defd)"
-            : "linear-gradient(130deg, #d0d4ff, #f5f7ff)",
-        }}
-      />
-      <div
-        className="beam b3"
-        style={{
-          opacity: isDark ? 0.09 : 0.14,
-        }}
-      />
-    </div>
-  );
-}
-
-/* ----------------------------------------------- */
-/*  THREE.JS 3D GLOBE (INTERACTIVE)                */
-/* ----------------------------------------------- */
-function WebiloGlobe() {
-  const mountRef = useRef(null);
-
-  useEffect(() => {
-    const mount = mountRef.current;
-
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark";
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      50,
-      mount.clientWidth / mount.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 3.5;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(mount.clientWidth, mount.clientHeight);
-    mount.appendChild(renderer.domElement);
-
-    // GLOBE MATERIAL (Theme-Aware)
-    const material = new THREE.MeshStandardMaterial({
-      color: isDark ? 0x6a5dfd : 0x4f46e5,
-      transparent: true,
-      opacity: isDark ? 0.9 : 0.85,
-      roughness: isDark ? 0.25 : 0.35,
-      metalness: isDark ? 0.65 : 0.45,
-    });
-
-    const geometry = new THREE.SphereGeometry(1.5, 64, 64);
-    const globe = new THREE.Mesh(geometry, material);
-    scene.add(globe);
-
-    // LIGHTS (Theme-Aware)
-    const ambient = new THREE.AmbientLight(isDark ? 0xffffff : 0x444444, 0.6);
-    const point = new THREE.PointLight(
-      isDark ? 0x4bbaff : 0x7f8cff,
-      isDark ? 1 : 0.6
-    );
-    point.position.set(5, 3, 5);
-    scene.add(ambient, point);
-
-    const animate = () => {
-      globe.rotation.y += 0.0025;
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    };
-    animate();
-
-    return () => {
-      mount.removeChild(renderer.domElement);
-    };
-  }, []);
-
-  return <div ref={mountRef} className="webilo-globe"></div>;
-}
-
-
-/* ----------------------------------------------- */
-/*  AI WEBSITE BUILD ANIMATION                     */
-/* ----------------------------------------------- */
-function AIShowcase() {
-  const [text, setText] = useState("");
-  const fullText = "Analyzing your prompt… Generating layout… Selecting visuals… Applying design system… Building your website… Done.";
-
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      setText(fullText.slice(0, index));
-      index += 1;
-      if (index > fullText.length) clearInterval(interval);
-    }, 40); 
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="ai-showcase">
-      <p>{text}</p>
-
-      {/* Section reveal */}
-      <motion.div
-        className="ai-section"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 2 }}
-      />
-      <motion.div
-        className="ai-section mid"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 2.3 }}
-      />
-      <motion.div
-        className="ai-section small"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 2.6 }}
-      />
-    </div>
-  );
-}
-
-/* ----------------------------------------------- */
-/*  TESTIMONIAL CAROUSEL                          */
-/* ----------------------------------------------- */
-function TestimonialCarousel() {
-  const testimonials = [
-    {
-      name: "Faith M.",
-      text: "Webilo created a full business site for me in seconds. It’s insane.",
-    },
-    {
-      name: "Thabo K.",
-      text: "This is the future of web design. Nothing comes close.",
-    },
-    {
-      name: "Mariah S.",
-      text: "As a freelancer, Webilo saves me hours every day.",
-    },
-    {
-      name: "Kenji R.",
-      text: "I went from zero knowledge to having my e-commerce site launched in one afternoon.",
-    },
-    {
-      name: "Alex B.",
-      text: "The quality is what truly shocked me. It builds better code than I used to write myself.",
-    },
-    {
-      name: "Priya L.",
-      text: "It handles all the technical headaches. I just focus on the big ideas now.",
-    },
-    {
-      name: "Javi G.",
-      text: "I thought it would be a gimmick, but the AI understands my intent perfectly. Game changer.",
-    },
-  ];
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const int = setInterval(() => {
-      setIndex((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(int);
-  }, []);
-
-  return (
-    <div className="testimonial-wrap">
-      <motion.div
-        key={index}
-        className="testimonial-card"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <p className="t-text">“{testimonials[index].text}”</p>
-        <p className="t-name">— {testimonials[index].name}</p>
-      </motion.div>
-    </div>
-  );
-}
-
-/* ----------------------------------------------- */
-/*  FULL WEBILO HOME COMPONENT                     */
-/* ----------------------------------------------- */
 export default function Home() {
   return (
-    <div className="webilo-page">
+    <div className="wl-home">
+      <header className="wl-home-nav">
+        <Link to="/" className="wl-brand"><span>W</span><strong>webilo</strong></Link>
+        <nav><a href="#how-it-works">How it works</a><a href="#features">Features</a></nav>
+        <div><Link to="/login">Sign in</Link><Link className="wl-home-nav__cta" to="/register">Start building <Icon name="arrow" size={16} /></Link></div>
+      </header>
 
-      {/* BACKGROUND EFFECTS */}
-      <FloatingParticles />
-      <GradientBeams />
-
-      {/* HERO */}
-      <section className="webilo-hero">
-        <motion.div
-          className="hero-content"
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.3 }}
-        >
-          <h1 className="title">
-            WEBILO  
-            <span>Web Creation Reinvented</span>
-          </h1>
-
-          <p className="subtitle">
-            Imagine it. Define it. Watch our AI design and launch your entire site, effortlessly.
-          </p>
-          <p className="subtitle">
-            We design only pixel perfect websites.🤌
-          </p>
-
-          <div className="cta-row">
-            <Link to="/studio/new" className="btn-primary">Start Creating</Link>
-            <Link to="/studio" className="btn-outline">Dashboard</Link>
+      <main>
+        <section className="wl-home-hero">
+          <div className="wl-home-hero__copy">
+            <p><Icon name="sparkles" size={15} /> AI website builder for small businesses</p>
+            <h1>A website that starts with <em>your idea.</em></h1>
+            <span>Describe your business. Review the plan. Edit every detail. Webilo turns a conversation into a polished website you can confidently publish.</span>
+            <div><Link className="wl-home-button" to="/register">Create your website <Icon name="arrow" /></Link><a href="#how-it-works">See how it works</a></div>
+            <small>No code required · Start free · Your draft stays private</small>
           </div>
-        </motion.div>
-      </section>
+          <div className="wl-home-hero__visual">
+            <div className="wl-home-app-card">
+              <div className="wl-home-app-card__bar"><i /><i /><i /><span>moya-wellness.webilo.site</span></div>
+              <div className="wl-home-app-card__body">
+                <aside><strong>W</strong><i /><i /><i /></aside>
+                <div className="wl-home-preview">
+                  <nav><strong>Moya</strong><span /><span /><button /></nav>
+                  <div><small>MOVE · BREATHE · RESTORE</small><h2>Feel more at home in your body.</h2><p>Small-group movement and wellness classes made for real life.</p><button>Explore classes</button></div>
+                  <section><i /><i /><i /></section>
+                </div>
+                <div className="wl-home-inspector"><small>SECTION</small><strong>Hero</strong><label>Heading<i /></label><label>Body<i /><i /></label><small>BRAND COLOUR</small><span /></div>
+              </div>
+            </div>
+            <span className="wl-home-float wl-home-float--one"><Icon name="check" /> Changes saved</span>
+            <span className="wl-home-float wl-home-float--two"><Icon name="mobile" /> Mobile ready</span>
+          </div>
+        </section>
 
-      {/* 3D GLOBE */}
-      <section className="globe-section">
-        <WebiloGlobe />
-      </section>
+        <section className="wl-home-proof"><p>One connected path from idea to published website</p><div><span>Guided brief</span><Icon name="arrow" /><span>AI plan</span><Icon name="arrow" /><span>Visual editor</span><Icon name="arrow" /><span>Publish</span></div></section>
 
-      {/* AI WEBSITE BUILD ANIMATION */}
-      <section className="ai-section-wrap">
-        <h2>See AI Build in Real-Time</h2>
-        <AIShowcase />
-      </section>
+        <section className="wl-home-process" id="how-it-works">
+          <header><p className="wl-eyebrow">A clearer way to build</p><h2>Know what happens next, at every step.</h2><span>Webilo guides the decisions that matter and keeps you in control of the result.</span></header>
+          <div>
+            <article><span>01</span><h3>Share your idea</h3><p>Answer a few focused questions about your business, audience, goal, and style.</p></article>
+            <article><span>02</span><h3>Approve the plan</h3><p>Review the pages and sections before Webilo writes content or chooses a layout.</p></article>
+            <article><span>03</span><h3>Make it yours</h3><p>Edit content directly, adjust the theme, preview each device, and publish when ready.</p></article>
+          </div>
+        </section>
 
-      {/* TESTIMONIALS */}
-      <section className="testimonials">
-        <h2>Loved by Creators</h2>
-        <TestimonialCarousel />
-      </section>
+        <section className="wl-home-features" id="features">
+          {featureCards.map(([icon, title, body]) => <article key={title}><span><Icon name={icon} /></span><h3>{title}</h3><p>{body}</p></article>)}
+        </section>
 
+        <section className="wl-home-final">
+          <span><Icon name="sparkles" size={24} /></span>
+          <h2>Your idea deserves more than a generic template.</h2>
+          <p>Build a focused first draft in minutes, then shape it into a website that feels like yours.</p>
+          <Link className="wl-home-button" to="/register">Start building free <Icon name="arrow" /></Link>
+        </section>
+      </main>
+      <footer className="wl-home-footer"><Link to="/" className="wl-brand"><span>W</span><strong>webilo</strong></Link><p>AI-powered websites, made clear.</p><div><Link to="/login">Sign in</Link><Link to="/register">Create account</Link></div></footer>
     </div>
   );
 }

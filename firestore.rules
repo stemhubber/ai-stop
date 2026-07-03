@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function ownsBusiness(businessId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read, create, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if false;
+
+      match /websiteActivity/{activityId} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() &&
+          request.auth.uid == userId &&
+          request.resource.data.ownerId == request.auth.uid;
+      }
+    }
+
+    match /websites/{websiteId} {
+      allow create: if signedIn() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.id == websiteId;
+      allow read, delete: if signedIn() &&
+        resource.data.ownerId == request.auth.uid;
+      allow update: if signedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.id == websiteId;
+    }
+
+    match /publishedWebsites/{slug} {
+      allow read: if true;
+      allow create: if signedIn() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.status == "published";
+      allow update: if signedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.status == "published";
+      allow delete: if signedIn() &&
+        resource.data.ownerId == request.auth.uid;
+    }
+
+    match /businesses/{businessId} {
+      allow read: if resource.data.status == "active" ||
+        (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if ownsBusiness(businessId);
+
+      match /members/{userId} {
+        allow read: if ownsBusiness(businessId) || (signedIn() && request.auth.uid == userId);
+        allow write: if ownsBusiness(businessId);
+      }
+
+      match /modules/{moduleId} {
+        allow read, write: if ownsBusiness(businessId);
+      }
+
+      match /products/{itemId} {
+        allow read: if true;
+        allow write: if ownsBusiness(businessId);
+      }
+
+      match /services/{itemId} {
+        allow read: if true;
+        allow write: if ownsBusiness(businessId);
+      }
+
+      match /customers/{itemId} {
+        allow read, update, delete: if ownsBusiness(businessId);
+        allow create: if ownsBusiness(businessId) ||
+          (request.resource.data.source == "website" &&
+           request.resource.data.name is string &&
+           request.resource.data.phone is string);
+      }
+
+      match /orders/{itemId} {
+        allow read, update, delete: if ownsBusiness(businessId);
+        allow create: if ownsBusiness(businessId) ||
+          (request.resource.data.source == "website" &&
+           request.resource.data.status == "pending" &&
+           request.resource.data.paymentStatus == "unpaid");
+      }
+
+      match /bookings/{itemId} {
+        allow read, update, delete: if ownsBusiness(businessId);
+        allow create: if ownsBusiness(businessId) ||
+          (request.resource.data.source == "website" &&
+           request.resource.data.status == "requested");
+      }
+
+      match /{document=**} {
+        allow read, write: if ownsBusiness(businessId);
+      }
+    }
+
+    match /businessSlugs/{slug} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /publishedSites/{siteId} {
+      allow read: if true;
+      allow write: if signedIn() && request.resource.data.owner == request.auth.uid;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

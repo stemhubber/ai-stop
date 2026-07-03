@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { storage, db } from "../services/firebase.config";
 import {
@@ -10,7 +10,6 @@ import {
   collection,
   addDoc,
   deleteDoc,
-  updateDoc,
   doc,
   getDocs
 } from "firebase/firestore";
@@ -21,18 +20,13 @@ import { useAuth } from "../context/AuthContext";
 export default function GalleryUploader({ onGenerated, siteId }) {
   const [images, setImages] = useState([]);
   const [originalImages, setOriginalImages] = useState([]);
-  const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
 
   // ─────────────────────────────────────
   // Load gallery on mount
   // ─────────────────────────────────────
-  useEffect(() => {
+  const loadGallery = useCallback(async () => {
     if (!user || !siteId) return;
-    loadGallery();
-  }, [user, siteId]);
-
-  const loadGallery = async () => {
     const refCol = collection(db, "users", user.uid, "sites", siteId, "gallery");
     const snap = await getDocs(refCol);
 
@@ -43,20 +37,21 @@ export default function GalleryUploader({ onGenerated, siteId }) {
 
     setImages(list);
     setOriginalImages(list);
-  };
+  }, [siteId, user]);
+
+  useEffect(() => { loadGallery(); }, [loadGallery]);
 
   // ─────────────────────────────────────
   // Upload image but DO NOT save to Firestore
   // ─────────────────────────────────────
   const uploadFiles = async (files) => {
     if (!files.length) return;
-    setUploading(true);
 
     let newList = [...images];
 
     for (let file of files) {
       const id = uuid();
-      const fileRef = ref(storage, `gallery/${id}`);
+      const fileRef = ref(storage, `users/${user.uid}/gallery/${id}`);
       const uploadTask = uploadBytesResumable(fileRef, file);
 
       const temp = {
@@ -81,7 +76,6 @@ export default function GalleryUploader({ onGenerated, siteId }) {
         async () => {
           temp.url = await getDownloadURL(uploadTask.snapshot.ref);
           temp.progress = 100;
-          setUploading(false);
           setImages([...newList]);
         }
       );
@@ -200,7 +194,7 @@ export default function GalleryUploader({ onGenerated, siteId }) {
               </div>
             ) : (
               <>
-                <img src={img.url} className="gallery-thumb" />
+                <img src={img.url} className="gallery-thumb" alt="Gallery item" />
                 <button
                   className="gallery-delete"
                   onClick={() => deleteImage(img)}

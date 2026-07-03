@@ -50,7 +50,7 @@ export default function PublishNewSite() {
     setPaymentProcessing(false);
 
     window.open(`${window.location.origin}/site/${siteName}`, "_blank");
-    navigate("/studio");
+    navigate("/app");
 
   };
 

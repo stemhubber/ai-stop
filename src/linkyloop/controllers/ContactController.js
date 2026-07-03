@@ -14,15 +14,6 @@ export const ContactController = {
     }
   },
 
-  async getAll() {
-    try {
-      return await getDocuments(COLLECTION);
-    } catch (err) {
-      console.error("Failed to fetch contacts:", err);
-      return [];
-    }
-  },
-
   async add({ userId, name, phone, email }) {
     try {
       return await addDocument(COLLECTION, {

@@ -18,6 +18,9 @@
 
 # production
 /build
+/.firebase/
+firebase-debug.log*
+**/firebase-debug.log*
 
 
 

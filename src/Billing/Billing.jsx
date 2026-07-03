@@ -6,9 +6,15 @@ import "./styles/Billing.css"; // isolated styles
 export default function Billing({ item, amount, user, userId }) {
   const { initiatePayment, loading, error } = usePayment();
   const [message, setMessage] = useState("");
+  const canPay = Boolean(user?.email && amount > 0 && userId);
 
   const handlePayment = async () => {
     setMessage("");
+    if (!canPay) {
+      setMessage("Your billing profile is incomplete. Please sign in again.");
+      return;
+    }
+
     try {
       const reference = await initiatePayment({
         email: user.email,
@@ -48,14 +54,14 @@ export default function Billing({ item, amount, user, userId }) {
         </p>
         <p>
           <i className="fa fa-user"></i>{" "}
-          <strong>User:</strong> {user.name} ({user.email})
+          <strong>User:</strong> {user.name} ({user.email || "No email found"})
         </p>
       </div>
 
       <motion.button
         className="billing-button"
         onClick={handlePayment}
-        disabled={loading}
+        disabled={loading || !canPay}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >

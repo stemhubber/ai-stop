@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 const HelpContext = createContext();
 
@@ -7,22 +7,17 @@ export const HelpProvider = ({ children }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Add single tooltip or multiple, append instead of replacing
-  const registerHelp = (help) => {
+  const registerHelp = useCallback((help) => {
     setQueue((prev) => {
       const id = help.id || `help-${prev.length}-${Math.random().toString(36).substr(2, 5)}`;
       if (prev.find((item)=> item?.text === help?.text)){
         return prev;
       }
-      console.log(prev);
       return [...prev, { ...help, id }];
     });
 
     
-  };
-
-  const removeDuplicateObjects = (arr, key) => {
-    return [...new Map(arr.map(item => [item[key], item])).values()];
-  };
+  }, []);
 
   const nextHelp = () => {
     setActiveIndex((prev) => {

@@ -1,70 +1,262 @@
-# Getting Started with Create React App
+# Webilo
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Webilo is a React-based website builder and small-business dashboard. It supports AI-assisted site creation, publishing, product and media management, customer follow-ups, and billing.
 
-## Available Scripts
+## Product flows
 
-In the project directory, you can run:
+The product branch adds a business-centered operating workspace:
 
-### `npm start`
+- `/onboarding` creates a South African business and selects active modules.
+- `/app` opens the owner workspace and business switcher.
+- Products, services, customers, orders, bookings, messages, and campaigns are managed under `businesses/{businessId}`.
+- `/b/:slug` renders the public business page and accepts customer enquiries.
+- Existing website-studio, billing, profile, and messaging routes remain available.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Current architecture
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```text
+React single-page application
+├── Firebase Authentication
+├── Cloud Firestore
+├── Firebase Storage
+├── OpenAI and Pexels APIs
+└── Firebase Hosting
+    └── Firebase Cloud Functions
+        ├── Express payment API → Paystack
+        └── Scheduled follow-ups → Twilio SMS
+```
 
-### `npm test`
+The browser application reads and writes Firebase services directly through the Firebase Web SDK. Server-side payment and scheduled messaging logic runs in Firebase Cloud Functions.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Stack
 
-### `npm run build`
+### Frontend
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- React 19 and React DOM
+- Create React App (`react-scripts` 5)
+- React Router 7
+- Plain CSS
+- Framer Motion for UI animation
+- Three.js for animated 3D backgrounds
+- Leaflet and React Leaflet for maps
+- Axios for HTTP requests
+- UUID for generated asset and record identifiers
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Firebase
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Firebase Authentication with email/password and Google sign-in
+- Cloud Firestore for users, sites, products, contacts, and follow-ups
+- Firebase Storage for images and video
+- Firebase Hosting for the production SPA
+- Firebase Cloud Functions for the payment API and scheduled follow-up processing
+- Firebase Admin SDK inside Cloud Functions
 
-### `npm run eject`
+### Cloud Functions
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- Node.js 24 runtime
+- CommonJS modules
+- Express 5
+- CORS
+- Firebase Functions v2 scheduler
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### External services
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- OpenAI Chat Completions for generated website content
+- OpenAI Audio Transcriptions for voice input
+- Pexels API for stock-image search
+- Paystack for payment initialization and verification
+- Twilio for SMS follow-ups
+- OpenStreetMap tiles and Nominatim geocoding
+- Google Maps and Street View embeds
+- UI Avatars for fallback profile images
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Project structure
 
-## Learn More
+```text
+src/
+  Billing/              Billing and payment-completion UI
+  components/           Website builder, dashboard, publishing, and media UI
+  context/              Authentication and contextual-help providers
+  controllers/          Firebase, OpenAI, Pexels, site, and user operations
+  linkyloop/             Contacts and scheduled follow-up messaging
+  services/             Firebase setup, Firestore helpers, and payment client
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+lib/
+  styles/
+    webilo-tokens.css    Shared design tokens
+    webilo.css           Reusable wb-* component and utility classes
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+functions/
+  index.js              Scheduled SMS function and Express payment API
+  env.js                Firebase secret declarations
+  paystack.js           Paystack integration
+  twilioSender.js       Twilio integration
 
-### Code Splitting
+firebase.json           Hosting, Functions, and emulator configuration
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## UI style library
 
-### Analyzing the Bundle Size
+Reusable Webilo design-system styles live in `lib/styles/`:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```text
+lib/styles/webilo-tokens.css
+lib/styles/webilo.css
+```
 
-### Making a Progressive Web App
+Load the token file before the component file. For a CSS entry point that can resolve repository-root files:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```css
+@import "../lib/styles/webilo-tokens.css";
+@import "../lib/styles/webilo.css";
+```
 
-### Advanced Configuration
+The library is opt-in and is not loaded by the current React application automatically. Its classes use the `wb-` prefix:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```jsx
+<div className="wb-card">
+  <h2 className="wb-heading">Business profile</h2>
+  <p className="wb-secondary">Keep your public details up to date.</p>
+  <button className="wb-btn wb-btn-primary" type="button">
+    Save changes
+  </button>
+</div>
+```
 
-### Deployment
+The component stylesheet depends on the variables in `webilo-tokens.css`; reversing the import order will leave its `var(--wb-*)` declarations unresolved. See the [UI usage guide](docs/WEBILO_UI_USAGE_GUIDE.md) for component examples and current application conventions.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Prerequisites
 
-### `npm run build` fails to minify
+- Node.js and npm
+- Node.js 24 when running or deploying `functions/`
+- Firebase CLI
+- Access to the Firebase project configured in `.firebaserc`
+- Credentials for the external services used by the features you enable
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Local setup
+
+Install the frontend and Cloud Functions dependencies:
+
+```bash
+npm install
+cd functions
+npm install
+cd ..
+```
+
+Create a root `.env.local` file:
+
+```dotenv
+REACT_APP_FIREBASE_API_KEY=
+REACT_APP_FIREBASE_AUTH_DOMAIN=
+REACT_APP_FIREBASE_PROJECT_ID=
+REACT_APP_FIREBASE_STORAGE_BUCKET=
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=
+REACT_APP_FIREBASE_APP_ID=
+REACT_APP_FIREBASE_MEASUREMENT_ID=
+
+REACT_APP_PEXELS_API_KEY=
+# Optional override. Leave blank to use the deployed Firebase Function.
+REACT_APP_API_BASE_URL=
+REACT_APP_USE_FIREBASE_EMULATORS=false
+```
+
+All `REACT_APP_*` values are bundled into the browser build. OpenAI is called through the authenticated Firebase API function; configure its key only as a Firebase secret.
+
+Configure backend credentials as Firebase secrets:
+
+```bash
+firebase functions:secrets:set TWILIO_SID
+firebase functions:secrets:set TWILIO_TOKEN
+firebase functions:secrets:set TWILIO_FROM
+firebase functions:secrets:set TWILIO_WHATSAPP_FROM
+firebase functions:secrets:set SENDGRID_API_KEY
+firebase functions:secrets:set EMAIL_FROM
+firebase functions:secrets:set PAYSTACK_SECRET
+firebase functions:secrets:set OPENAI_API_KEY
+```
+
+Provider selection is configuration-driven:
+
+```dotenv
+AI_PROVIDER=openai
+PAYMENT_PROVIDER=paystack
+MESSAGING_PROVIDER=twilio
+```
+
+The backend provider registries isolate vendor-specific code. New payment or messaging providers can be added without changing product controllers or frontend flows. Twilio is the default SMS provider; WhatsApp requires a Twilio WhatsApp sender, and email through the Twilio ecosystem requires a SendGrid adapter.
+
+In Firebase Authentication, enable Email/Password and Google providers and add the local and deployed domains as authorized domains.
+
+## Development
+
+Start the React development server:
+
+```bash
+npm start
+```
+
+The app runs at `http://localhost:3000`.
+
+Run the frontend test suite:
+
+```bash
+npm test
+```
+
+Run the configured Firebase emulators:
+
+```bash
+firebase emulators:start
+```
+
+The Functions emulator uses port `5001`, Hosting uses `5003`, and the Emulator Suite UI is enabled.
+
+Auth uses `9099`, Firestore uses `8080`, and Storage uses `9199`. Install a compatible Java runtime before starting the Firestore emulator.
+
+## Production
+
+Create an optimized frontend build:
+
+```bash
+npm run build
+```
+
+Deploy Hosting and Cloud Functions:
+
+```bash
+npm run deploy
+```
+
+The Firebase Hosting configuration serves `build/` and rewrites application routes to `index.html`.
+
+To deploy only the backend:
+
+```bash
+cd functions
+npm run deploy
+```
+
+## Backend endpoints and jobs
+
+The exported `api` Cloud Function exposes:
+
+```text
+POST /payments/init
+GET  /payments/verify/:ref
+POST /ai/site
+GET  /paystack/health
+```
+
+Payment and AI routes require a Firebase ID token in the `Authorization: Bearer <token>` header. Legacy `/paystack/*` aliases remain temporarily for compatibility.
+
+The exported `followUpScheduler` runs every minute in the `Africa/Johannesburg` timezone. It queries pending Firestore follow-ups, formats South African phone numbers to E.164, sends them through Twilio, and updates their delivery status.
+
+The frontend payment client currently targets the deployed Cloud Run URL defined in `src/services/PaymentController.js`. Update that URL when deploying the API under a different Firebase project or region.
+
+## Additional documentation
+
+- [Webilo architecture](docs/WEBILO_ARCHITECTURE.md)
+- [Webilo developer rules](docs/DEVELOPER_RULES.md)
+- [Webilo UI usage guide](docs/WEBILO_UI_USAGE_GUIDE.md)
+- [Webilo UI design decisions](docs/WEBILO_UI_DECISIONS.md)

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { storage } from "../services/firebase.config";
+import { auth, storage } from "../services/firebase.config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { v4 as uuid } from "uuid";
 
@@ -45,7 +45,7 @@ export default function BlockEditor({ html, onChange }) {
 
     links.forEach((a) => {
       a.dataset.href = a.getAttribute("href"); // store original
-      a.setAttribute("href", "javascript:void(0)");
+      a.setAttribute("href", "#");
       a.style.pointerEvents = "none"; // disable click
       a.style.opacity = "0.6";
       a.style.cursor = "not-allowed";
@@ -132,7 +132,8 @@ export default function BlockEditor({ html, onChange }) {
   // ============= UPLOAD FILE TO FIREBASE ============
   const uploadNewImage = async (file) => {
     setUploading(true);
-    const fileRef = ref(storage, `editorImages/${uuid()}`);
+    if (!auth.currentUser) return;
+    const fileRef = ref(storage, `users/${auth.currentUser.uid}/editorImages/${uuid()}`);
 
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);

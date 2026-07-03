@@ -28,7 +28,7 @@ export default function Profile() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [user.uid]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -54,7 +54,7 @@ export default function Profile() {
     setSaving(true);
 
     try {
-      const imgRef = ref(storage, `profileImages/${user.uid}`);
+      const imgRef = ref(storage, `users/${user.uid}/profileImages/avatar`);
       await uploadBytes(imgRef, file);
 
       const url = await getDownloadURL(imgRef);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { storage, db } from "../services/firebase.config";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -20,19 +20,17 @@ export default function ProductManager({ onGenerated, siteId }) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const loadProducts = useCallback(async () => {
     if (!user || !siteId) return;
-    loadProducts();
-  }, [user, siteId]);
-
-  const loadProducts = async () => {
     const refCol = collection(db, "users", user.uid, "sites", siteId, "products");
     const snap = await getDocs(refCol);
     const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     setProducts(list);
     setOriginalProducts(list);
-  };
+  }, [siteId, user]);
+
+  useEffect(() => { loadProducts(); }, [loadProducts]);
 
   const addProduct = () => {
     setProducts([
@@ -49,7 +47,7 @@ export default function ProductManager({ onGenerated, siteId }) {
 
   const uploadImage = async (file, index) => {
     const fileId = uuid();
-    const fileRef = ref(storage, `products/${fileId}`);
+    const fileRef = ref(storage, `users/${user.uid}/products/${fileId}`);
     const uploadTask = uploadBytesResumable(fileRef, file);
 
     setLoading(true);
@@ -163,7 +161,7 @@ export default function ProductManager({ onGenerated, siteId }) {
           <motion.div key={index} className="pm-card">
             <label className="pm-img-wrapper">
               {p.img ? (
-                <img src={p.img} className="pm-img" />
+                <img src={p.img} className="pm-img" alt={p.name || "Product"} />
               ) : (
                 <div className="pm-img-placeholder">
                   <i className="fa fa-image"></i>

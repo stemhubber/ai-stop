@@ -1,0 +1,662 @@
+/* ============================================================
+   webilo.css
+   Component classes for the Webilo design system.
+   Requires webilo-tokens.css to be imported first.
+
+   Usage in Angular (angular.json > styles array):
+     "styles": [
+       "src/webilo-tokens.css",
+       "src/webilo.css",
+       "src/styles.scss"
+     ]
+
+   Or in styles.scss:
+     @import 'webilo-tokens';
+     @import 'webilo';
+   ============================================================ */
+
+/* ============================================================
+   BASE RESET
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-base);
+  line-height: 1.6;
+  color: var(--wb-ink-1);
+  background: var(--wb-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+.wb-display {
+  font-size: var(--wb-text-3xl);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--wb-ink-1);
+}
+
+.wb-heading {
+  font-size: var(--wb-text-xl);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--wb-ink-1);
+}
+
+.wb-subheading {
+  font-size: var(--wb-text-lg);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--wb-ink-1);
+}
+
+.wb-body {
+  font-size: var(--wb-text-base);
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--wb-ink-1);
+}
+
+.wb-body-sm {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-ink-1);
+  line-height: 1.6;
+}
+
+.wb-secondary {
+  color: var(--wb-ink-3);
+}
+
+.wb-muted {
+  color: var(--wb-ink-4);
+}
+
+.wb-label {
+  font-size: var(--wb-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wb-ink-4);
+}
+
+.wb-mono {
+  font-family: var(--wb-font-mono);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-ink-3);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.wb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wb-space-2);
+  height: var(--wb-control-h);
+  padding: 0 var(--wb-space-4);
+  border-radius: var(--wb-radius-sm);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-base);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border: 0.5px solid var(--wb-border);
+  background: var(--wb-surface);
+  color: var(--wb-ink-1);
+  text-decoration: none;
+  transition:
+    background var(--wb-dur-base) var(--wb-ease-out),
+    border-color var(--wb-dur-base) var(--wb-ease-out),
+    color var(--wb-dur-base) var(--wb-ease-out),
+    transform var(--wb-dur-fast) var(--wb-ease-out),
+    opacity var(--wb-dur-fast) var(--wb-ease-out);
+}
+
+.wb-btn:hover {
+  background: var(--wb-canvas);
+  border-color: var(--wb-border-hover);
+}
+
+.wb-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.wb-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--wb-canvas), 0 0 0 4px var(--wb-ink-1);
+}
+
+.wb-btn:disabled,
+.wb-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Sizes */
+.wb-btn-sm {
+  height: var(--wb-control-h-sm);
+  padding: 0 var(--wb-space-3);
+  font-size: var(--wb-text-sm);
+}
+
+.wb-btn-lg {
+  height: var(--wb-control-h-lg);
+  padding: 0 var(--wb-space-6);
+  font-size: var(--wb-text-md);
+}
+
+/* Variants */
+.wb-btn-primary {
+  background: var(--wb-ink-1);
+  color: #fff;
+  border-color: var(--wb-ink-1);
+}
+.wb-btn-primary:hover {
+  background: var(--wb-ink-2);
+  border-color: var(--wb-ink-2);
+}
+
+.wb-btn-accent {
+  background: var(--wb-accent);
+  color: #fff;
+  border-color: var(--wb-accent);
+}
+.wb-btn-accent:hover {
+  background: var(--wb-accent-hover);
+  border-color: var(--wb-accent-hover);
+}
+
+.wb-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.wb-btn-ghost:hover {
+  background: var(--wb-canvas);
+  border-color: var(--wb-border);
+}
+
+.wb-btn-danger {
+  background: var(--wb-danger-bg);
+  color: var(--wb-danger-text);
+  border-color: var(--wb-danger-border);
+}
+.wb-btn-danger:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
+
+/* Icon button */
+.wb-btn-icon {
+  width: var(--wb-control-h);
+  padding: 0;
+}
+.wb-btn-icon.wb-btn-sm {
+  width: var(--wb-control-h-sm);
+}
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
+
+.wb-input {
+  display: block;
+  width: 100%;
+  height: var(--wb-control-h);
+  padding: 0 var(--wb-space-3);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-base);
+  color: var(--wb-ink-1);
+  background: var(--wb-surface);
+  border: 0.5px solid var(--wb-border);
+  border-radius: var(--wb-radius-sm);
+  outline: none;
+  transition:
+    border-color var(--wb-dur-base) var(--wb-ease-out),
+    box-shadow var(--wb-dur-base) var(--wb-ease-out);
+}
+
+.wb-input::placeholder {
+  color: var(--wb-ink-4);
+}
+
+.wb-input:hover {
+  border-color: var(--wb-border-hover);
+}
+
+.wb-input:focus {
+  border-color: var(--wb-ink-1);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+
+.wb-input--error {
+  border-color: var(--wb-danger);
+}
+.wb-input--error:focus {
+  border-color: var(--wb-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.wb-input--success {
+  border-color: var(--wb-success);
+}
+
+.wb-textarea {
+  padding: var(--wb-space-3);
+  height: auto;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+
+.wb-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Field wrapper */
+.wb-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-2);
+}
+
+.wb-field-label {
+  font-size: var(--wb-text-sm);
+  font-weight: 500;
+  color: var(--wb-ink-2);
+}
+
+.wb-field-hint {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-ink-4);
+}
+
+.wb-field-error {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-danger);
+}
+
+.wb-field-success {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-success);
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.wb-card {
+  background: var(--wb-surface);
+  border: 0.5px solid var(--wb-border);
+  border-radius: var(--wb-radius-lg);
+  padding: var(--wb-space-5);
+}
+
+.wb-card-sm {
+  padding: var(--wb-space-4);
+  border-radius: var(--wb-radius);
+}
+
+.wb-card-hover {
+  transition:
+    border-color var(--wb-dur-base) var(--wb-ease-out),
+    box-shadow var(--wb-dur-base) var(--wb-ease-out);
+  cursor: pointer;
+}
+
+.wb-card-hover:hover {
+  border-color: var(--wb-border-hover);
+  box-shadow: var(--wb-shadow-sm);
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+
+.wb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-1);
+  padding: 2px var(--wb-space-2);
+  border-radius: var(--wb-radius-full);
+  font-size: var(--wb-text-xs);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.wb-badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.wb-badge-neutral {
+  background: var(--wb-canvas);
+  border: 0.5px solid var(--wb-border);
+  color: var(--wb-ink-3);
+}
+
+.wb-badge-success {
+  background: var(--wb-success-bg);
+  color: var(--wb-success-text);
+}
+
+.wb-badge-warning {
+  background: var(--wb-accent-bg);
+  color: var(--wb-accent-text);
+}
+
+.wb-badge-danger {
+  background: var(--wb-danger-bg);
+  color: var(--wb-danger-text);
+}
+
+.wb-badge-accent {
+  background: var(--wb-accent-bg);
+  color: var(--wb-accent-text);
+}
+
+/* ============================================================
+   TOGGLE
+   ============================================================ */
+
+.wb-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.wb-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.wb-toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--wb-radius-full);
+  background: var(--wb-border);
+  border: 0.5px solid var(--wb-border);
+  transition: background var(--wb-dur-base) var(--wb-ease-out), border-color var(--wb-dur-base) var(--wb-ease-out);
+  cursor: pointer;
+}
+
+.wb-toggle input:checked ~ .wb-toggle-track {
+  background: var(--wb-ink-1);
+  border-color: var(--wb-ink-1);
+}
+
+.wb-toggle input:focus-visible ~ .wb-toggle-track {
+  box-shadow: 0 0 0 2px var(--wb-canvas), 0 0 0 4px var(--wb-ink-1);
+}
+
+.wb-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: none;
+  transition: transform var(--wb-dur-base) var(--wb-ease-spring);
+}
+
+.wb-toggle input:checked ~ .wb-toggle-track ~ .wb-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+
+.wb-progress {
+  height: 4px;
+  background: var(--wb-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wb-progress-bar {
+  height: 100%;
+  background: var(--wb-ink-1);
+  border-radius: 2px;
+  transition: width var(--wb-dur-enter) var(--wb-ease);
+}
+
+.wb-progress-bar--accent {
+  background: var(--wb-accent);
+}
+
+.wb-progress-bar--success {
+  background: var(--wb-success);
+}
+
+/* ============================================================
+   METRIC CARD
+   ============================================================ */
+
+.wb-metric {
+  background: var(--wb-surface);
+  border: 0.5px solid var(--wb-border);
+  border-radius: var(--wb-radius);
+  padding: var(--wb-space-4);
+}
+
+.wb-metric-value {
+  font-size: var(--wb-text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--wb-ink-1);
+  line-height: 1.1;
+}
+
+.wb-metric-label {
+  font-size: var(--wb-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-ink-4);
+  margin-top: var(--wb-space-1);
+}
+
+.wb-metric-delta {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-success);
+  margin-top: var(--wb-space-2);
+}
+
+.wb-metric-delta--down {
+  color: var(--wb-danger);
+}
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+
+.wb-divider {
+  border: none;
+  border-top: 0.5px solid var(--wb-border);
+  margin: var(--wb-space-5) 0;
+}
+
+/* ============================================================
+   SKELETON LOADER
+   ============================================================ */
+
+@keyframes wb-shimmer {
+  from { opacity: 1; }
+  50%  { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+.wb-skeleton {
+  background: var(--wb-border);
+  border-radius: var(--wb-radius-sm);
+  animation: wb-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ============================================================
+   TOAST / NOTIFICATION
+   ============================================================ */
+
+.wb-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wb-space-3);
+  padding: var(--wb-space-3) var(--wb-space-4);
+  background: var(--wb-surface);
+  border: 0.5px solid var(--wb-border);
+  border-radius: var(--wb-radius);
+  box-shadow: var(--wb-shadow-md);
+  font-size: var(--wb-text-base);
+}
+
+.wb-toast-title {
+  font-weight: 500;
+  color: var(--wb-ink-1);
+}
+
+.wb-toast-body {
+  font-size: var(--wb-text-sm);
+  color: var(--wb-ink-3);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.wb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--wb-text-base);
+}
+
+.wb-table th {
+  text-align: left;
+  font-size: var(--wb-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-ink-4);
+  padding: var(--wb-space-3) var(--wb-space-4);
+  border-bottom: 0.5px solid var(--wb-border);
+}
+
+.wb-table td {
+  padding: var(--wb-space-3) var(--wb-space-4);
+  border-bottom: 0.5px solid var(--wb-border);
+  color: var(--wb-ink-1);
+  vertical-align: middle;
+}
+
+.wb-table tr:last-child td {
+  border-bottom: none;
+}
+
+.wb-table tbody tr {
+  transition: background var(--wb-dur-fast) var(--wb-ease-out);
+}
+
+.wb-table tbody tr:hover {
+  background: var(--wb-canvas);
+}
+
+/* ============================================================
+   AVATAR
+   ============================================================ */
+
+.wb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 500;
+  background: var(--wb-accent-bg);
+  color: var(--wb-accent-text);
+  flex-shrink: 0;
+}
+
+.wb-avatar-sm  { width: 28px; height: 28px; font-size: var(--wb-text-xs); }
+.wb-avatar     { width: 36px; height: 36px; font-size: var(--wb-text-sm); }
+.wb-avatar-lg  { width: 44px; height: 44px; font-size: var(--wb-text-base); }
+
+/* ============================================================
+   LAYOUT UTILITIES
+   ============================================================ */
+
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-space-3);
+}
+
+.wb-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wb-space-3);
+}
+
+.wb-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-3);
+}
+
+.wb-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--wb-space-4); }
+.wb-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--wb-space-4); }
+.wb-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--wb-space-4); }
+
+@media (max-width: 640px) {
+  .wb-grid-2,
+  .wb-grid-3,
+  .wb-grid-4 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .wb-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   RESPONSIVE CONTAINER
+   ============================================================ */
+
+.wb-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--wb-space-6);
+}
+
+@media (max-width: 640px) {
+  .wb-container { padding: 0 var(--wb-space-4); }
+}

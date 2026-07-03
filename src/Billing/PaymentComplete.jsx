@@ -26,11 +26,15 @@ export default function PaymentComplete() {
         setStatus("Payment Failed or Pending");
       }
     });
-  }, []);
+  }, [searchParams, verifyPayment]);
 
   const handlePrint = () => {
+    if (!receiptRef.current) return;
+
     const content = receiptRef.current.innerHTML;
     const printWindow = window.open("", "", "width=400,height=600");
+    if (!printWindow) return;
+
     printWindow.document.write(`
       <html>
         <head>
@@ -81,34 +85,34 @@ export default function PaymentComplete() {
         <div className="line"></div>
 
         <p><strong>Status:</strong> {status}</p>
-        <p><strong>Reference:</strong> {paymentData?.reference}</p>
-        <p><strong>Date:</strong> {paymentData && new Date(paymentData.paidAt).toLocaleString()}</p>
+        <p><strong>Reference:</strong> {paymentData?.reference || "Unavailable"}</p>
+        <p><strong>Date:</strong> {paymentData?.paidAt ? new Date(paymentData.paidAt).toLocaleString() : "Unavailable"}</p>
 
         <div className="line"></div>
 
         <p>
           <i className="fa fa-box"></i>{" "}
-          <strong>Item:</strong> {paymentData?.metadata?.item}
+          <strong>Item:</strong> {paymentData?.metadata?.item || "Unavailable"}
         </p>
         <p>
           <i className="fa fa-user"></i>{" "}
-          <strong>Customer:</strong> {paymentData?.metadata?.userName}
+          <strong>Customer:</strong> {paymentData?.metadata?.userName || "Unavailable"}
         </p>
         <p>
           <i className="fa fa-envelope"></i>{" "}
-          {paymentData?.customer?.email}
+          {paymentData?.customer?.email || "Unavailable"}
         </p>
 
         <div className="line"></div>
 
         <p>
-          <strong>Amount:</strong> R{(paymentData?.amount / 100).toFixed(2)}
+          <strong>Amount:</strong> {paymentData?.amount ? `R${(paymentData.amount / 100).toFixed(2)}` : "Unavailable"}
         </p>
         <p>
-          <strong>Fees:</strong> R{(paymentData?.fees / 100).toFixed(2)}
+          <strong>Fees:</strong> {paymentData?.fees ? `R${(paymentData.fees / 100).toFixed(2)}` : "Unavailable"}
         </p>
         <p>
-          <strong>Paid Via:</strong> {paymentData?.authorization?.brand?.toUpperCase()} CARD
+          <strong>Paid Via:</strong> {paymentData?.authorization?.brand ? `${paymentData.authorization.brand.toUpperCase()} CARD` : "Unavailable"}
         </p>
 
         <div className="line"></div>

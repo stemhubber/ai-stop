@@ -1,88 +1,66 @@
-import { useState, useRef } from "react";
-import axios from "axios";
-import './styles/VoiceInput.css';
+import { useRef, useState } from "react";
+import { transcribeAudio } from "../services/aiService";
+import "./styles/VoiceInput.css";
 
 export default function VoiceInput({ onTranscribed }) {
   const [recording, setRecording] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (e) => {
-        chunksRef.current.push(e.data);
+      mediaRecorder.ondataavailable = (event) => {
+        chunksRef.current.push(event.data);
       };
-
       mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-        await sendToWhisper(audioBlob);
+        try {
+          setLoading(true);
+          const response = await transcribeAudio(audioBlob);
+          onTranscribed(response.text);
+        } catch (error) {
+          console.error("Transcription failed:", error.message);
+          window.alert("The recording could not be transcribed.");
+        } finally {
+          setLoading(false);
+        }
       };
 
       mediaRecorder.start();
       setRecording(true);
-    } catch (err) {
-      console.error("Mic permission denied:", err);
-      alert("Microphone permission is required.");
+    } catch (error) {
+      console.error("Microphone permission denied:", error.message);
+      window.alert("Microphone permission is required.");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  };
-
-  const sendToWhisper = async (audioBlob) => {
-    try {
-      setLoading(true);
-
-      const formData = new FormData();
-      formData.append("file", audioBlob, "audio.webm");
-      formData.append("model", "whisper-1");
-
-      // 🔥 USE YOUR AI CONTROLLER ENDPOINT
-      const response = await axios.post(
-        "https://api.openai.com/v1/audio/transcriptions",
-        formData,
-        {
-          headers: {
-            "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      const text = response.data.text;
-      onTranscribed(text); // send text back to parent
-    } catch (err) {
-      console.error("Whisper error:", err);
-      alert("Failed to transcribe audio.");
-    } finally {
-      setLoading(false);
-    }
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
+    setRecording(false);
   };
 
   return (
     <button
+      type="button"
       onClick={recording ? stopRecording : startRecording}
       className="voice-btn"
       disabled={loading}
+      aria-label={recording ? "Stop recording" : "Describe the website by voice"}
     >
       {loading ? (
-        <i className="fa fa-spinner fa-spin"></i>
+        <i className="fa fa-spinner fa-spin" />
       ) : recording ? (
-        <i className="fa fa-microphone" style={{ color: "red" }}></i>
+        <i className="fa fa-microphone" style={{ color: "red" }} />
       ) : (
-        <i className="fa fa-microphone-slash"></i>
+        <i className="fa fa-microphone-slash" />
       )}
     </button>
   );
