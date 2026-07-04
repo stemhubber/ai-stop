@@ -8,8 +8,8 @@
   --border-glass: rgba(255, 255, 255, 0.25);
   --blur: 18px;
 
-  --primary: #6366f1;
-  --primary-soft: #eef2ff;
+  --primary: #176b5d;
+  --primary-soft: #e5f2ee;
 
   --text-dark: #1f2937;
   --text-muted: #6b7280;
@@ -74,7 +74,7 @@
   height: 118px;
   border-radius: 50%;
   border: 3px solid var(--primary-soft);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 6px 20px rgba(23, 107, 93, 0.18);
   object-fit: cover;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .pLight-upload-btn:hover {
-  background: #e0e7ff;
+  background: #d4e9e2;
 }
 
 .pLight-username {
@@ -139,7 +139,7 @@
   outline: none;
   border-color: var(--primary);
   background: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(23, 107, 93, 0.15);
 }
 
 .pLight-disabled {
@@ -164,8 +164,8 @@
 }
 
 .pLight-save-btn:hover {
-  background: #4f46e5;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+  background: #105347;
+  box-shadow: 0 6px 20px rgba(23, 107, 93, 0.22);
 }
 
 .pLight-logout-btn {
@@ -182,6 +182,24 @@
 
 .pLight-logout-btn:hover {
   background: rgba(255, 180, 180, 0.9);
+}
+
+.pLight-plan-row {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  background: var(--glass-muted);
+}
+
+.pLight-plan-row a {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
 }
 
 /* --------------------

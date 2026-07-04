@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { usePayment } from "../services/PaymentController";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./styles/PaymentComplete.css";
+import { AppLayout } from "../features/websites/components/WebiloUI";
 
 export default function PaymentComplete() {
   const { verifyPayment, loading, error } = usePayment();
@@ -60,13 +61,14 @@ export default function PaymentComplete() {
 
   if (loading) {
     return (
-      <div className="receipt-container">
+      <AppLayout><div className="receipt-container">
         <i className="fa fa-spinner fa-spin"></i> Verifying payment...
-      </div>
+      </div></AppLayout>
     );
   }
 
   return (
+    <AppLayout>
     <motion.div
       className="receipt-container"
       initial={{ opacity: 0, y: 20 }}
@@ -130,8 +132,10 @@ export default function PaymentComplete() {
       >
         <i className="fa fa-print"></i> Print Receipt
       </motion.button>
+      {paymentData && <Link className="payment-complete-link" to="/pro">Open Pro workspace</Link>}
 
       {error && <p className="error-text">{error}</p>}
     </motion.div>
+    </AppLayout>
   );
 }

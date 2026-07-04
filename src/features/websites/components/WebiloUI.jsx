@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { useBusiness } from "../../../context/BusinessContext";
+import WebiloAnimatedLogo from "../../../components/WebiloAnimatedLogo";
+import { usePlan } from "../../../context/PlanContext";
 
 const icons = {
   grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
@@ -145,50 +148,74 @@ export function Toast({ message, tone = "success", onClose }) {
 
 export function AppLayout({ children }) {
   const { user, logout } = useAuth();
+  const { activeBusiness } = useBusiness();
+  const { plan, isPro } = usePlan();
   const location = useLocation();
   const navigate = useNavigate();
   const links = [
-    { to: "/app", label: "Websites", icon: "grid", end: true },
+    { to: "/business", label: "Today", icon: "grid", end: true },
+    { to: "/websites", label: "Website", icon: "site" },
     { to: "/create", label: "Create website", icon: "sparkles" },
   ];
+  const mobileLinks = [
+    { to: "/business", label: "Today", icon: "grid", tabs: ["overview", ""] },
+    { to: "/business?tab=sell", label: "Sell", icon: "site", tabs: ["sell", "products", "services", "orders", "bookings"] },
+    { to: "/business?tab=customers", label: "Customers", icon: "grid", tabs: ["customers"] },
+    { to: "/business?tab=more", label: "More", icon: "more", tabs: ["more", "profile", "messages", "campaigns", "analytics", "modules"] },
+  ];
+  const activeMobileTab = location.pathname === "/business"
+    ? new URLSearchParams(location.search).get("tab") || "overview"
+    : location.pathname === "/websites" || location.pathname === "/create"
+      ? "more"
+      : "";
 
   return (
     <div className="wl-app-shell">
       <aside className="wl-sidebar">
-        <Link to="/app" className="wl-brand" aria-label="Webilo dashboard">
-          <span>W</span><strong>webilo</strong>
+        <Link to="/business" className="wl-brand" aria-label="Webilo business dashboard">
+          <WebiloAnimatedLogo size={36} showWordmark wordmarkSize={21} />
         </Link>
         <nav aria-label="Main navigation">
-          <p className="wl-nav-label">Workspace</p>
+          <p className="wl-nav-label">{activeBusiness?.name || "Business workspace"}</p>
           {links.map((link) => (
             <NavLink to={link.to} end={link.end} className={({ isActive }) => isActive ? "active" : ""} key={link.to}>
               <Icon name={link.icon} /><span>{link.label}</span>
             </NavLink>
           ))}
-          <p className="wl-nav-label">More</p>
-          <NavLink to="/business"><Icon name="grid" /><span>Business tools</span></NavLink>
+          <p className="wl-nav-label">Manage</p>
+          <NavLink to="/onboarding"><Icon name="plus" /><span>Add business</span></NavLink>
+          <NavLink to="/usage"><Icon name="clock" /><span>Usage</span></NavLink>
           <NavLink to="/profile"><Icon name="settings" /><span>Account settings</span></NavLink>
+          <NavLink to="/pro" className={({ isActive }) => `wl-pro-nav ${isActive ? "active" : ""}`}>
+            <Icon name="sparkles" />
+            <span>{isPro ? "Pro workspace" : "Explore Pro"}</span>
+            <em>{plan.name}</em>
+          </NavLink>
         </nav>
         <div className="wl-sidebar__account">
           <span className="wl-avatar">{(user?.email || "W").charAt(0).toUpperCase()}</span>
-          <div><strong>{user?.displayName || "My workspace"}</strong><small>{user?.email}</small></div>
+          <div><strong>{user?.displayName || "My workspace"}</strong><small>{user?.email}</small><em className={isPro ? "is-pro" : ""}>{plan.name}</em></div>
           <button onClick={async () => { await logout(); navigate("/"); }} aria-label="Sign out"><Icon name="logout" /></button>
         </div>
       </aside>
       <div className="wl-app-content">
         <header className="wl-mobile-topbar">
-          <Link to="/app" className="wl-brand"><span>W</span><strong>webilo</strong></Link>
-          <Link to="/create" className="wl-mobile-create"><Icon name="plus" /> New</Link>
+          <Link to="/business" className="wl-brand"><WebiloAnimatedLogo size={34} showWordmark wordmarkSize={20} /></Link>
+          <Link to="/onboarding" className="wl-mobile-create"><Icon name="plus" /> Business</Link>
         </header>
         <main key={location.pathname}>{children}</main>
       </div>
       <nav className="wl-mobile-nav" aria-label="Mobile navigation">
-        {links.map((link) => (
-          <NavLink to={link.to} end={link.end} key={link.to}>
-            <Icon name={link.icon} /><span>{link.label === "Create website" ? "Create" : link.label}</span>
-          </NavLink>
+        {mobileLinks.map((link) => (
+          <Link
+            to={link.to}
+            className={link.tabs.includes(activeMobileTab) ? "active" : ""}
+            aria-current={link.tabs.includes(activeMobileTab) ? "page" : undefined}
+            key={link.to}
+          >
+            <Icon name={link.icon} /><span>{link.label}</span>
+          </Link>
         ))}
-        <NavLink to="/profile"><Icon name="settings" /><span>Account</span></NavLink>
       </nav>
     </div>
   );
@@ -197,9 +224,8 @@ export function AppLayout({ children }) {
 export function LoadingScreen({ label = "Loading your workspace" }) {
   return (
     <div className="wl-loading-screen" role="status">
-      <span className="wl-loader-logo">W</span>
+      <WebiloAnimatedLogo size={72} showWordmark wordmarkSize={30} />
       <p>{label}</p>
     </div>
   );
 }
-

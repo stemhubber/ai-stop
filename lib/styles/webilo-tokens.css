@@ -6,23 +6,23 @@
 
 :root {
   /* --- Color: neutrals --- */
-  --wb-ink-1:       #18181B;   /* primary text, primary button bg */
-  --wb-ink-2:       #3F3F46;   /* strong secondary text           */
-  --wb-ink-3:       #71717A;   /* secondary text                  */
-  --wb-ink-4:       #A1A1AA;   /* muted / placeholder             */
-  --wb-ink-5:       #D4D4D8;   /* disabled                        */
+  --wb-ink-1:       #15211E;
+  --wb-ink-2:       #32443F;
+  --wb-ink-3:       #687A75;
+  --wb-ink-4:       #91A09C;
+  --wb-ink-5:       #CCD6D2;
 
-  --wb-border:      #E4E4E7;   /* default hairline                 */
-  --wb-border-hover:#A1A1AA;   /* hover / focus ring              */
+  --wb-border:      rgba(35, 67, 59, 0.13);
+  --wb-border-hover:#8AA29B;
 
-  --wb-surface:     #FFFFFF;   /* cards, inputs                   */
-  --wb-canvas:      #FAFAF9;   /* page background                 */
+  --wb-surface:     rgba(255, 255, 255, 0.82);
+  --wb-canvas:      #F3F7F5;
 
   /* --- Color: accent (warm amber — use sparingly) --- */
-  --wb-accent:      #B45309;
-  --wb-accent-hover:#92400E;
-  --wb-accent-bg:   #FEF3C7;
-  --wb-accent-text: #92400E;
+  --wb-accent:      #176B5D;
+  --wb-accent-hover:#105347;
+  --wb-accent-bg:   #E5F2EE;
+  --wb-accent-text: #105347;
 
   /* --- Color: semantic --- */
   --wb-success:     #16A34A;
@@ -71,8 +71,8 @@
   --wb-radius-full: 9999px;
 
   /* --- Shadows (use sparingly) --- */
-  --wb-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --wb-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --wb-shadow-sm: 0 8px 24px rgba(29, 63, 54, 0.06);
+  --wb-shadow-md: 0 18px 48px rgba(29, 63, 54, 0.10);
 
   /* --- Motion --- */
   --wb-dur-fast:   80ms;
@@ -88,30 +88,4 @@
   --wb-control-h-sm: 28px;
   --wb-control-h:    36px;
   --wb-control-h-lg: 44px;
-}
-
-/* Dark mode overrides */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --wb-ink-1:       #FAFAFA;
-    --wb-ink-2:       #D4D4D8;
-    --wb-ink-3:       #A1A1AA;
-    --wb-ink-4:       #71717A;
-    --wb-ink-5:       #3F3F46;
-
-    --wb-border:      #27272A;
-    --wb-border-hover:#52525B;
-
-    --wb-surface:     #1C1C1E;
-    --wb-canvas:      #111111;
-
-    --wb-accent:      #FBBF24;
-    --wb-accent-hover:#FCD34D;
-    --wb-accent-bg:   #292318;
-    --wb-accent-text: #FDE68A;
-
-    --wb-success-bg:  #052E16;
-    --wb-danger-bg:   #1C0A0A;
-    --wb-warning-bg:  #1C1306;
-  }
 }

@@ -1,15 +1,15 @@
 import { auth } from "./firebase.config";
 import { apiBaseUrl } from "./apiConfig";
 
-export async function sendMessage({ channel, to, subject, body }) {
+export async function sendMessage({ businessId, channel, to, subject, body }) {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("Sign in before sending a message.");
   const response = await fetch(`${apiBaseUrl}/messages/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ channel, to, subject, body }),
+    body: JSON.stringify({ businessId, channel, to, subject, body }),
   });
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || "Could not send the message.");
   return data;
 }

@@ -41,34 +41,34 @@ function sectionContent(type, brief) {
   const content = {
     hero: {
       eyebrow: brief.businessType || "Welcome",
-      heading: `${business}, built around what matters`,
-      body: `${brief.description || `${business} helps ${audience} ${goal}.`} Clear, thoughtful, and ready when you are.`,
+      heading: `${business}, made for ${audience}`,
+      body: brief.description || `${business} helps ${audience} ${goal}.`,
       primaryAction: "Get started",
       secondaryAction: "Learn more",
     },
     pageHero: {
       eyebrow: business,
       heading: `A better way to ${goal}`,
-      body: `Everything you need to feel confident choosing ${business}.`,
+      body: brief.description || `Discover ${business}.`,
     },
     features: {
       heading: "Why people choose us",
-      body: "A focused experience shaped around quality, simplicity, and personal service.",
+      body: "",
       items: [
-        { title: "Thoughtful service", body: "A clear process and support at every step." },
-        { title: "Built for you", body: `Solutions designed around ${audience}.` },
-        { title: "Dependable quality", body: "Careful work with no unnecessary complexity." },
+        { title: "Thoughtful service", body: "Support at every step." },
+        { title: "Built for you", body: `Designed around ${audience}.` },
+        { title: "Dependable quality", body: "Careful, consistent work." },
       ],
     },
     about: {
       eyebrow: "About us",
       heading: `Good work starts with understanding`,
-      body: `${business} exists to make it easier for ${audience} to ${goal}. We combine practical experience with a genuinely personal approach.`,
+      body: `${business} helps ${audience} ${goal}.`,
     },
     story: {
       eyebrow: "Our story",
       heading: `Why we started ${business}`,
-      body: `We saw a simpler, more human way to help ${audience}. Today, that same idea guides every decision we make.`,
+      body: `We started with a simpler way to help ${audience}.`,
     },
     values: {
       heading: "What guides our work",
@@ -109,7 +109,7 @@ function sectionContent(type, brief) {
     contact: {
       eyebrow: "Next step",
       heading: "Let’s start a conversation",
-      body: `Tell us what you are working on. We will get back to you with a clear next step.`,
+      body: "Send an enquiry, order, or booking request.",
       primaryAction: "Contact us",
       email: "hello@example.com",
     },
@@ -130,7 +130,7 @@ export function buildWebsitePlan(brief) {
     name: brief.businessName || "Untitled website",
     summary: `${brief.tone || "Warm and professional"} website focused on ${brief.goal || "building trust"}.`,
     pages,
-    palette: brief.palette || "#6d5dfc",
+    palette: brief.palette || "#176b5d",
   };
 }
 
@@ -172,7 +172,7 @@ export function createWebsiteFromBrief(brief, blueprint = null) {
       updatedAt: createdAt,
       publishedAt: null,
       theme: {
-        primary: validHex(theme.primary) || brief.palette || "#6d5dfc",
+        primary: validHex(theme.primary) || brief.palette || "#176b5d",
         background: validHex(theme.background) || "#fbfaf7",
         surface: validHex(theme.surface) || "#ffffff",
         text: validHex(theme.text) || "#1d1d1f",

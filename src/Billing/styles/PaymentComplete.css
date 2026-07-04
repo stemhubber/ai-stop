@@ -50,6 +50,20 @@
   margin-right: 8px;
 }
 
+.payment-complete-link {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  display: block;
+  color: #fff;
+  border-radius: 8px;
+  background: #176b5d;
+  font-size: 14px;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: none;
+}
+
 .error-text {
   margin-top: 10px;
   color: red;

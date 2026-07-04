@@ -6,10 +6,52 @@ service cloud.firestore {
       return signedIn() &&
         get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
     }
+    function validOrderStatusTransition() {
+      return !resource.data.keys().hasAll(["schemaVersion"]) ||
+        resource.data.schemaVersion != 2 ||
+        request.resource.data.status == resource.data.status ||
+        (resource.data.status in ["requested", "pending"] &&
+         request.resource.data.status in ["confirmed", "cancelled"]) ||
+        (resource.data.status == "confirmed" &&
+         request.resource.data.status in ["processing", "completed", "cancelled"]) ||
+        (resource.data.status == "processing" &&
+         request.resource.data.status in ["completed", "cancelled"]);
+    }
+    function preservesOrderSnapshot() {
+      return !resource.data.keys().hasAll(["schemaVersion"]) ||
+        resource.data.schemaVersion != 2 ||
+        (
+          request.resource.data.businessId == resource.data.businessId &&
+          request.resource.data.customerId == resource.data.customerId &&
+          request.resource.data.publicReference == resource.data.publicReference &&
+          request.resource.data.source == resource.data.source &&
+          request.resource.data.items == resource.data.items &&
+          request.resource.data.pricingSnapshot == resource.data.pricingSnapshot &&
+          request.resource.data.total == resource.data.total &&
+          request.resource.data.currency == resource.data.currency
+        );
+    }
 
     match /users/{userId} {
-      allow read, create, update: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() &&
+        request.auth.uid == userId &&
+        !request.resource.data.keys().hasAny([
+          "plan", "planStatus", "planStartedAt", "planExpiresAt",
+          "planPaymentReference", "entitlements"
+        ]);
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          "plan", "planStatus", "planStartedAt", "planExpiresAt",
+          "planPaymentReference", "entitlements"
+        ]);
       allow delete: if false;
+
+      match /usage/{period} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow write: if false;
+      }
 
       match /websiteActivity/{activityId} {
         allow read, delete: if signedIn() && request.auth.uid == userId;
@@ -69,27 +111,27 @@ service cloud.firestore {
         allow write: if ownsBusiness(businessId);
       }
 
+      match /offers/{itemId} {
+        allow read: if ownsBusiness(businessId) || resource.data.status == "active";
+        allow write: if ownsBusiness(businessId);
+      }
+
       match /customers/{itemId} {
         allow read, update, delete: if ownsBusiness(businessId);
-        allow create: if ownsBusiness(businessId) ||
-          (request.resource.data.source == "website" &&
-           request.resource.data.name is string &&
-           request.resource.data.phone is string);
+        allow create: if ownsBusiness(businessId);
       }
 
       match /orders/{itemId} {
-        allow read, update, delete: if ownsBusiness(businessId);
-        allow create: if ownsBusiness(businessId) ||
-          (request.resource.data.source == "website" &&
-           request.resource.data.status == "pending" &&
-           request.resource.data.paymentStatus == "unpaid");
+        allow read, delete: if ownsBusiness(businessId);
+        allow create: if ownsBusiness(businessId);
+        allow update: if ownsBusiness(businessId) &&
+          validOrderStatusTransition() &&
+          preservesOrderSnapshot();
       }
 
       match /bookings/{itemId} {
         allow read, update, delete: if ownsBusiness(businessId);
-        allow create: if ownsBusiness(businessId) ||
-          (request.resource.data.source == "website" &&
-           request.resource.data.status == "requested");
+        allow create: if ownsBusiness(businessId);
       }
 
       match /{document=**} {

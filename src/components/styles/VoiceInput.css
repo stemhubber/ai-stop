@@ -1,12 +1,120 @@
-.voice-btn {
-  background: transparent;
-  border: none;
-  font-size: 26px;
-  cursor: pointer;
-  padding: 8px;
-  transition: 0.2s;
+.voice-input {
+  margin-top: 10px;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: #393448;
+  border: 1px solid #cfe2dc;
+  border-radius: 11px;
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(16px);
 }
 
-.voice-btn:hover {
-  transform: scale(1.12);
+.voice-input > button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border: 0;
+  border-radius: 11px;
+  background: #176b5d;
+  box-shadow: 0 7px 18px rgba(23, 107, 93, .2);
+  cursor: pointer;
+}
+
+.voice-input > button:disabled {
+  cursor: wait;
+  opacity: .75;
+}
+
+.voice-input > button:focus-visible {
+  outline: 3px solid rgba(23, 107, 93, .2);
+  outline-offset: 2px;
+}
+
+.voice-input svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.voice-input strong,
+.voice-input small {
+  display: block;
+}
+
+.voice-input strong {
+  font-size: 11px;
+}
+
+.voice-input small {
+  margin-top: 3px;
+  color: #827d8e;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.voice-input--recording {
+  color: #932f3d;
+  border-color: #f3c9cf;
+  background: #fff7f8;
+}
+
+.voice-input--recording > button {
+  background: #d64555;
+  box-shadow: 0 7px 18px rgba(190, 48, 67, .2);
+}
+
+.voice-input--done {
+  color: #176c4c;
+  border-color: #c6e8d9;
+  background: #f4fbf8;
+}
+
+.voice-input__wave {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.voice-input__wave i {
+  width: 3px;
+  height: 8px;
+  border-radius: 3px;
+  background: #d64555;
+  animation: voice-wave .8s ease-in-out infinite alternate;
+}
+
+.voice-input__wave i:nth-child(2) { animation-delay: .15s; }
+.voice-input__wave i:nth-child(3) { animation-delay: .3s; }
+.voice-input__wave i:nth-child(4) { animation-delay: .45s; }
+
+.voice-input__spinner {
+  stroke-dasharray: 35;
+  stroke-dashoffset: 12;
+  animation: voice-spin .8s linear infinite;
+}
+
+@keyframes voice-wave {
+  to { height: 22px; }
+}
+
+@keyframes voice-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-input__wave i,
+  .voice-input__spinner {
+    animation: none;
+  }
 }

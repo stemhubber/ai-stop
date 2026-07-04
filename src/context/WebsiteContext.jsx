@@ -93,6 +93,11 @@ export function WebsiteProvider({ children }) {
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) cached = JSON.parse(stored);
+      cached.projects = (cached.projects || []).map((project) =>
+        project.theme?.primary?.toLowerCase() === "#6d5dfc"
+          ? { ...project, theme: { ...project.theme, primary: "#176b5d" } }
+          : project
+      );
     } catch {
       cached = { projects: [], activity: [], deletedProjectIds: [], deletedProjectSlugs: {} };
     }

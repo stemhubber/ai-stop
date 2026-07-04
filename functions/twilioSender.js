@@ -1,13 +1,45 @@
 const twilio = require("twilio");
-const { TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, TWILIO_WHATSAPP_FROM } = require("./env");
+const {
+  TWILIO_SID,
+  TWILIO_TOKEN,
+  TWILIO_API_KEY,
+  TWILIO_API_SECRET,
+  TWILIO_FROM,
+  TWILIO_WHATSAPP_FROM,
+} = require("./env");
+
+function resolveTwilioCredentials({ accountSid, authToken, apiKey, apiSecret }) {
+  if (!/^AC[0-9a-f]{32}$/i.test(accountSid)) {
+    const error = new Error("The Twilio Account SID is invalid. Update the TWILIO_SID Firebase secret.");
+    error.code = "TWILIO_INVALID_SID";
+    throw error;
+  }
+  if (apiKey || apiSecret) {
+    if (!/^SK[0-9a-f]{32}$/i.test(apiKey) || !apiSecret) {
+      const error = new Error("The Twilio API key credentials are incomplete.");
+      error.code = "TWILIO_INVALID_API_KEY";
+      throw error;
+    }
+    return { mode: "apiKey", accountSid, username: apiKey, password: apiSecret };
+  }
+  if (!authToken) {
+    const error = new Error("The Twilio Auth Token is missing. Update the TWILIO_TOKEN Firebase secret.");
+    error.code = "TWILIO_MISSING_TOKEN";
+    throw error;
+  }
+  return { mode: "authToken", accountSid, username: accountSid, password: authToken };
+}
 
 function createTwilioClient() {
-  const accountSid = TWILIO_SID.value();
-  const authToken = TWILIO_TOKEN.value();
-  if (!/^AC[0-9a-f]{32}$/i.test(accountSid || "") || !authToken) {
-    throw new Error("Twilio credentials are not configured.");
-  }
-  return twilio(accountSid, authToken);
+  const credentials = resolveTwilioCredentials({
+    accountSid: String(TWILIO_SID.value() || "").trim(),
+    authToken: String(TWILIO_TOKEN.value() || "").trim(),
+    apiKey: String(TWILIO_API_KEY.value() || "").trim(),
+    apiSecret: String(TWILIO_API_SECRET.value() || "").trim(),
+  });
+  return credentials.mode === "apiKey"
+    ? twilio(credentials.username, credentials.password, { accountSid: credentials.accountSid })
+    : twilio(credentials.username, credentials.password);
 }
 
 function e164(value, label) {
@@ -44,4 +76,4 @@ async function sendWhatsApp(to, message) {
   });
 }
 
-module.exports = { sendSMS, sendWhatsApp };
+module.exports = { resolveTwilioCredentials, sendSMS, sendWhatsApp };

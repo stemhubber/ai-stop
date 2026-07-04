@@ -1,15 +1,18 @@
 # Webilo
 
-Webilo is a React-based website builder and small-business dashboard. It supports AI-assisted site creation, publishing, product and media management, customer follow-ups, and billing.
+Webilo is a business operating platform with a connected AI-assisted website. It brings business setup, products, services, customers, orders, bookings, messaging, publishing, and analytics into one workspace.
 
 ## Product flows
 
 The product branch adds a business-centered operating workspace:
 
 - `/onboarding` creates a South African business and selects active modules.
-- `/app` opens the owner workspace and business switcher.
+- `/business` opens the owner workspace and business switcher (`/app` redirects there).
 - Products, services, customers, orders, bookings, messages, and campaigns are managed under `businesses/{businessId}`.
-- `/b/:slug` renders the public business page and accepts customer enquiries.
+- `/w/:slug` renders a published website connected to live products, services, enquiries, orders, and booking requests.
+- `/b/:slug` remains the lightweight public business-page route.
+- `/pro` explains the premium plan and routes verified upgrades through Paystack.
+- `/usage` shows monthly AI, token, transcription, and messaging fair-use meters.
 - Existing website-studio, billing, profile, and messaging routes remain available.
 
 ## Current architecture
@@ -197,12 +200,16 @@ npm start
 ```
 
 The app runs at `http://localhost:3000`.
+On Windows PowerShell, use `npm.cmd start` if script execution policy blocks
+`npm.ps1`.
 
 Run the frontend test suite:
 
 ```bash
 npm test
 ```
+
+The PowerShell-safe equivalent is `npm.cmd test`.
 
 Run the configured Firebase emulators:
 
@@ -245,10 +252,20 @@ The exported `api` Cloud Function exposes:
 POST /payments/init
 GET  /payments/verify/:ref
 POST /ai/site
+POST /ai/website-draft
+POST /ai/business-profile
+POST /ai/extract-business-image
+POST /ai/transcribe
+POST /messages/send
 GET  /paystack/health
 ```
 
 Payment and AI routes require a Firebase ID token in the `Authorization: Bearer <token>` header. Legacy `/paystack/*` aliases remain temporarily for compatibility.
+
+AI, Whisper, and messaging requests are metered on the backend under
+`users/{userId}/usage/{YYYY-MM}`. Plan fields are server-controlled; verified
+Pro payments activate 30 days of Pro access. The React `PlanProvider` exposes
+the effective plan, entitlements, limits, and live usage to application views.
 
 The exported `followUpScheduler` runs every minute in the `Africa/Johannesburg` timezone. It queries pending Firestore follow-ups, formats South African phone numbers to E.164, sends them through Twilio, and updates their delivery status.
 
@@ -256,7 +273,14 @@ The frontend payment client currently targets the deployed Cloud Run URL defined
 
 ## Additional documentation
 
+- [Webilo Pro product plan](docs/WEBILO_PRO_PRODUCT_PLAN.md)
+- [Webilo user journey action plan](docs/WEBILO_USER_JOURNEY_ACTION_PLAN.md)
+- [Ask Webilo business advisor](docs/WEBILO_BUSINESS_ADVISOR.md)
+- [Webilo offer and commerce architecture](docs/WEBILO_COMMERCE_ARCHITECTURE.md)
 - [Webilo architecture](docs/WEBILO_ARCHITECTURE.md)
+- [Webilo product rebuild](docs/WEBILO_PRODUCT_REBUILD.md)
+- [Webilo AI integration](docs/WEBILO_AI_INTEGRATION.md)
+- [Webilo messaging setup](docs/WEBILO_MESSAGING_SETUP.md)
 - [Webilo developer rules](docs/DEVELOPER_RULES.md)
 - [Webilo UI usage guide](docs/WEBILO_UI_USAGE_GUIDE.md)
 - [Webilo UI design decisions](docs/WEBILO_UI_DECISIONS.md)

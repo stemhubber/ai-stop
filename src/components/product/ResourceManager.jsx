@@ -1,55 +1,219 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRecord, deleteRecord, listRecords, updateRecord } from "../../services/businessRepository";
 import { sendMessage } from "../../services/messagingService";
+import { Icon } from "../../features/websites/components/WebiloUI";
 import AIVisualImporter from "./AIVisualImporter";
 import { uploadBusinessImage } from "../../services/websiteAssetService";
 
 const CONFIG = {
-  products: { singular: "product", fields: ["name", "description", "price"], defaults: { status: "active", currency: "ZAR" } },
-  services: { singular: "service", fields: ["name", "description", "price", "durationMinutes"], defaults: { status: "active", currency: "ZAR", bookingEnabled: true } },
-  customers: { singular: "customer", fields: ["name", "email", "phone"], defaults: { source: "manual" } },
-  orders: { singular: "order", fields: ["customerName", "total", "notes"], defaults: { status: "pending", paymentStatus: "unpaid", currency: "ZAR" } },
-  bookings: { singular: "booking", fields: ["customerName", "serviceName", "startTime", "notes"], defaults: { status: "requested" } },
-  messages: { singular: "message", fields: ["customerName", "to", "subject", "body"], defaults: { status: "draft", direction: "outbound", channel: "sms" } },
-  campaigns: { singular: "campaign", fields: ["name", "channel", "message"], defaults: { status: "draft", type: "promotion" } },
+  offers: {
+    singular: "offer",
+    description: "Everything customers can order, book, buy as a package, or request a quote for.",
+    fields: ["name", "offerType", "description", "pricingMode", "price", "fulfilmentMethod", "durationMinutes"],
+    required: ["name", "offerType", "pricingMode", "fulfilmentMethod"],
+    defaults: {
+      status: "active",
+      currency: "ZAR",
+      offerType: "product",
+      pricingMode: "fixed",
+      fulfilmentMethod: "pickup",
+    },
+  },
+  products: {
+    singular: "product",
+    description: "Items clients can discover and order from your public business page.",
+    fields: ["name", "description", "price"],
+    required: ["name"],
+    defaults: { status: "active", currency: "ZAR" },
+  },
+  services: {
+    singular: "service",
+    description: "Services clients can view and request a booking for.",
+    fields: ["name", "description", "price", "durationMinutes"],
+    required: ["name"],
+    defaults: { status: "active", currency: "ZAR", bookingEnabled: true },
+  },
+  customers: {
+    singular: "customer",
+    description: "Leads from your website and contacts added by your team.",
+    fields: ["name", "email", "phone"],
+    required: ["name"],
+    defaults: { source: "manual", status: "lead" },
+  },
+  orders: {
+    singular: "order",
+    description: "Website orders appear here automatically. You can also capture an order manually.",
+    fields: ["customerName", "total", "notes"],
+    required: ["customerName"],
+    defaults: { status: "pending", paymentStatus: "unpaid", currency: "ZAR", source: "manual" },
+  },
+  bookings: {
+    singular: "booking",
+    description: "Booking requests from your services appear here, alongside manual bookings.",
+    fields: ["customerName", "serviceName", "startTime", "notes"],
+    required: ["customerName", "serviceName"],
+    defaults: { status: "requested", source: "manual" },
+  },
+  messages: {
+    singular: "message",
+    description: "Send an SMS or email to a saved customer.",
+    fields: ["channel", "customerName", "to", "subject", "body"],
+    required: ["to", "body"],
+    defaults: { status: "draft", direction: "outbound", channel: "sms" },
+  },
+  campaigns: {
+    singular: "campaign",
+    description: "Prepare reusable SMS campaigns. Sending is handled from Messages while campaign delivery is being completed.",
+    fields: ["name", "channel", "message"],
+    required: ["name", "message"],
+    defaults: { status: "draft", type: "promotion", channel: "sms" },
+  },
 };
 
-export default function ResourceManager({ businessId, resource }) {
+const TEXTAREA_FIELDS = new Set(["description", "notes", "body", "message"]);
+const NUMBER_FIELDS = new Set(["price", "total", "durationMinutes"]);
+const SELECT_FIELDS = {
+  offerType: [
+    ["product", "Product"],
+    ["service", "Service"],
+    ["package", "Package"],
+    ["bundle", "Bundle"],
+    ["tier", "Customer tier"],
+    ["deposit", "Deposit"],
+  ],
+  pricingMode: [
+    ["fixed", "Fixed price"],
+    ["starting_from", "Starting from"],
+    ["quote", "Price on request"],
+    ["free", "Free"],
+  ],
+  fulfilmentMethod: [
+    ["pickup", "Pickup"],
+    ["delivery", "Delivery"],
+    ["booking", "Booking"],
+    ["digital", "Digital delivery"],
+    ["quote", "Quote request"],
+  ],
+};
+
+export default function ResourceManager({ businessId, resource, aiEnabled = false }) {
   const config = CONFIG[resource];
   const [records, setRecords] = useState([]);
-  const [form, setForm] = useState(config.defaults);
+  const [customers, setCustomers] = useState([]);
+  const [form, setForm] = useState(() => ({ ...config.defaults }));
   const [editing, setEditing] = useState(null);
   const [state, setState] = useState("loading");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [showForm, setShowForm] = useState(false);
   const [showAiImport, setShowAiImport] = useState(false);
   const [imageState, setImageState] = useState("idle");
+  const formRef = useRef(null);
 
-  const load = async () => {
-    setState("loading");
-    try { setRecords(await listRecords(businessId, resource)); setState("ready"); }
-    catch (err) { setError(err.message); setState("error"); }
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setState("loading");
+    try {
+      const nextRecords = await listRecords(businessId, resource);
+      setRecords(nextRecords);
+      setState("ready");
+      return nextRecords;
+    } catch (err) {
+      setError(err.message || `Could not load ${resource}.`);
+      setState("error");
+      return [];
+    }
+  }, [businessId, resource]);
+
+  useEffect(() => {
+    setForm({ ...config.defaults });
+    setEditing(null);
+    setError("");
+    setNotice("");
+    setShowForm(false);
+    setShowAiImport(false);
+    setImageState("idle");
+    load();
+  }, [config, load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!["messages", "orders", "bookings"].includes(resource)) return undefined;
+    listRecords(businessId, "customers")
+      .then((items) => !cancelled && setCustomers(items))
+      .catch(() => !cancelled && setCustomers([]));
+    return () => { cancelled = true; };
+  }, [businessId, resource]);
+
+  const resetForm = ({ close = true } = {}) => {
+    setForm({ ...config.defaults });
+    setEditing(null);
+    setError("");
+    setImageState("idle");
+    if (close) setShowForm(false);
   };
-  useEffect(() => { load(); }, [businessId, resource]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startNew = () => {
+    resetForm({ close: false });
+    setNotice("");
+    setShowForm(true);
+    window.requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const save = async (event) => {
     event.preventDefault();
-    if (!form.name && !form.customerName) return setError(`Enter a ${config.singular} name.`);
+    setError("");
+    setNotice("");
+    const missing = config.required.find((field) => !String(form[field] || "").trim());
+    if (missing) return setError(`Enter ${label(missing).toLowerCase()} before saving.`);
+
     setState("saving");
-    const normalized = { ...form };
+    const { id, createdAt, updatedAt, ...normalized } = form; // eslint-disable-line no-unused-vars
     if ("price" in normalized) normalized.price = Math.round(Number(normalized.price || 0) * 100);
     if ("total" in normalized) normalized.total = Math.round(Number(normalized.total || 0) * 100);
+    if ("durationMinutes" in normalized) normalized.durationMinutes = Number(normalized.durationMinutes || 0);
+    if (resource === "offers") {
+      normalized.fulfilmentMethods = [normalized.fulfilmentMethod];
+      delete normalized.fulfilmentMethod;
+      if (["quote", "free"].includes(normalized.pricingMode)) normalized.price = 0;
+    }
+
     try {
       if (editing) await updateRecord(businessId, resource, editing, normalized);
       else await createRecord(businessId, resource, normalized);
-      setForm(config.defaults); setEditing(null); setImageState("idle"); setError(""); await load();
-    } catch (err) { setError(err.message); setState("error"); }
+      const action = editing ? "updated" : "added";
+      resetForm();
+      setNotice(`${capitalize(config.singular)} ${action}.`);
+      await load({ quiet: true });
+    } catch (err) {
+      const missingRecord = err.code === "not-found" || /No document to update/i.test(err.message || "");
+      if (missingRecord) {
+        resetForm();
+        await load({ quiet: true });
+        setError(`That ${config.singular} no longer exists. The list has been refreshed.`);
+      } else {
+        setError(err.message || `Could not save this ${config.singular}.`);
+      }
+      setState("ready");
+    }
   };
 
   const edit = (record) => {
     const next = { ...record };
-    if ("price" in next) next.price = next.price / 100;
-    if ("total" in next) next.total = next.total / 100;
-    setForm(next); setEditing(record.id);
+    if ("price" in next) next.price = Number(next.price || 0) / 100;
+    if ("total" in next) next.total = Number(next.total || 0) / 100;
+    if (resource === "offers") {
+      next.fulfilmentMethod = next.fulfilmentMethods?.[0] || "pickup";
+    }
+    setForm(next);
+    setEditing(record.id);
+    setShowForm(true);
+    setError("");
+    setNotice("");
+    window.requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    });
   };
 
   const uploadImage = async (file) => {
@@ -68,42 +232,262 @@ export default function ResourceManager({ businessId, resource }) {
   const send = async (record) => {
     setState("saving");
     setError("");
+    setNotice("");
     try {
-      await sendMessage(record);
+      await sendMessage({ ...record, businessId });
       await updateRecord(businessId, resource, record.id, {
         status: "sent",
         sentAt: new Date().toISOString(),
       });
-      await load();
+      setNotice(`Message sent to ${record.to}.`);
+      await load({ quiet: true });
     } catch (err) {
-      setError(err.message);
-      setState("error");
+      setError(err.message || "The message could not be sent.");
+      setState("ready");
+    }
+  };
+
+  const remove = async (record) => {
+    if (!window.confirm(`Delete this ${config.singular}?`)) return;
+    setError("");
+    setNotice("");
+    try {
+      await deleteRecord(businessId, resource, record.id);
+      if (editing === record.id) resetForm();
+      setNotice(`${capitalize(config.singular)} deleted.`);
+      await load({ quiet: true });
+    } catch (err) {
+      setError(err.message || `Could not delete this ${config.singular}.`);
+    }
+  };
+
+  const chooseCustomer = (customerId) => {
+    const customer = customers.find((item) => item.id === customerId);
+    if (!customer) return;
+    setForm((current) => ({
+      ...current,
+      customerId: customer.id,
+      customerName: customer.name || current.customerName,
+      to: current.channel === "email"
+        ? customer.email || ""
+        : customer.phone || "",
+    }));
+  };
+
+  const changeChannel = (channel) => {
+    setForm((current) => {
+      const customer = customers.find((item) => item.id === current.customerId);
+      return {
+        ...current,
+        channel,
+        to: customer
+          ? channel === "email" ? customer.email || "" : customer.phone || ""
+          : "",
+      };
+    });
+  };
+
+  const changeStatus = async (record, status) => {
+    setError("");
+    setNotice("");
+    try {
+      await updateRecord(businessId, resource, record.id, { status });
+      setRecords((current) => current.map((item) =>
+        item.id === record.id ? { ...item, status } : item
+      ));
+      setNotice(`${capitalize(config.singular)} marked ${status}.`);
+    } catch (err) {
+      setError(err.message || `Could not update this ${config.singular}.`);
     }
   };
 
   return (
     <section>
       <header className="product-header product-header--actions">
-        <div><span className="wb-label">Manage</span><h1 className="wb-display">{resource[0].toUpperCase() + resource.slice(1)}</h1></div>
-        {["products", "services"].includes(resource) && <button className="wb-btn wb-btn-accent" onClick={() => setShowAiImport((value) => !value)}>Import image with AI</button>}
+        <div>
+          <span className="wl-eyebrow">Manage</span>
+          <h2>{capitalize(resource)}</h2>
+          <p>{config.description}</p>
+        </div>
+        <div className="product-header-actions">
+          {["products", "services"].includes(resource) && aiEnabled && (
+            <button className="wb-btn" onClick={() => setShowAiImport((value) => !value)}>
+              <Icon name="sparkles" size={16} /> {showAiImport ? "Close AI import" : "Import image"}
+            </button>
+          )}
+          <button
+            className={`wb-btn ${showForm ? "" : "wb-btn-primary"}`}
+            onClick={() => showForm ? resetForm() : startNew()}
+            aria-expanded={showForm}
+          >
+            <Icon name={showForm ? "close" : "plus"} size={16} />
+            {showForm ? "Close form" : `Add ${config.singular}`}
+          </button>
+        </div>
       </header>
-      {showAiImport && <AIVisualImporter businessId={businessId} resource={resource} onImported={load} onClose={() => setShowAiImport(false)} />}
-      <form className="wb-card product-record-form" onSubmit={save}>
-        <div className="wb-grid-3">
-          {config.fields.map((field) => <label className="wb-field" key={field}><span className="wb-field-label">{label(field)}</span>{field === "channel" ? <select className="wb-input wb-select" value={form[field] || "sms"} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select> : <input className="wb-input" type={field === "price" || field === "total" || field === "durationMinutes" ? "number" : field === "startTime" ? "datetime-local" : "text"} value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />}</label>)}
+
+      {showAiImport && (
+        <AIVisualImporter
+          businessId={businessId}
+          resource={resource}
+          onImported={() => load({ quiet: true })}
+          onClose={() => setShowAiImport(false)}
+        />
+      )}
+
+      {error && <p className="product-feedback product-feedback--error" role="alert"><Icon name="settings" size={16} /> {friendlyError(error)}</p>}
+      {notice && <p className="product-feedback product-feedback--success" role="status"><Icon name="check" size={16} /> {notice}</p>}
+
+      {showForm && <form className="wb-card product-record-form" onSubmit={save} ref={formRef}>
+        <div className="product-form-heading">
+          <div>
+            <span>{editing ? "Editing" : "New"}</span>
+            <h3>{editing ? `Update ${config.singular}` : `Add ${config.singular}`}</h3>
+          </div>
+          {resource === "messages" && <span className="wb-badge wb-badge-accent">{String(form.channel || "sms").toUpperCase()}</span>}
         </div>
-        {["products", "services"].includes(resource) && <div className="product-record-image"><div>{form.imageUrl ? <img src={form.imageUrl} alt="" /> : <span>No image selected</span>}</div><label className="wb-btn"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => event.target.files?.[0] && uploadImage(event.target.files[0])} />{imageState === "uploading" ? "Uploading…" : form.imageUrl ? "Replace image" : "Add image"}</label>{form.imageUrl && <button className="wb-btn wb-btn-ghost" type="button" onClick={() => setForm((current) => ({ ...current, imageUrl: "" }))}>Remove</button>}</div>}
-        {error && <p className="wb-field-error" role="alert">{error}</p>}
-        <div className="wb-row">
-          <button className="wb-btn wb-btn-primary" disabled={state === "saving"}>{editing ? "Save changes" : `Add ${config.singular}`}</button>
-          {editing && <button className="wb-btn" type="button" onClick={() => { setEditing(null); setForm(config.defaults); }}>Cancel</button>}
+
+        {customers.length > 0 && ["messages", "orders", "bookings"].includes(resource) && (
+          <label className="wb-field product-customer-picker">
+            <span className="wb-field-label">Use saved customer</span>
+            <select className="wb-input wb-select" value={form.customerId || ""} onChange={(event) => chooseCustomer(event.target.value)}>
+              <option value="">Choose a customer (optional)</option>
+              {customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}{customer.phone || customer.email ? ` · ${customer.phone || customer.email}` : ""}</option>)}
+            </select>
+          </label>
+        )}
+
+        <div className="product-form-grid">
+          {config.fields.map((field) => (
+            <label className={`wb-field ${TEXTAREA_FIELDS.has(field) ? "product-field--wide" : ""}`} key={field}>
+              <span className="wb-field-label">{label(field)}</span>
+              {field === "channel" ? (
+                <select className="wb-input wb-select" value={form.channel || "sms"} onChange={(event) => changeChannel(event.target.value)}>
+                  <option value="sms">SMS</option>
+                  <option value="email">Email</option>
+                </select>
+              ) : SELECT_FIELDS[field] ? (
+                <select className="wb-input wb-select" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}>
+                  {SELECT_FIELDS[field].map(([value, text]) => <option value={value} key={value}>{text}</option>)}
+                </select>
+              ) : TEXTAREA_FIELDS.has(field) ? (
+                <textarea className="wb-input wb-textarea" rows="3" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
+              ) : (
+                <input
+                  className="wb-input"
+                  type={NUMBER_FIELDS.has(field) ? "number" : field === "startTime" ? "datetime-local" : field === "email" || (field === "to" && form.channel === "email") ? "email" : "text"}
+                  min={NUMBER_FIELDS.has(field) ? "0" : undefined}
+                  step={field === "price" || field === "total" ? "0.01" : undefined}
+                  value={form[field] || ""}
+                  onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
+                />
+              )}
+            </label>
+          ))}
         </div>
-      </form>
-      {state === "loading" ? <div className="wb-skeleton" style={{ height: 120 }} /> : records.length === 0 ? <div className="wb-card product-empty"><h2 className="wb-heading">No {resource} yet</h2><p className="wb-secondary">Add your first {config.singular} above.</p></div> : <div className="wb-card product-table-wrap"><table className="wb-table"><thead><tr><th>Name</th><th>Status</th><th>Value</th><th>Actions</th></tr></thead><tbody>{records.map((record) => <tr key={record.id}><td>{record.name || record.customerName || record.serviceName}</td><td><span className={`wb-badge ${badge(record.status)}`}>{record.status || "active"}</span></td><td>{money(record.price ?? record.total)}</td><td><div className="wb-row"><button className="wb-btn wb-btn-sm" onClick={() => edit(record)}>Edit</button>{resource === "messages" && record.status !== "sent" && <button className="wb-btn wb-btn-accent wb-btn-sm" onClick={() => send(record)}>Send</button>}<button className="wb-btn wb-btn-danger wb-btn-sm" onClick={async () => { if (window.confirm(`Delete this ${config.singular}?`)) { await deleteRecord(businessId, resource, record.id); await load(); } }}>Delete</button></div></td></tr>)}</tbody></table></div>}
+
+        {["offers", "products", "services"].includes(resource) && (
+          <div className="product-record-image">
+            <div>{form.imageUrl ? <img src={form.imageUrl} alt="" /> : <span>No image selected</span>}</div>
+            <label className="wb-btn">
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => event.target.files?.[0] && uploadImage(event.target.files[0])} />
+              {imageState === "uploading" ? "Uploading…" : form.imageUrl ? "Replace image" : "Add image"}
+            </label>
+            {form.imageUrl && <button className="wb-btn wb-btn-ghost" type="button" onClick={() => setForm((current) => ({ ...current, imageUrl: "" }))}>Remove</button>}
+          </div>
+        )}
+
+        <div className="product-form-actions">
+          <button className="wb-btn wb-btn-primary" disabled={state === "saving"}>{state === "saving" ? "Saving…" : editing ? "Save changes" : `Add ${config.singular}`}</button>
+          <button className="wb-btn" type="button" onClick={() => resetForm()}>Cancel</button>
+        </div>
+      </form>}
+
+      {state === "loading" ? (
+        <div className="wb-skeleton product-record-skeleton" />
+      ) : records.length === 0 ? (
+        <div className="wb-card product-empty">
+          <span className="product-state-icon"><Icon name={resource === "messages" ? "site" : "grid"} /></span>
+          <h3>No {resource} yet</h3>
+          <p>Website activity will appear here automatically, or add the first {config.singular} yourself.</p>
+          <button className="wb-btn wb-btn-primary" onClick={startNew}><Icon name="plus" size={16} /> Add {config.singular}</button>
+        </div>
+      ) : (
+        <div className="wb-card product-table-wrap">
+          <table className="wb-table product-table">
+            <thead><tr><th>Name</th><th>Status</th><th>Value</th><th>Actions</th></tr></thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record.id}>
+                  <td data-label="Name">
+                    <strong>{record.name || record.customerName || record.serviceName || "Untitled"}</strong>
+                    {resource === "orders" && record.publicReference && (
+                      <small className="product-record-detail">{record.publicReference}</small>
+                    )}
+                    {resource === "orders" && record.items?.length > 0 && (
+                      <small className="product-record-detail">
+                        {record.items.map((item) => `${item.quantity || 1} × ${item.name}`).join(", ")}
+                      </small>
+                    )}
+                    {resource === "orders" && record.fulfilment?.method && (
+                      <small className="product-record-detail">
+                        {label(record.fulfilment.method)}
+                        {record.fulfilment.requestedStartTime ? ` · ${formatDate(record.fulfilment.requestedStartTime)}` : ""}
+                      </small>
+                    )}
+                    {resource === "bookings" && record.startTime && (
+                      <small className="product-record-detail">{formatDate(record.startTime)}</small>
+                    )}
+                  </td>
+                  <td data-label="Status"><span className={`wb-badge ${badge(record.status)}`}>{record.status || "active"}</span></td>
+                  <td data-label="Value">{money(record.price ?? record.total)}</td>
+                  <td data-label="Actions">
+                    <div className="product-row-actions">
+                      {!(resource === "orders" && record.schemaVersion === 2) && (
+                        <button className="wb-btn wb-btn-sm" onClick={() => edit(record)}>Edit</button>
+                      )}
+                      {resource === "orders" && ["requested", "pending"].includes(record.status) && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "confirmed")}>Accept order</button>
+                      )}
+                      {resource === "orders" && record.status === "confirmed" && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "processing")}>Start processing</button>
+                      )}
+                      {resource === "orders" && record.status === "processing" && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "completed")}>Complete</button>
+                      )}
+                      {resource === "bookings" && record.status === "requested" && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "confirmed")}>Confirm</button>
+                      )}
+                      {resource === "bookings" && record.status === "confirmed" && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "completed")}>Complete</button>
+                      )}
+                      {["orders", "bookings"].includes(resource) && !["completed", "cancelled"].includes(record.status) && (
+                        <button className="wb-btn wb-btn-sm" onClick={() => changeStatus(record, "cancelled")}>Cancel</button>
+                      )}
+                      {resource === "messages" && record.status !== "sent" && <button className="wb-btn wb-btn-accent wb-btn-sm" onClick={() => send(record)}>Send {record.channel === "email" ? "email" : "SMS"}</button>}
+                      <button className="wb-btn wb-btn-danger wb-btn-sm" onClick={() => remove(record)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
 
-const label = (value) => value.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+const label = (value) => value.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
+const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
 const money = (cents) => cents == null ? "—" : new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(cents / 100);
-const badge = (status) => status === "active" || status === "completed" || status === "confirmed" ? "wb-badge-success" : status === "cancelled" ? "wb-badge-danger" : "wb-badge-warning";
+const badge = (status) => status === "active" || status === "completed" || status === "confirmed" || status === "sent" ? "wb-badge-success" : status === "cancelled" ? "wb-badge-danger" : "wb-badge-warning";
+const formatDate = (value) => {
+  const date = value?.toDate?.() || new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium", timeStyle: "short" }).format(date);
+};
+const friendlyError = (message) => /No document to update/i.test(message)
+  ? "This item was removed elsewhere. Refresh the list and try again."
+  : message;

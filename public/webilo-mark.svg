@@ -1,0 +1,36 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="14" y1="8" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6DB5A5"/>
+      <stop offset=".42" stop-color="#237C6B"/>
+      <stop offset=".76" stop-color="#155A4E"/>
+      <stop offset="1" stop-color="#17312C"/>
+    </linearGradient>
+    <radialGradient id="ambient" cx="0" cy="0" r="1" gradientTransform="translate(34 26) rotate(48) scale(88)">
+      <stop stop-color="white" stop-opacity=".34"/>
+      <stop offset=".48" stop-color="white" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#10231F" stop-opacity=".24"/>
+    </radialGradient>
+    <linearGradient id="edge" x1="20" y1="16" x2="102" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity=".72"/>
+      <stop offset=".48" stop-color="#B9E0D6" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#5EF2D6" stop-opacity=".5"/>
+    </linearGradient>
+    <clipPath id="clip"><rect x="9" y="9" width="102" height="102" rx="32"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect x="9" y="9" width="102" height="102" rx="32" fill="url(#bg)"/>
+    <rect x="9" y="9" width="102" height="102" rx="32" fill="url(#ambient)"/>
+    <path d="M8 40C32 27 53 31 70 22C88 13 102 8 118 14M3 88C29 73 46 82 66 70C83 60 98 59 118 66" stroke="white" stroke-opacity=".1" stroke-width="1.5"/>
+    <path d="M-8 32L32-8L102 62L62 102Z" fill="white" fill-opacity=".09"/>
+    <circle cx="60" cy="57" r="40" stroke="url(#edge)" stroke-width="1.5" stroke-dasharray="8 7" opacity=".55"/>
+  </g>
+  <rect x="10" y="10" width="100" height="100" rx="31" stroke="url(#edge)" stroke-width="1.5"/>
+  <path d="M31 43C43 31 51 31 60 51C69 31 78 31 89 43" stroke="#5EF2D6" stroke-opacity=".42" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>
+  <path d="M31 42L44 80L60 51L76 80L89 42" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="42" r="4.5" fill="#5EF2D6" stroke="white" stroke-opacity=".7"/>
+  <circle cx="60" cy="51" r="4.5" fill="#5EF2D6" stroke="white" stroke-opacity=".7"/>
+  <circle cx="89" cy="42" r="4.5" fill="#5EF2D6" stroke="white" stroke-opacity=".7"/>
+  <path d="M70 91C78 88 85 81 91 70M82 70H91V79" stroke="#5EF2D6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M98 55V63M94 59H102" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

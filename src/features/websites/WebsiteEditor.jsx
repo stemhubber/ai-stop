@@ -6,6 +6,7 @@ import WebsitePreview from "./components/WebsitePreview";
 import { Button, DeviceToggle, EmptyState, Icon, Modal, Toast } from "./components/WebiloUI";
 import { useAuth } from "../../context/AuthContext";
 import { uploadWebsiteImage } from "../../services/websiteAssetService";
+import WebiloAnimatedLogo from "../../components/WebiloAnimatedLogo";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const escapeHtml = (value = "") =>
@@ -241,14 +242,14 @@ export default function WebsiteEditor() {
   };
 
   if (!hydrated || !draft) {
-    if (hydrated && !storedProject) return <div className="wl-editor-missing"><EmptyState title="Website not found" body="This project may have been removed or belongs to another workspace." action={<Button onClick={() => navigate("/app")}>Back to websites</Button>} /></div>;
-    return <div className="wl-editor-loading"><span>W</span><p>Opening your website</p></div>;
+    if (hydrated && !storedProject) return <div className="wl-editor-missing"><EmptyState title="Website not found" body="This project may have been removed or belongs to another workspace." action={<Button onClick={() => navigate("/websites")}>Back to website module</Button>} /></div>;
+    return <div className="wl-editor-loading"><WebiloAnimatedLogo size={72} showWordmark wordmarkSize={28} /><p>Opening your business website</p></div>;
   }
 
   return (
     <div className="wl-editor">
       <header className="wl-editor-topbar">
-        <button className="wl-editor-brand" onClick={() => navigate("/app")} aria-label="Back to websites"><span>W</span><Icon name="chevron" size={16} /></button>
+        <button className="wl-editor-brand" onClick={() => navigate("/websites")} aria-label="Back to website module"><WebiloAnimatedLogo size={32} animated={false} /><Icon name="chevron" size={16} /></button>
         <div className="wl-editor-project"><strong>{draft.name}</strong><span className={`wl-status wl-status--${draft.status}`}>{draft.status}</span><small>{unsaved ? "Unsaved changes" : syncStatus === "offline" ? "Saved on this device" : syncStatus === "loading" ? "Syncing…" : "Saved to Firebase"}</small></div>
         <div className="wl-editor-history">
           <button onClick={undo} disabled={!past.length} aria-label="Undo"><Icon name="undo" /></button>

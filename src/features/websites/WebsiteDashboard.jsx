@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWebsites } from "../../context/WebsiteContext";
+import { useBusiness } from "../../context/BusinessContext";
 import { AppLayout, Button, EmptyState, Icon, Modal, PageHeader } from "./components/WebiloUI";
+import { ProPrompt } from "../plans/PlanUI";
 
 function relativeTime(value) {
   const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
@@ -44,18 +46,42 @@ function ProjectCard({ project, onOpen, onView, onDelete }) {
 
 export default function WebsiteDashboard() {
   const { projects, activity, hydrated, syncStatus, syncError, deleteProject } = useWebsites();
+  const { activeBusiness, activeBusinessId, businesses, loadingBusinesses } = useBusiness();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const navigate = useNavigate();
-  const published = useMemo(() => projects.filter((project) => project.status === "published").length, [projects]);
+  const businessProjects = useMemo(
+    () => projects.filter((project) =>
+      project.settings?.businessId === activeBusinessId ||
+      (!project.settings?.businessId && businesses.length === 1)
+    ),
+    [activeBusinessId, businesses.length, projects]
+  );
+  const businessProjectIds = useMemo(() => new Set(businessProjects.map((project) => project.id)), [businessProjects]);
+  const businessActivity = useMemo(() => activity.filter((item) => businessProjectIds.has(item.projectId)), [activity, businessProjectIds]);
+  const published = useMemo(() => businessProjects.filter((project) => project.status === "published").length, [businessProjects]);
+
+  useEffect(() => {
+    if (!loadingBusinesses && !activeBusiness) navigate("/onboarding", { replace: true });
+  }, [activeBusiness, loadingBusinesses, navigate]);
+
+  if (loadingBusinesses || !activeBusiness) {
+    return <AppLayout><div className="wl-page"><div className="wl-project-skeleton" /></div></AppLayout>;
+  }
 
   return (
     <AppLayout>
       <div className="wl-page">
         <PageHeader
-          eyebrow="Website workspace"
-          title="Your websites"
-          description="Create, edit, and publish every website from one place."
-          action={<Button variant="primary" icon="plus" onClick={() => navigate("/create")}>Create website</Button>}
+          eyebrow="Website module"
+          title={`${activeBusiness.name} online`}
+          description="Build the website connected to this business profile, offer, and customer journey."
+          action={<Button variant="primary" icon="plus" onClick={() => navigate("/create")}>Create business website</Button>}
+        />
+        <ProPrompt
+          compact
+          title="Build more with higher AI limits"
+          body="Higher AI capacity is available now. Custom domains and branding controls are coming next."
+          action="See the Pro roadmap"
         />
         {syncStatus === "offline" && (
           <div className="wl-sync-alert" role="status">
@@ -66,24 +92,24 @@ export default function WebsiteDashboard() {
 
         {!hydrated ? (
           <div className="wl-project-grid">{[1, 2, 3].map((item) => <div className="wl-project-skeleton" key={item} />)}</div>
-        ) : projects.length === 0 ? (
+        ) : businessProjects.length === 0 ? (
           <EmptyState
             icon="sparkles"
-            title="Create your first website"
-            body="Answer a few simple questions. Webilo will plan the pages, write a first draft, and open it in the editor."
-            action={<Button variant="primary" icon="sparkles" onClick={() => navigate("/create")}>Start with AI</Button>}
+            title="Bring this business online"
+            body="Webilo will use the business profile, audience, goals, products, and services to prepare a focused digital presence."
+            action={<Button variant="primary" icon="sparkles" onClick={() => navigate("/create")}>Build from business profile</Button>}
           />
         ) : (
           <>
             <section className="wl-dashboard-summary" aria-label="Workspace summary">
-              <div><span>{projects.length}</span><p>Total websites</p></div>
-              <div><span>{projects.length - published}</span><p>In progress</p></div>
+              <div><span>{businessProjects.length}</span><p>Business websites</p></div>
+              <div><span>{businessProjects.length - published}</span><p>In progress</p></div>
               <div><span>{published}</span><p>Published</p></div>
             </section>
             <section>
-              <div className="wl-section-title"><div><h2>All websites</h2><p>Continue where you left off or start something new.</p></div></div>
+              <div className="wl-section-title"><div><h2>Digital presence</h2><p>Everything here belongs to {activeBusiness.name}.</p></div></div>
               <div className="wl-project-grid">
-                {projects.map((project) => (
+                {businessProjects.map((project) => (
                   <ProjectCard
                     project={project}
                     onOpen={() => navigate(`/editor/${project.id}`)}
@@ -93,14 +119,14 @@ export default function WebsiteDashboard() {
                   />
                 ))}
                 <button className="wl-project-new" onClick={() => navigate("/create")}>
-                  <span><Icon name="plus" /></span><strong>New website</strong><small>Start with a guided AI brief</small>
+                  <span><Icon name="plus" /></span><strong>New business website</strong><small>Use the existing business foundation</small>
                 </button>
               </div>
             </section>
             <section className="wl-activity">
               <div className="wl-section-title"><div><h2>Recent activity</h2><p>Your latest changes across this workspace.</p></div></div>
               <div className="wl-activity-list">
-                {activity.slice(0, 5).map((item) => (
+                {businessActivity.slice(0, 5).map((item) => (
                   <button onClick={() => navigate(`/editor/${item.projectId}`)} key={item.id}>
                     <span><Icon name={item.type === "published" ? "rocket" : item.type === "created" ? "sparkles" : "save"} /></span>
                     <div><strong>{item.message}</strong><small>{relativeTime(item.at)}</small></div>

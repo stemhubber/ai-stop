@@ -9,6 +9,7 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { db, auth } from "../services/firebase.config";
 import { Icon } from "../features/websites/components/WebiloUI";
+import WebiloAnimatedLogo from "./WebiloAnimatedLogo";
 import "./styles/Auth.css";
 
 function AuthLayout({ mode, children }) {
@@ -16,15 +17,15 @@ function AuthLayout({ mode, children }) {
   return (
     <main className="wl-auth">
       <section className="wl-auth__intro">
-        <Link to="/" className="wl-brand"><span>W</span><strong>webilo</strong></Link>
+        <Link to="/" className="wl-brand"><WebiloAnimatedLogo size={42} showWordmark wordmarkSize={24} inverse /></Link>
         <div>
-          <p className="wl-eyebrow">AI website builder</p>
-          <h1>{isRegister ? "Turn your idea into a website." : "Welcome back to your workspace."}</h1>
-          <p>{isRegister ? "Plan, create, edit, and publish in one guided flow—without writing code." : "Continue editing your websites, review recent changes, or start a new project."}</p>
+          <p className="wl-eyebrow">AI business launch assistant</p>
+          <h1>{isRegister ? "Turn your idea into a working business." : "Welcome back to your business."}</h1>
+          <p>{isRegister ? "Set up your offer, digital presence, customer tools, and website in one guided workspace." : "Review what needs attention, serve customers, and keep improving your online business."}</p>
           <ul>
-            <li><Icon name="check" /> Guided AI brief and plan</li>
-            <li><Icon name="check" /> Visual section and theme editor</li>
-            <li><Icon name="check" /> Desktop, tablet, and mobile preview</li>
+            <li><Icon name="check" /> AI-guided business setup</li>
+            <li><Icon name="check" /> Products, services, customers, and leads</li>
+            <li><Icon name="check" /> A connected website when you are ready</li>
           </ul>
         </div>
         <small>Your drafts stay private until you publish.</small>
@@ -51,7 +52,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      window.location.assign("/app");
+      window.location.replace("/business");
     } catch {
       setError("Those details did not match an account. Check them and try again.");
       setLoading(false);
@@ -63,8 +64,8 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      await setDoc(doc(db, "users", result.user.uid), { email: result.user.email, createdAt: Date.now(), plan: "free", sites: [] }, { merge: true });
-      window.location.assign("/app");
+      await setDoc(doc(db, "users", result.user.uid), { email: result.user.email, createdAt: Date.now(), sites: [] }, { merge: true });
+      window.location.replace("/business");
     } catch {
       setError("Google sign-in could not be completed. Try again or use your email.");
       setLoading(false);
@@ -74,7 +75,7 @@ export default function Login() {
   return (
     <AuthLayout mode="login">
       <form className="wl-auth-card" onSubmit={handleLogin}>
-        <header><p className="wl-eyebrow">Sign in</p><h2>Continue building</h2><span>Use the account connected to your Webilo workspace.</span></header>
+        <header><p className="wl-eyebrow">Sign in</p><h2>Open your business workspace</h2><span>Use the account connected to your businesses.</span></header>
         <GoogleButton onClick={handleGoogleLogin} loading={loading} />
         <div className="wl-auth__divider"><span>or use email</span></div>
         <label><span>Email address</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
@@ -101,8 +102,8 @@ export function Register() {
     setLoading(true);
     try {
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "users", userCred.user.uid), { email, createdAt: Date.now(), plan: "free", sites: [] });
-      window.location.assign("/app");
+      await setDoc(doc(db, "users", userCred.user.uid), { email, createdAt: Date.now(), sites: [] });
+      window.location.replace("/business");
     } catch {
       setError("We could not create that account. The email may already be in use.");
       setLoading(false);
@@ -114,8 +115,8 @@ export function Register() {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      await setDoc(doc(db, "users", result.user.uid), { email: result.user.email, createdAt: Date.now(), plan: "free", sites: [] }, { merge: true });
-      window.location.assign("/app");
+      await setDoc(doc(db, "users", result.user.uid), { email: result.user.email, createdAt: Date.now(), sites: [] }, { merge: true });
+      window.location.replace("/business");
     } catch {
       setError("Google sign-up could not be completed. Try again or use your email.");
       setLoading(false);
@@ -125,7 +126,7 @@ export function Register() {
   return (
     <AuthLayout mode="register">
       <form className="wl-auth-card" onSubmit={createAccount}>
-        <header><p className="wl-eyebrow">Create your workspace</p><h2>Start with your idea</h2><span>Your first website begins with a short, guided brief.</span></header>
+        <header><p className="wl-eyebrow">Create your workspace</p><h2>Start with your business idea</h2><span>Tell Webilo what you do. AI will help structure the business before building its digital presence.</span></header>
         <GoogleButton onClick={createWithGoogle} loading={loading} />
         <div className="wl-auth__divider"><span>or use email</span></div>
         <label><span>Email address</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>

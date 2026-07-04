@@ -108,6 +108,60 @@ export async function listRecords(businessId, resource) {
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
+export async function listActiveRecords(businessId, resource) {
+  const snap = await getDocs(query(
+    subcollection(businessId, resource),
+    where("status", "==", "active"),
+    limit(100)
+  ));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+function legacyOffer(resource, record) {
+  const offerType = resource === "services" ? "service" : "product";
+  return {
+    ...record,
+    key: `${resource}:${record.id}`,
+    sourceResource: resource,
+    sourceId: record.id,
+    offerType,
+    pricingMode: record.pricingMode || "fixed",
+    fulfilmentMethods: Array.isArray(record.fulfilmentMethods) && record.fulfilmentMethods.length
+      ? record.fulfilmentMethods
+      : [offerType === "service" ? "booking" : "pickup"],
+  };
+}
+
+export async function listPublicOffers(businessId) {
+  const [offers, products, services] = await Promise.all([
+    listActiveRecords(businessId, "offers").catch(() => []),
+    listRecords(businessId, "products").catch(() => []),
+    listRecords(businessId, "services").catch(() => []),
+  ]);
+  const canonicalLegacyRefs = new Set(
+    offers
+      .map((offer) => offer.legacyRef)
+      .filter((reference) => reference?.resource && reference?.id)
+      .map((reference) => `${reference.resource}:${reference.id}`)
+  );
+  const canonical = offers.map((offer) => ({
+    ...offer,
+    key: `offers:${offer.id}`,
+    sourceResource: "offers",
+    sourceId: offer.id,
+    offerType: offer.offerType || "product",
+    pricingMode: offer.pricingMode || "fixed",
+    fulfilmentMethods: Array.isArray(offer.fulfilmentMethods) && offer.fulfilmentMethods.length
+      ? offer.fulfilmentMethods
+      : [offer.offerType === "service" ? "booking" : "pickup"],
+  }));
+  const legacy = [
+    ...products.filter((item) => item.status !== "inactive").map((item) => legacyOffer("products", item)),
+    ...services.filter((item) => item.status !== "inactive").map((item) => legacyOffer("services", item)),
+  ].filter((offer) => !canonicalLegacyRefs.has(offer.key));
+  return [...canonical, ...legacy];
+}
+
 export async function createRecord(businessId, resource, data) {
   const ref = await addDoc(subcollection(businessId, resource), {
     ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),

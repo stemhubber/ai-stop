@@ -213,7 +213,7 @@ export default function SiteStudio() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                 />
-                <VoiceInput onTranscribed={(text) => setPrompt((p) => p + " " + text)} />
+                <VoiceInput label="Describe the website by voice" onTranscribed={(text) => setPrompt((p) => p + " " + text)} />
               </div>
 
               {loading && (

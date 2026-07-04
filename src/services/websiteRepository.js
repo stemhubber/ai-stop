@@ -38,8 +38,12 @@ function toIsoString(value) {
 
 function normalizeWebsite(snapshot) {
   const data = snapshot.data();
+  const theme = data.theme?.primary?.toLowerCase() === "#6d5dfc"
+    ? { ...data.theme, primary: "#176b5d" }
+    : data.theme;
   return {
     ...data,
+    theme,
     id: snapshot.id,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),

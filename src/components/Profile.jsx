@@ -11,9 +11,13 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import "./styles/Profile.css";
+import { Link } from "react-router-dom";
+import { usePlan } from "../context/PlanContext";
+import { AppLayout } from "../features/websites/components/WebiloUI";
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const { plan, isPro } = usePlan();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +41,6 @@ export default function Profile() {
     try {
       await updateUserProfile(user.uid, {
         displayName: profile.displayName || "",
-        plan: profile.plan || "free",
       });
 
       alert("Profile updated successfully!");
@@ -67,10 +70,10 @@ export default function Profile() {
     setSaving(false);
   };
 
-  if (loading) return <div className="pLight-loading">Loading...</div>;
+  if (loading) return <AppLayout><div className="pLight-loading">Loading...</div></AppLayout>;
 
   return (
-    <div className="pLight-container">
+    <AppLayout><div className="pLight-container">
 
       {/* HEADER */}
       <div className="pLight-header">
@@ -127,16 +130,10 @@ export default function Profile() {
 
         <div className="pLight-field">
           <label>Subscription Plan</label>
-          <select
-            className="pLight-input"
-            value={profile.plan}
-            onChange={(e) =>
-              setProfile({ ...profile, plan: e.target.value })
-            }
-          >
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-          </select>
+          <div className="pLight-plan-row">
+            <strong>{plan.name}</strong>
+            <Link to={isPro ? "/usage" : "/pro"}>{isPro ? "View usage" : "Explore Pro"}</Link>
+          </div>
         </div>
 
         <button
@@ -151,6 +148,6 @@ export default function Profile() {
           Logout
         </button>
       </div>
-    </div>
+    </div></AppLayout>
   );
 }

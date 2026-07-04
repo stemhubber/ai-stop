@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { usePayment } from "../services/PaymentController";
 import "./styles/Billing.css"; // isolated styles
 
-export default function Billing({ item, amount, user, userId }) {
+export default function Billing({ item, amount, user, userId, metadata = {} }) {
   const { initiatePayment, loading, error } = usePayment();
   const [message, setMessage] = useState("");
   const canPay = Boolean(user?.email && amount > 0 && userId);
@@ -20,7 +20,7 @@ export default function Billing({ item, amount, user, userId }) {
         email: user.email,
         amount,
         userId,
-        metadata: { item, userName: user.name },
+        metadata: { ...metadata, item, userName: user.name },
       });
 
       if (reference) {

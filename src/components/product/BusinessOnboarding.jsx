@@ -5,6 +5,7 @@ import { useBusiness } from "../../context/BusinessContext";
 import { createBusiness } from "../../services/businessRepository";
 import { generateBusinessProfile } from "../../services/aiService";
 import { Button, Icon, Modal } from "../../features/websites/components/WebiloUI";
+import VoiceInput from "../VoiceInput";
 import "./product.css";
 
 const OPTIONS = ["commerce", "bookings", "orders", "messages", "marketing", "analytics", "payments"];
@@ -27,7 +28,7 @@ export default function BusinessOnboarding() {
       tone: "Warm and professional",
       font: "modern",
       template: "organic",
-      palette: "#6d5dfc",
+      palette: "#176b5d",
     },
   });
   const [showPrompt, setShowPrompt] = useState(true);
@@ -138,6 +139,13 @@ export default function BusinessOnboarding() {
         actions={<><Button onClick={() => setShowPrompt(false)}>Fill it myself</Button><Button variant="primary" icon="sparkles" onClick={fillWithAI} disabled={aiState === "loading"}>{aiState === "loading" ? "Preparing setup…" : "Fill setup with AI"}</Button></>}
       >
         <label className="wl-field"><span>Business description</span><textarea rows="7" value={businessPrompt} onChange={(event) => setBusinessPrompt(event.target.value)} placeholder="We run a natural hair salon in Soweto for women who want healthy, low-maintenance styles. We offer appointments and sell hair products. We want more bookings and repeat clients." /></label>
+        <VoiceInput
+          onTranscribed={(text) => {
+            setBusinessPrompt((current) => [current.trim(), text].filter(Boolean).join(current.trim() ? " " : ""));
+            setError("");
+          }}
+          onError={setError}
+        />
         {error && <p className="wl-publish-error" role="alert">{error}</p>}
         <div className="wl-ai-note"><Icon name="sparkles" /><div><strong>AI will prepare, not publish</strong><p>You will review the business profile, modules, font, colour, and template before anything is saved.</p></div></div>
       </Modal>

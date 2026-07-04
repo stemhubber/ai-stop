@@ -15,14 +15,15 @@ The previous application had capable individual features, but the website-builde
 - The old editor was desktop-shaped; its panels and actions did not adapt into a deliberate phone workflow.
 - The existing design tokens were useful, but the builder did not consistently consume one component or spacing system.
 
-The rebuild keeps legacy business, billing, messaging, publishing, and Firebase features available. It changes the primary Webilo journey to a connected website-builder experience.
+The rebuild keeps legacy business, billing, messaging, publishing, and Firebase features available. The website flow is now one connected capability inside the business-first Webilo workspace. The current product baseline and planned paid expansion are defined in [Webilo Pro product plan](WEBILO_PRO_PRODUCT_PLAN.md).
 
 ## Product flow
 
 ```text
 Landing
   -> Sign in / create account
-  -> Website dashboard
+  -> Business setup or existing business workspace
+  -> Website dashboard when the owner chooses Website
   -> Guided business brief
   -> Goal, tone, and brand direction
   -> Page selection
@@ -47,11 +48,12 @@ The AI plan is reviewed before content generation. Generated work always begins 
 | --- | --- | --- |
 | Welcome | `/` | Explain the product and lead to account creation |
 | Authentication | `/login`, `/register` | Enter or create a workspace |
-| Websites | `/app` | Project list, status, recent activity, new-project entry |
+| Business workspace | `/business` | Default owner command centre and business switcher |
+| Websites | `/websites` | Project list, status, recent activity, new-project entry |
 | Create | `/create`, `/studio/new` | Guided brief, plan review, generation |
 | Editor | `/editor/:projectId` | Content, structure, theme, preview, save, publish |
 | Published website | `/w/:publishedSlug` | Public, shareable multi-page website snapshot |
-| Business tools | `/business` | Preserved operational workspace |
+| Public business | `/b/:slug` | Lightweight public business profile |
 | Account | `/profile` | Existing account management |
 | Legacy editor | `/studio/edit/:siteName` | Preserved compatibility route |
 
@@ -158,14 +160,14 @@ src/
 
 ## Implementation phases
 
-1. **Product structure and layout system — complete.** Primary routes now describe the website-builder journey; legacy tools have explicit secondary routes.
+1. **Product structure and layout system — complete.** The business workspace is the primary journey, with website creation and legacy tools available as connected capabilities.
 2. **Design system and reusable components — complete.** Builder primitives, tokens, spacing, controls, status, feedback, and navigation are shared.
 3. **Dashboard and project flow — complete.** Projects, empty state, status, deletion, and real activity use shared project data.
 4. **AI creation flow — complete.** Guided inputs, recommendation, plan review, authenticated OpenAI blueprint generation, schema-constrained content, useful progress, and visible retry errors are connected.
 5. **Website editor and preview — complete.** Section selection, direct and form content editing, reorder, add/remove/hide, theme editing, undo/redo, and device preview are functional.
 6. **State management and persistence — complete.** Reducer state, authenticated Firestore CRUD, local fallback, migration, reconciliation, deletion tombstones, save state, activity, and publish state are implemented.
 7. **Responsiveness and polish — complete.** Landing, auth, dashboard, creation, editor, modals, and previews have deliberate mobile layouts.
-8. **Final QA and cleanup — complete for the implemented scope.** Production build and six unit tests pass; the core browser journey and desktop/mobile landing layouts were exercised.
+8. **Final QA and cleanup — complete for the implemented scope.** The production build and automated suites pass; the core browser journey and desktop/mobile layouts are exercised as features are added.
 
 ## Recommended next backend phase
 

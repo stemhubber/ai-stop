@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../services/firebase.config";
+import { auth, authPersistenceReady } from "../services/firebase.config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const AuthContext = createContext();
@@ -10,12 +10,21 @@ export function AuthProvider({ children }) {
 
   // Listen for login/logout changes
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser || null);
-      setLoadingUser(false);
+    let active = true;
+    let unsubscribe = () => {};
+
+    authPersistenceReady.finally(() => {
+      if (!active) return;
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        setUser(firebaseUser || null);
+        setLoadingUser(false);
+      });
     });
 
-    return () => unsub();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const logout = () => signOut(auth);

@@ -178,10 +178,13 @@ npm run deploy
 The exported `api` Cloud Function exposes:
 
 ```text
+POST /public/businesses/:slug/requests
 POST /paystack/init
 GET  /paystack/verify/:ref
 GET  /paystack/health
 ```
+
+Public business requests are resolved and priced by the backend. The browser sends offer identity, quantity, fulfilment choice, and customer details; it does not provide an authoritative total. See [Webilo offer and commerce architecture](WEBILO_COMMERCE_ARCHITECTURE.md).
 
 The exported `followUpScheduler` runs every minute in the `Africa/Johannesburg` timezone. It queries pending Firestore follow-ups, formats South African phone numbers to E.164, sends them through Twilio, and updates their delivery status.
 

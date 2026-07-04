@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/Home.jsx";
 import SiteEditor from "./components/SiteEditor";
 import SiteViewer from "./components/SiteViewer";
@@ -19,15 +19,25 @@ import WebsiteDashboard from "./features/websites/WebsiteDashboard";
 import CreateWebsiteFlow from "./features/websites/CreateWebsiteFlow";
 import WebsiteEditor from "./features/websites/WebsiteEditor";
 import PublicWebsite from "./features/websites/PublicWebsite";
+import { useAuth } from "./context/AuthContext";
+import { LoadingScreen } from "./features/websites/components/WebiloUI";
+import ProPage from "./features/plans/ProPage";
+import UsagePage from "./features/plans/UsagePage";
+
+function EntryRoute({ children }) {
+  const { user, loadingUser } = useAuth();
+  if (loadingUser) return <LoadingScreen label="Restoring your Webilo session" />;
+  return user ? <Navigate to="/business" replace /> : children;
+}
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<EntryRoute><Home /></EntryRoute>} />
+          <Route path="/register" element={<EntryRoute><Register /></EntryRoute>} />
+          <Route path="/login" element={<EntryRoute><Login /></EntryRoute>} />
           <Route path="/studio/new" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />
           <Route path="/studio/edit/:siteName" element={<RequireAuth><SiteEditor /></RequireAuth>} />
           <Route path="/sites/:siteId" element={<RequireAuth><SiteViewer /></RequireAuth>} />
@@ -40,14 +50,17 @@ function App() {
           {/* Billing */}
           <Route path="/billing" element={<RequireAuth><BillingPage/></RequireAuth>}/>
           <Route path="/payment-complete" element={<RequireAuth><PaymentComplete/></RequireAuth>}/>
-          <Route path="/app" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
+          <Route path="/app" element={<RequireAuth><Navigate to="/business" replace /></RequireAuth>} />
+          <Route path="/websites" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
           <Route path="/create" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />
           <Route path="/editor/:projectId" element={<RequireAuth><WebsiteEditor /></RequireAuth>} />
           <Route path="/w/:slug" element={<PublicWebsite />} />
           <Route path="/business" element={<RequireAuth><ProductWorkspace /></RequireAuth>} />
+          <Route path="/pro" element={<RequireAuth><ProPage /></RequireAuth>} />
+          <Route path="/usage" element={<RequireAuth><UsagePage /></RequireAuth>} />
           <Route path="/onboarding" element={<RequireAuth><BusinessOnboarding /></RequireAuth>} />
           <Route path="/b/:slug" element={<PublicBusinessPage />} />
-          <Route path="/studio" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
+          <Route path="/studio" element={<RequireAuth><Navigate to="/websites" replace /></RequireAuth>} />
           <Route path="/legacy-studio" element={<RequireAuth><Dashboard /></RequireAuth>} />
 <Route
   path="/profile"

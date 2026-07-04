@@ -28,7 +28,9 @@ body {
   font-size: var(--wb-text-base);
   line-height: 1.6;
   color: var(--wb-ink-1);
-  background: var(--wb-canvas);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(187, 220, 209, .34), transparent 30%),
+    var(--wb-canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -106,7 +108,7 @@ body {
   gap: var(--wb-space-2);
   height: var(--wb-control-h);
   padding: 0 var(--wb-space-4);
-  border-radius: var(--wb-radius-sm);
+  border-radius: var(--wb-radius);
   font-family: var(--wb-font-sans);
   font-size: var(--wb-text-base);
   font-weight: 500;
@@ -163,13 +165,13 @@ body {
 
 /* Variants */
 .wb-btn-primary {
-  background: var(--wb-ink-1);
+  background: var(--wb-accent);
   color: #fff;
-  border-color: var(--wb-ink-1);
+  border-color: var(--wb-accent);
 }
 .wb-btn-primary:hover {
-  background: var(--wb-ink-2);
-  border-color: var(--wb-ink-2);
+  background: var(--wb-accent-hover);
+  border-color: var(--wb-accent-hover);
 }
 
 .wb-btn-accent {
@@ -224,7 +226,8 @@ body {
   color: var(--wb-ink-1);
   background: var(--wb-surface);
   border: 0.5px solid var(--wb-border);
-  border-radius: var(--wb-radius-sm);
+  border-radius: var(--wb-radius);
+  backdrop-filter: blur(14px);
   outline: none;
   transition:
     border-color var(--wb-dur-base) var(--wb-ease-out),
@@ -309,6 +312,8 @@ body {
   border: 0.5px solid var(--wb-border);
   border-radius: var(--wb-radius-lg);
   padding: var(--wb-space-5);
+  box-shadow: var(--wb-shadow-sm);
+  backdrop-filter: blur(18px);
 }
 
 .wb-card-sm {

@@ -7,19 +7,22 @@ import { HelpProvider } from './context/help/HelpContext';
 import HelpBubble from './context/help/HelpBubble';
 import { BusinessProvider } from './context/BusinessContext';
 import { WebsiteProvider } from './context/WebsiteContext';
+import { PlanProvider } from './context/PlanContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <AuthProvider>
-      <WebsiteProvider>
-        <BusinessProvider>
-          <HelpProvider>
-            <App />
-            <HelpBubble />
-          </HelpProvider>
-        </BusinessProvider>
-      </WebsiteProvider>
+      <PlanProvider>
+        <WebsiteProvider>
+          <BusinessProvider>
+            <HelpProvider>
+              <App />
+              <HelpBubble />
+            </HelpProvider>
+          </BusinessProvider>
+        </WebsiteProvider>
+      </PlanProvider>
     </AuthProvider>
   </React.StrictMode>
 );

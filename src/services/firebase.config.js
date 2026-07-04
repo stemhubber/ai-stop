@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { browserLocalPersistence, connectAuthEmulator, getAuth, setPersistence } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 
@@ -16,6 +16,9 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 
 const auth = getAuth(firebaseApp);
+const authPersistenceReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Firebase auth persistence could not be enabled:", error.message);
+});
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
 
@@ -25,4 +28,4 @@ if (process.env.REACT_APP_USE_FIREBASE_EMULATORS === "true") {
   connectStorageEmulator(storage, "127.0.0.1", 9199);
 }
 
-export { firebaseApp, auth, db, storage };
+export { firebaseApp, auth, authPersistenceReady, db, storage };
