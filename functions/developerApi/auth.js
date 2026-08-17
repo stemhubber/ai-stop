@@ -1,12 +1,16 @@
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const { hashApiKey } = require("./apiKeys");
 
-// Router-wide middleware for everything under /v1 — the developer API is
-// authenticated by API key only and never depends on Firebase user auth
-// (see functions/index.js's `requireAuth`, which is for the internal app).
+// Router-wide middleware for everything under /v1 — the developer API is authenticated by
+// API key only and never depends on Firebase user auth (see functions/index.js's
+// `requireAuth`, which is for the internal app). Deliberately a separate header from
+// `Authorization: Bearer` rather than overloading it: that header already means "Firebase ID
+// token" everywhere else on this same Express app (requireAuth), so a second, unrelated
+// meaning for it here would be a real footgun for anyone reading or extending functions/
+// later. `x-api-key` keeps the two auth schemes visually and structurally distinct — same
+// convention as the sibling Locus Plane API's requireApiKey.js.
 async function requireApiKey(req, res, next) {
-  const header = req.headers.authorization || "";
-  const rawKey = header.replace(/^Bearer\s+/i, "").trim();
+  const rawKey = String(req.headers["x-api-key"] || "").trim();
   if (!rawKey) {
     return res.status(401).json({ error: "An API key is required.", code: "API_KEY_MISSING" });
   }
