@@ -11,17 +11,18 @@ function configuredValue(secret, code, message) {
   return value;
 }
 
-function buildEmailPayload({ from, to, subject, body, replyTo }) {
+function buildEmailPayload({ from, to, subject, body, html, replyTo }) {
   return {
     from,
     to: [to],
     subject: subject || "Message from Webilo",
     text: body,
+    ...(html ? { html } : {}),
     ...(replyTo ? { reply_to: replyTo } : {}),
   };
 }
 
-async function sendEmail({ to, subject, body, replyTo }) {
+async function sendEmail({ to, subject, body, html, replyTo }) {
   const apiKey = configuredValue(
     RESEND_API_KEY,
     "RESEND_MISSING_KEY",
@@ -41,6 +42,7 @@ async function sendEmail({ to, subject, body, replyTo }) {
         to,
         subject,
         body,
+        html,
         replyTo,
       }),
       {

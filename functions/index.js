@@ -134,9 +134,12 @@ const {
   welcomeEmail,
 } = require("./notifications");
 
+const developerApiRouter = require("./developerApi");
+
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "8mb" }));
+app.use("/v1", developerApiRouter);
 
 async function enforcePublicRequestRateLimit(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "")
