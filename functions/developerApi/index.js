@@ -1,6 +1,6 @@
 const express = require("express");
 const { requireApiKey } = require("./auth");
-const { recordMessage } = require("./messages");
+const { recordMessage, getMessage } = require("./messages");
 const { respondToProviderError } = require("./providerErrors");
 const { withIdempotency } = require("./idempotency");
 const { requireRateLimit } = require("./rateLimit");
@@ -106,6 +106,19 @@ router.post("/sms", async (req, res) => {
       return res.status(err.statusCode).json({ error: err.message, code: err.code });
     }
     return respondToProviderError(res, "sms", err);
+  }
+});
+
+router.get("/messages/:id", async (req, res) => {
+  try {
+    const message = await getMessage(req.developerProject.projectId, req.params.id);
+    if (!message) {
+      return res.status(404).json({ error: "Message not found.", code: "MESSAGE_NOT_FOUND" });
+    }
+    return res.json(message);
+  } catch (err) {
+    console.error("GET /v1/messages/:id failed", err);
+    return res.status(500).json({ error: "Could not look up this message." });
   }
 });
 
