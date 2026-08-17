@@ -8,6 +8,7 @@ exports.TWILIO_FROM = defineSecret("TWILIO_FROM");
 exports.TWILIO_WHATSAPP_FROM = defineSecret("TWILIO_WHATSAPP_FROM");
 exports.RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 exports.EMAIL_FROM = defineSecret("EMAIL_FROM");
+exports.RESEND_WEBHOOK_SECRET = defineSecret("RESEND_WEBHOOK_SECRET");
 
 
 // Paystack

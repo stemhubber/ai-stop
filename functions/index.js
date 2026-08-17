@@ -12,6 +12,7 @@ const {
   OPENAI_API_KEY,
   RESEND_API_KEY,
   EMAIL_FROM,
+  RESEND_WEBHOOK_SECRET,
 } = require("./env");
 const { sendSMS } = require("./twilioSender");
 
@@ -135,11 +136,13 @@ const {
 } = require("./notifications");
 
 const developerApiRouter = require("./developerApi");
+const developerApiWebhooksRouter = require("./developerApi/webhooks");
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "8mb" }));
 app.use("/v1", developerApiRouter);
+app.use("/webhooks", developerApiWebhooksRouter);
 
 async function enforcePublicRequestRateLimit(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "")
@@ -1115,6 +1118,7 @@ exports.api = functions.https.onRequest(
       TWILIO_FROM,
       RESEND_API_KEY,
       EMAIL_FROM,
+      RESEND_WEBHOOK_SECRET,
     ],
   },
   app
