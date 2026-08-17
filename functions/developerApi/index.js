@@ -1,8 +1,10 @@
 const express = require("express");
+const { requireApiKey } = require("./auth");
 
 // Mounted at /v1 on the existing `exports.api` Express app (see functions/index.js).
-// Auth, projects, and the first endpoints land in later phases — this router is
-// intentionally empty for now so the mount point exists without any new surface area.
+// Every /v1 route is API-key authenticated; endpoints (/v1/email, /v1/sms, ...)
+// land in later phases.
 const router = express.Router();
+router.use(requireApiKey);
 
 module.exports = router;

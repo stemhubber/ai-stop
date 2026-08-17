@@ -155,6 +155,32 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Developer API (/v1/*) data model. API-key auth does not produce
+    // request.auth, so these are Admin SDK-only — no client ever reads or
+    // writes them directly.
+    match /projects/{projectId} {
+      allow read, write: if false;
+
+      match /usage/{period} {
+        allow read, write: if false;
+      }
+
+      match /messages/{messageId} {
+        allow read, write: if false;
+      }
+
+      // TTL policy on `expireAt` (24h) must be configured out-of-band — rules can't expire
+      // documents. `gcloud firestore fields ttls update expireAt --collection-group=idempotency`
+      // (or the console), not yet done as of this collection's introduction.
+      match /idempotency/{idempotencyKey} {
+        allow read, write: if false;
+      }
+    }
+
+    match /apiKeys/{keyHash} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
