@@ -34,12 +34,14 @@ this is an additive interface over infrastructure that already existed
 - The Resend provider (`functions/providers/messaging/resend.js`) now accepts
   an optional `html` body alongside `text`, used by `/v1/email` and available
   to the internal `/messages/send` route too.
+- `GET /v1/messages/:id` — scoped to the caller's own project; a different
+  project's key gets `404` for the same id.
 
 ### Not yet included
 
 - Self-serve project/API-key management (currently manual, via the
   provisioning script).
-- `GET /v1/messages/:id` and message history.
+- Message history / listing (`GET /v1/messages` beyond a single id).
 - Delivery-status webhooks from Resend/Twilio.
 - `/v1/whatsapp`.
 - A `functions/.secret.local` file must exist locally (gitignored, not
