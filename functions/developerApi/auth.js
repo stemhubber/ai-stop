@@ -34,6 +34,9 @@ async function requireApiKey(req, res, next) {
       projectId: projectSnapshot.id,
       ownerUid: projectData.ownerUid,
       businessId: projectData.businessId || null,
+      // Defaults to the stricter "test" rate-limit tier (rateLimit.js) if a key predates this
+      // field or has a malformed value — fail toward the tighter limit, not the looser one.
+      environment: keyData.environment === "live" ? "live" : "test",
     };
 
     keyRef.update({ lastUsedAt: Timestamp.now() }).catch((error) => {

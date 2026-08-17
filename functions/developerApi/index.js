@@ -3,6 +3,8 @@ const { requireApiKey } = require("./auth");
 const { recordMessage } = require("./messages");
 const { respondToProviderError } = require("./providerErrors");
 const { withIdempotency } = require("./idempotency");
+const { requireRateLimit } = require("./rateLimit");
+const { recordUsage } = require("./usage");
 const { getMessagingProvider } = require("../providers/messaging");
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,6 +15,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // no second Resend/Twilio implementation.
 const router = express.Router();
 router.use(requireApiKey);
+router.use(requireRateLimit);
 
 router.post("/email", async (req, res) => {
   try {
@@ -41,6 +44,7 @@ router.post("/email", async (req, res) => {
           idempotencyKey,
           providerMessageId: result?.id || null,
         });
+        await recordUsage(req.developerProject.projectId, "emails");
         return { id, status: "accepted" };
       },
     });
@@ -91,6 +95,7 @@ router.post("/sms", async (req, res) => {
           idempotencyKey,
           providerMessageId: result?.sid || null,
         });
+        await recordUsage(req.developerProject.projectId, "sms");
         return { id, status: "accepted" };
       },
     });
