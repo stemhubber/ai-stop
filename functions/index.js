@@ -137,12 +137,14 @@ const {
 
 const developerApiRouter = require("./developerApi");
 const developerApiWebhooksRouter = require("./developerApi/webhooks");
+const developerApiSelfServiceRouter = require("./developerApi/selfService");
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "8mb" }));
 app.use("/v1", developerApiRouter);
 app.use("/webhooks", developerApiWebhooksRouter);
+app.use("/developer", developerApiSelfServiceRouter);
 
 async function enforcePublicRequestRateLimit(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "")
