@@ -21,4 +21,20 @@ async function recordUsage(projectId, metric) {
   );
 }
 
-module.exports = { recordUsage, usagePeriod };
+const PERIOD_PATTERN = /^\d{4}-\d{2}$/;
+
+async function getUsage(projectId, period) {
+  const targetPeriod = period && PERIOD_PATTERN.test(period) ? period : usagePeriod();
+  const db = getFirestore();
+  const snapshot = await db.collection("projects").doc(projectId).collection("usage").doc(targetPeriod).get();
+  const data = snapshot.data() || {};
+  return {
+    period: targetPeriod,
+    requests: data.requests || 0,
+    emails: data.emails || 0,
+    sms: data.sms || 0,
+    whatsapp: data.whatsapp || 0,
+  };
+}
+
+module.exports = { recordUsage, usagePeriod, getUsage, PERIOD_PATTERN };

@@ -4,7 +4,7 @@ const { recordMessage, getMessage, listMessages } = require("./messages");
 const { respondToProviderError } = require("./providerErrors");
 const { withIdempotency } = require("./idempotency");
 const { requireRateLimit } = require("./rateLimit");
-const { recordUsage } = require("./usage");
+const { recordUsage, getUsage } = require("./usage");
 const { getMessagingProvider } = require("../providers/messaging");
 const { twilioStatusCallbackUrl } = require("./webhooks");
 
@@ -120,6 +120,20 @@ function createTwilioSendHandler({ channel, providerMethod }) {
 
 router.post("/sms", createTwilioSendHandler({ channel: "sms", providerMethod: "sendSms" }));
 router.post("/whatsapp", createTwilioSendHandler({ channel: "whatsapp", providerMethod: "sendWhatsApp" }));
+
+router.get("/usage", async (req, res) => {
+  try {
+    const requestedPeriod = req.query.period;
+    if (requestedPeriod && !/^\d{4}-\d{2}$/.test(String(requestedPeriod))) {
+      return res.status(400).json({ error: "`period` must be in YYYY-MM format.", code: "INVALID_PERIOD" });
+    }
+    const usage = await getUsage(req.developerProject.projectId, requestedPeriod);
+    return res.json(usage);
+  } catch (err) {
+    console.error("GET /v1/usage failed", err);
+    return res.status(500).json({ error: "Could not look up usage." });
+  }
+});
 
 router.get("/messages", async (req, res) => {
   try {
