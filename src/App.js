@@ -23,6 +23,7 @@ import { useAuth } from "./context/AuthContext";
 import { LoadingScreen } from "./features/websites/components/WebiloUI";
 import ProPage from "./features/plans/ProPage";
 import UsagePage from "./features/plans/UsagePage";
+import DeveloperApiPage from "./features/developerApi/DeveloperApiPage";
 
 function EntryRoute({ children }) {
   const { user, loadingUser } = useAuth();
@@ -57,6 +58,7 @@ function App() {
           <Route path="/w/:slug" element={<PublicWebsite />} />
           <Route path="/business" element={<RequireAuth><ProductWorkspace /></RequireAuth>} />
           <Route path="/pro" element={<RequireAuth><ProPage /></RequireAuth>} />
+          <Route path="/webilo-apis" element={<RequireAuth><DeveloperApiPage /></RequireAuth>} />
           <Route path="/usage" element={<RequireAuth><UsagePage /></RequireAuth>} />
           <Route path="/onboarding" element={<RequireAuth><BusinessOnboarding /></RequireAuth>} />
           <Route path="/b/:slug" element={<PublicBusinessPage />} />

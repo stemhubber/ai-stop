@@ -1,0 +1,302 @@
+.dev-api-page {
+  width: min(calc(100% - 64px), 1120px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 0 100px;
+  color: var(--wb-ink-1);
+  text-align: left;
+}
+
+.dev-api-error {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  color: var(--wb-danger-text);
+  border: 1px solid var(--wb-danger-border);
+  border-radius: 12px;
+  background: var(--wb-danger-bg);
+  font-size: 13px;
+}
+
+.dev-api-projects {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dev-api-projects__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dev-api-projects__list button {
+  padding: 8px 14px;
+  color: var(--wb-ink-2);
+  border: 1px solid var(--wb-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dev-api-projects__list button.active {
+  color: var(--wb-accent-text);
+  border-color: var(--wb-accent);
+  background: var(--wb-accent-bg);
+}
+
+.dev-api-projects__create {
+  display: flex;
+  gap: 8px;
+}
+
+.dev-api-projects__create input {
+  min-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.dev-api-tabs {
+  margin-top: 32px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--wb-border);
+}
+
+.dev-api-tabs button {
+  padding: 10px 4px;
+  margin-right: 20px;
+  color: var(--wb-ink-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dev-api-tabs button.active {
+  color: var(--wb-ink-1);
+  border-bottom-color: var(--wb-accent);
+}
+
+.dev-api-hint {
+  margin-top: 24px;
+  color: var(--wb-ink-3);
+  font-size: 13px;
+}
+
+.dev-api-keys {
+  margin-top: 24px;
+}
+
+.dev-api-keys__create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--wb-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--wb-shadow-sm);
+}
+
+.dev-api-keys__create input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 12px;
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.dev-api-env-toggle {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+}
+
+.dev-api-env-toggle button {
+  padding: 9px 12px;
+  color: var(--wb-ink-3);
+  border: 0;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dev-api-env-toggle button + button { border-left: 1px solid var(--wb-border); }
+.dev-api-env-toggle button.active { color: var(--wb-accent-text); background: var(--wb-accent-bg); }
+
+.dev-api-keys__table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--wb-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.dev-api-keys__table th,
+.dev-api-keys__table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+}
+
+.dev-api-keys__table th {
+  color: var(--wb-ink-4);
+  border-bottom: 1px solid var(--wb-border);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.dev-api-keys__table tbody tr + tr td { border-top: 1px solid var(--wb-border); }
+.dev-api-keys__table code { font-family: var(--wb-font-mono); font-size: 11px; }
+
+.dev-api-status {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dev-api-status--active { color: var(--wb-success-text); background: var(--wb-success-bg); }
+.dev-api-status--revoked { color: var(--wb-danger-text); background: var(--wb-danger-bg); }
+
+.dev-api-revoke {
+  color: var(--wb-danger-text);
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dev-api-new-key {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dev-api-new-key code {
+  padding: 12px;
+  overflow-wrap: break-word;
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+  background: var(--wb-canvas);
+  font-family: var(--wb-font-mono);
+  font-size: 12px;
+}
+
+.dev-api-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--wb-warning-text);
+  font-size: 12px;
+}
+
+.dev-api-usage { margin-top: 24px; }
+
+.dev-api-usage__period {
+  margin: 0 0 16px;
+  color: var(--wb-ink-3);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.dev-api-usage__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.dev-api-billing {
+  max-width: 640px;
+  margin-top: 24px;
+}
+
+.dev-api-billing__badge {
+  display: inline-block;
+  padding: 4px 10px;
+  margin-bottom: 12px;
+  color: var(--wb-warning-text);
+  border-radius: 999px;
+  background: var(--wb-warning-bg);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.dev-api-billing__intro,
+.dev-api-billing__note {
+  margin: 0 0 16px;
+  color: var(--wb-ink-3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dev-api-billing__table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--wb-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--wb-shadow-sm);
+}
+
+.dev-api-billing__table th,
+.dev-api-billing__table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+}
+
+.dev-api-billing__table th {
+  color: var(--wb-ink-4);
+  border-bottom: 1px solid var(--wb-border);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.dev-api-billing__table tbody tr + tr td { border-top: 1px solid var(--wb-border); }
+.dev-api-billing__table th:not(:first-child),
+.dev-api-billing__table td:not(:first-child) { text-align: right; }
+
+.dev-api-billing__table tfoot td {
+  padding-top: 14px;
+  border-top: 2px solid var(--wb-border);
+  font-weight: 800;
+}
+
+.dev-api-billing__note { margin: 16px 0 0; }
+
+@media (max-width: 760px) {
+  .dev-api-page { width: calc(100% - 28px); padding-top: 28px; }
+  .dev-api-projects { flex-direction: column; align-items: stretch; }
+  .dev-api-projects__create { flex-direction: column; }
+  .dev-api-keys__table { display: block; overflow-x: auto; }
+  .dev-api-usage__grid { grid-template-columns: 1fr; }
+  .dev-api-billing__table { display: block; overflow-x: auto; }
+}
