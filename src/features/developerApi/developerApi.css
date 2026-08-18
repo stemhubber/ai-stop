@@ -229,30 +229,68 @@
 }
 
 .dev-api-billing {
-  max-width: 560px;
+  max-width: 640px;
   margin-top: 24px;
-  padding: 24px;
-  border: 1px solid var(--wb-border);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: var(--wb-shadow-sm);
 }
 
 .dev-api-billing__badge {
   display: inline-block;
   padding: 4px 10px;
   margin-bottom: 12px;
-  color: var(--wb-accent-text);
+  color: var(--wb-warning-text);
   border-radius: 999px;
-  background: var(--wb-accent-bg);
+  background: var(--wb-warning-bg);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
 
-.dev-api-billing h2 { margin: 0 0 10px; font-size: 18px; }
-.dev-api-billing p { margin: 0 0 10px; color: var(--wb-ink-3); font-size: 12px; line-height: 1.6; }
+.dev-api-billing__intro,
+.dev-api-billing__note {
+  margin: 0 0 16px;
+  color: var(--wb-ink-3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dev-api-billing__table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--wb-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--wb-shadow-sm);
+}
+
+.dev-api-billing__table th,
+.dev-api-billing__table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+}
+
+.dev-api-billing__table th {
+  color: var(--wb-ink-4);
+  border-bottom: 1px solid var(--wb-border);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.dev-api-billing__table tbody tr + tr td { border-top: 1px solid var(--wb-border); }
+.dev-api-billing__table th:not(:first-child),
+.dev-api-billing__table td:not(:first-child) { text-align: right; }
+
+.dev-api-billing__table tfoot td {
+  padding-top: 14px;
+  border-top: 2px solid var(--wb-border);
+  font-weight: 800;
+}
+
+.dev-api-billing__note { margin: 16px 0 0; }
 
 @media (max-width: 760px) {
   .dev-api-page { width: calc(100% - 28px); padding-top: 28px; }
@@ -260,4 +298,5 @@
   .dev-api-projects__create { flex-direction: column; }
   .dev-api-keys__table { display: block; overflow-x: auto; }
   .dev-api-usage__grid { grid-template-columns: 1fr; }
+  .dev-api-billing__table { display: block; overflow-x: auto; }
 }

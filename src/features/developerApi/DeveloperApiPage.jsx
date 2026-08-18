@@ -4,6 +4,7 @@ import { UsageMeter } from "../plans/PlanUI";
 import {
   createApiKey,
   createDeveloperProject,
+  getProjectBilling,
   getProjectUsage,
   listApiKeys,
   listDeveloperProjects,
@@ -109,7 +110,7 @@ export default function DeveloperApiPage() {
               />
             )}
             {tab === "usage" && <UsagePanel project={activeProject} onToast={(t) => setToast(t)} />}
-            {tab === "billing" && <BillingPanel />}
+            {tab === "billing" && <BillingPanel project={activeProject} onToast={(t) => setToast(t)} />}
           </>
         )}
       </main>
@@ -366,21 +367,71 @@ function UsagePanel({ project, onToast }) {
   );
 }
 
-function BillingPanel() {
+function BillingPanel({ project, onToast }) {
+  const [bill, setBill] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProjectBilling(project.id)
+      .then((data) => {
+        if (!cancelled) setBill(data);
+      })
+      .catch((error) => onToast({ message: error.message, tone: "error" }));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
+  if (!bill) return <p className="dev-api-hint">Loading billing…</p>;
+
   return (
     <section className="dev-api-billing">
-      <div className="dev-api-billing__badge">Beta — free while in early access</div>
-      <h2>You're not being billed yet</h2>
-      <p>
-        The Webilo Communications API is in free early access while we learn real usage patterns.
-        Usage-based billing isn't live — this project's sends are not currently charged.
+      <div className="dev-api-billing__badge">Estimate only — not charged automatically yet</div>
+      <p className="dev-api-billing__intro">
+        What {formatPeriod(bill.period)} would cost at current pricing, based on what's already
+        been sent this period. Nothing has been charged — automatic billing isn't live yet.
       </p>
-      <p>
-        When billing does launch, you'll see a clear notice here first and nothing will change
-        automatically without it.
+
+      <table className="dev-api-billing__table">
+        <thead>
+          <tr>
+            <th>Channel</th>
+            <th>Free allowance</th>
+            <th>Used</th>
+            <th>Billable</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bill.lineItems.map((item) => (
+            <tr key={item.metric}>
+              <td>{item.label}</td>
+              <td>{item.freeAllowance.toLocaleString()}</td>
+              <td>{item.used.toLocaleString()}</td>
+              <td>{item.billable.toLocaleString()}</td>
+              <td>{formatCents(item.amountCents, bill.currency)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={4}>Estimated total</td>
+            <td>{formatCents(bill.totalCents, bill.currency)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p className="dev-api-billing__note">
+        When automatic billing launches, you'll see a clear notice here first and nothing will
+        change without it.
       </p>
     </section>
   );
+}
+
+function formatCents(cents, currency) {
+  return new Intl.NumberFormat("en-ZA", { style: "currency", currency }).format((cents || 0) / 100);
 }
 
 function formatPeriod(period) {

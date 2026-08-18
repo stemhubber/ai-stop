@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { generateApiKey } = require("./apiKeys");
 const { getUsage } = require("./usage");
+const { calculateBill } = require("./billing");
 
 // Mirrors functions/index.js's requireAuth (Firebase ID token via Authorization: Bearer),
 // duplicated rather than imported/exported from index.js — index.js's module.exports
@@ -138,6 +139,28 @@ router.get("/projects/:projectId/usage", async (req, res) => {
     if (error.statusCode) return res.status(error.statusCode).json({ error: error.message });
     console.error("GET /developer/projects/:projectId/usage failed", error);
     return res.status(500).json({ error: "Could not look up usage." });
+  }
+});
+
+// GET /developer/projects/:projectId/billing?period=YYYY-MM — what this project would owe
+// for the period, computed from the same usage getUsage() already reads. Estimate only:
+// nothing here charges anyone (see billing.js's header comment for why the actual charge is
+// a deliberately separate, unbuilt piece).
+router.get("/projects/:projectId/billing", async (req, res) => {
+  try {
+    const db = getFirestore();
+    await ownedProject(db, req.user.uid, req.params.projectId);
+    const requestedPeriod = req.query.period;
+    if (requestedPeriod && !/^\d{4}-\d{2}$/.test(String(requestedPeriod))) {
+      return res.status(400).json({ error: "`period` must be in YYYY-MM format.", code: "INVALID_PERIOD" });
+    }
+    const usage = await getUsage(req.params.projectId, requestedPeriod);
+    const bill = calculateBill(usage);
+    return res.json({ period: usage.period, ...bill });
+  } catch (error) {
+    if (error.statusCode) return res.status(error.statusCode).json({ error: error.message });
+    console.error("GET /developer/projects/:projectId/billing failed", error);
+    return res.status(500).json({ error: "Could not calculate billing." });
   }
 });
 

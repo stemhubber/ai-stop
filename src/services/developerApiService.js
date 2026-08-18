@@ -50,3 +50,8 @@ export function getProjectUsage(projectId, period) {
   const query = period ? `?period=${encodeURIComponent(period)}` : "";
   return authedFetch(`/developer/projects/${encodeURIComponent(projectId)}/usage${query}`);
 }
+
+export function getProjectBilling(projectId, period) {
+  const query = period ? `?period=${encodeURIComponent(period)}` : "";
+  return authedFetch(`/developer/projects/${encodeURIComponent(projectId)}/billing${query}`);
+}
