@@ -1,13 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "messages",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "providerMessageId", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "followups",
       "queryScope": "COLLECTION",
       "fields": [
@@ -28,5 +21,14 @@
       "density": "SPARSE_ALL"
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "providerMessageId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
 }
