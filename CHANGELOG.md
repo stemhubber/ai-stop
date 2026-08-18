@@ -39,11 +39,11 @@ this is an additive interface over infrastructure that already existed
 - `POST /webhooks/resend` — delivery-status updates (sent/delivered/bounced)
   from Resend, matched back to a message via a Firestore collection-group
   query on `providerMessageId`. Signature verification implements Svix's
-  HMAC scheme directly rather than adding the `svix` package. **Requires the
-  new `firestore.indexes.json` index to actually be deployed**
-  (`firebase deploy --only firestore:indexes`) before this works in
-  production — the emulator doesn't enforce missing indexes the way
-  production Firestore does.
+  HMAC scheme directly rather than adding the `svix` package. Needs a field
+  override (not a composite index — Firestore rejects that for a
+  single-field collection-group query) declared in `firestore.indexes.json`
+  and deployed; rules, indexes, and the `RESEND_WEBHOOK_SECRET` secret have
+  since been deployed to `smart-shop-bb140`.
 - `POST /webhooks/twilio-status` — sent/delivered/failed/undelivered
   updates from Twilio, matched back to a message the same way as the
   Resend webhook. `twilioSender.js`'s `sendSMS`/`sendWhatsApp` now accept
@@ -59,11 +59,19 @@ this is an additive interface over infrastructure that already existed
 - `GET /v1/messages` — cursor-paginated (`?limit=&cursor=`), ordered
   newest first; the cursor is just a previously returned message's `id`.
   No `type`/`status` filtering yet (see "Not yet included").
+- `GET /v1/usage` — was in the original endpoint list and never built;
+  `recordUsage` was already writing counts, nothing read them back.
+  Optional `?period=YYYY-MM` (validated), defaults to the current month;
+  a period with no data returns zeros rather than 404.
+- `functions/scripts/revokeApiKey.js` — sets an API key's status to
+  `"revoked"`, which `requireApiKey` already rejected identically to an
+  unrecognized key; there was previously no way to do this short of a
+  manual Firestore console edit.
 
 ### Not yet included
 
 - Self-serve project/API-key management (currently manual, via the
-  provisioning script).
+  provisioning/revocation scripts).
 - `type`/`status` filtering on `GET /v1/messages` — needs a composite
   Firestore index per filter field, deferred until one is actually
   declared and deployed rather than shipped unverified.
