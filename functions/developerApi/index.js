@@ -1,6 +1,6 @@
 const express = require("express");
 const { requireApiKey } = require("./auth");
-const { recordMessage, getMessage, listMessages } = require("./messages");
+const { recordMessage, getMessage, listMessages, FILTERABLE_TYPES, FILTERABLE_STATUSES } = require("./messages");
 const { respondToProviderError } = require("./providerErrors");
 const { withIdempotency } = require("./idempotency");
 const { requireRateLimit } = require("./rateLimit");
@@ -137,10 +137,23 @@ router.get("/usage", async (req, res) => {
 
 router.get("/messages", async (req, res) => {
   try {
+    const { type, status } = req.query;
+    if (type && status) {
+      return res.status(400).json({ error: "Filter by `type` or `status`, not both.", code: "INVALID_FILTER" });
+    }
+    if (type && !FILTERABLE_TYPES.includes(String(type))) {
+      return res.status(400).json({ error: `\`type\` must be one of: ${FILTERABLE_TYPES.join(", ")}.`, code: "INVALID_FILTER" });
+    }
+    if (status && !FILTERABLE_STATUSES.includes(String(status))) {
+      return res.status(400).json({ error: `\`status\` must be one of: ${FILTERABLE_STATUSES.join(", ")}.`, code: "INVALID_FILTER" });
+    }
+
     const result = await listMessages({
       projectId: req.developerProject.projectId,
       limit: req.query.limit,
       cursorId: req.query.cursor,
+      type,
+      status,
     });
     return res.json(result);
   } catch (err) {

@@ -43,22 +43,30 @@ async function getMessage(projectId, messageId) {
 
 const DEFAULT_LIST_LIMIT = 20;
 const MAX_LIST_LIMIT = 100;
+const FILTERABLE_TYPES = ["email", "sms", "whatsapp"];
+const FILTERABLE_STATUSES = ["accepted", "sent", "delivered", "failed", "bounced"];
 
-// No type/status filtering yet — that would need a composite index per filter field
-// (equality filter + orderBy on a different field isn't covered by Firestore's automatic
-// single-field indexing) declared in firestore.indexes.json and actually deployed, which
-// isn't verifiable from here. Plain createdAt-ordered pagination needs no such index.
+// type and status are mutually exclusive, not because both together is meaningless, but
+// because a query filtering on both plus orderBy(createdAt) would need its own 3-field
+// composite index beyond the two 2-field ones declared in firestore.indexes.json — deferred
+// rather than adding index surface for a combination nothing has asked for yet.
 //
 // cursorId is simply the `id` of the last message already returned — the caller doesn't need
 // to construct or parse an opaque cursor. Passing a DocumentSnapshot to startAfter() makes
 // Firestore implicitly tie-break on document id too, so same-millisecond createdAt values
 // (unlikely at nanosecond Timestamp precision, but not impossible) can't cause a skipped or
 // duplicated row at a page boundary.
-async function listMessages({ projectId, limit, cursorId }) {
+async function listMessages({ projectId, limit, cursorId, type, status }) {
   const db = getFirestore();
   const boundedLimit = Math.min(Math.max(Number(limit) || DEFAULT_LIST_LIMIT, 1), MAX_LIST_LIMIT);
   const collectionRef = db.collection("projects").doc(projectId).collection("messages");
   let query = collectionRef.orderBy("createdAt", "desc");
+
+  if (type) {
+    query = collectionRef.where("type", "==", type).orderBy("createdAt", "desc");
+  } else if (status) {
+    query = collectionRef.where("status", "==", status).orderBy("createdAt", "desc");
+  }
 
   if (cursorId) {
     const cursorSnapshot = await collectionRef.doc(String(cursorId)).get();
@@ -75,4 +83,4 @@ async function listMessages({ projectId, limit, cursorId }) {
   return { data, nextCursor: data.length === boundedLimit ? data[data.length - 1].id : null };
 }
 
-module.exports = { recordMessage, getMessage, listMessages };
+module.exports = { recordMessage, getMessage, listMessages, FILTERABLE_TYPES, FILTERABLE_STATUSES };
