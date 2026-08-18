@@ -58,7 +58,6 @@ this is an additive interface over infrastructure that already existed
   same way `/v1/sms` is.
 - `GET /v1/messages` — cursor-paginated (`?limit=&cursor=`), ordered
   newest first; the cursor is just a previously returned message's `id`.
-  No `type`/`status` filtering yet (see "Not yet included").
 - `GET /v1/usage` — was in the original endpoint list and never built;
   `recordUsage` was already writing counts, nothing read them back.
   Optional `?period=YYYY-MM` (validated), defaults to the current month;
@@ -67,14 +66,19 @@ this is an additive interface over infrastructure that already existed
   `"revoked"`, which `requireApiKey` already rejected identically to an
   unrecognized key; there was previously no way to do this short of a
   manual Firestore console edit.
+- `type`/`status` filtering on `GET /v1/messages` (`?type=` or `?status=`,
+  mutually exclusive), backed by two new composite indexes in
+  `firestore.indexes.json`.
+- Self-serve project/API-key management, mounted at `/developer` and
+  gated by a Firebase ID token (not `/v1`'s `x-api-key`) — creating and
+  listing projects, issuing keys (raw value shown once), and revoking
+  them, all scoped so one owner can never see or touch another owner's
+  projects/keys. Backend routes only; no UI yet, and no access/billing
+  gate — any signed-in Webilo user can create a project today.
 
 ### Not yet included
 
-- Self-serve project/API-key management (currently manual, via the
-  provisioning/revocation scripts).
-- `type`/`status` filtering on `GET /v1/messages` — needs a composite
-  Firestore index per filter field, deferred until one is actually
-  declared and deployed rather than shipped unverified.
+- A developer portal UI for the self-serve routes above.
 - A `functions/.secret.local` file must exist locally (gitignored, not
   committed) with placeholder provider secrets before running the Functions
   emulator, so local/emulator runs never fetch real Resend/Twilio credentials
