@@ -59,56 +59,67 @@ router.post("/email", async (req, res) => {
   }
 });
 
-router.post("/sms", async (req, res) => {
-  try {
-    const { to, text } = req.body || {};
-    if (!String(text || "").trim()) {
-      return res.status(400).json({ error: "Provide `text` content.", code: "MISSING_CONTENT" });
-    }
+// Shared by /sms and /whatsapp — identical shape once you account for which provider method
+// to call and what to label the message/usage record as. Factored out here (rather than in
+// email's handler too) specifically because both Twilio channels go through the same
+// e164()-validation-error/statusCallback/recordMessage/recordUsage sequence; email's is
+// different enough (its own recipient pattern, no statusCallback) that sharing it would cost
+// more in indirection than it'd save.
+function createTwilioSendHandler({ channel, providerMethod }) {
+  return async (req, res) => {
+    try {
+      const { to, text } = req.body || {};
+      if (!String(text || "").trim()) {
+        return res.status(400).json({ error: "Provide `text` content.", code: "MISSING_CONTENT" });
+      }
 
-    const idempotencyKey = req.headers["idempotency-key"] || null;
-    const { replayed, response } = await withIdempotency({
-      projectId: req.developerProject.projectId,
-      idempotencyKey,
-      handler: async () => {
-        const provider = getMessagingProvider();
-        let result;
-        try {
-          result = await provider.sendSms({ to, body: text, statusCallback: twilioStatusCallbackUrl() });
-        } catch (err) {
-          // e164() in twilioSender.js throws a plain Error (no .code) for a malformed
-          // recipient; anything with a .code is a real provider/config failure.
-          if (!err.code) {
-            const validationError = new Error(err.message);
-            validationError.code = "INVALID_RECIPIENT";
-            validationError.statusCode = 400;
-            throw validationError;
+      const idempotencyKey = req.headers["idempotency-key"] || null;
+      const { replayed, response } = await withIdempotency({
+        projectId: req.developerProject.projectId,
+        idempotencyKey,
+        handler: async () => {
+          const provider = getMessagingProvider();
+          let result;
+          try {
+            result = await provider[providerMethod]({ to, body: text, statusCallback: twilioStatusCallbackUrl() });
+          } catch (err) {
+            // e164() in twilioSender.js throws a plain Error (no .code) for a malformed
+            // recipient; anything with a .code is a real provider/config failure.
+            if (!err.code) {
+              const validationError = new Error(err.message);
+              validationError.code = "INVALID_RECIPIENT";
+              validationError.statusCode = 400;
+              throw validationError;
+            }
+            throw err;
           }
-          throw err;
-        }
 
-        const id = await recordMessage({
-          projectId: req.developerProject.projectId,
-          type: "sms",
-          destination: to,
-          provider: "twilio",
-          status: "accepted",
-          idempotencyKey,
-          providerMessageId: result?.sid || null,
-        });
-        await recordUsage(req.developerProject.projectId, "sms");
-        return { id, status: "accepted" };
-      },
-    });
+          const id = await recordMessage({
+            projectId: req.developerProject.projectId,
+            type: channel,
+            destination: to,
+            provider: "twilio",
+            status: "accepted",
+            idempotencyKey,
+            providerMessageId: result?.sid || null,
+          });
+          await recordUsage(req.developerProject.projectId, channel);
+          return { id, status: "accepted" };
+        },
+      });
 
-    return res.status(replayed ? 200 : 202).json(response);
-  } catch (err) {
-    if (err.statusCode) {
-      return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return res.status(replayed ? 200 : 202).json(response);
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      return respondToProviderError(res, channel, err);
     }
-    return respondToProviderError(res, "sms", err);
-  }
-});
+  };
+}
+
+router.post("/sms", createTwilioSendHandler({ channel: "sms", providerMethod: "sendSms" }));
+router.post("/whatsapp", createTwilioSendHandler({ channel: "whatsapp", providerMethod: "sendWhatsApp" }));
 
 router.get("/messages/:id", async (req, res) => {
   try {
