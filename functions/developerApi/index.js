@@ -1,6 +1,6 @@
 const express = require("express");
 const { requireApiKey } = require("./auth");
-const { recordMessage, getMessage } = require("./messages");
+const { recordMessage, getMessage, listMessages } = require("./messages");
 const { respondToProviderError } = require("./providerErrors");
 const { withIdempotency } = require("./idempotency");
 const { requireRateLimit } = require("./rateLimit");
@@ -120,6 +120,20 @@ function createTwilioSendHandler({ channel, providerMethod }) {
 
 router.post("/sms", createTwilioSendHandler({ channel: "sms", providerMethod: "sendSms" }));
 router.post("/whatsapp", createTwilioSendHandler({ channel: "whatsapp", providerMethod: "sendWhatsApp" }));
+
+router.get("/messages", async (req, res) => {
+  try {
+    const result = await listMessages({
+      projectId: req.developerProject.projectId,
+      limit: req.query.limit,
+      cursorId: req.query.cursor,
+    });
+    return res.json(result);
+  } catch (err) {
+    console.error("GET /v1/messages failed", err);
+    return res.status(500).json({ error: "Could not list messages." });
+  }
+});
 
 router.get("/messages/:id", async (req, res) => {
   try {
