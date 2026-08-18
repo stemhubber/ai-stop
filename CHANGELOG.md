@@ -56,12 +56,17 @@ this is an additive interface over infrastructure that already existed
   wraps around `getMessagingProvider().sendWhatsApp`/`sendSms`. Covered by
   the Twilio status-callback webhook and usage/rate-limit tracking the
   same way `/v1/sms` is.
+- `GET /v1/messages` — cursor-paginated (`?limit=&cursor=`), ordered
+  newest first; the cursor is just a previously returned message's `id`.
+  No `type`/`status` filtering yet (see "Not yet included").
 
 ### Not yet included
 
 - Self-serve project/API-key management (currently manual, via the
   provisioning script).
-- Message history / listing (`GET /v1/messages` beyond a single id).
+- `type`/`status` filtering on `GET /v1/messages` — needs a composite
+  Firestore index per filter field, deferred until one is actually
+  declared and deployed rather than shipped unverified.
 - A `functions/.secret.local` file must exist locally (gitignored, not
   committed) with placeholder provider secrets before running the Functions
   emulator, so local/emulator runs never fetch real Resend/Twilio credentials
