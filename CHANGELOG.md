@@ -44,17 +44,19 @@ this is an additive interface over infrastructure that already existed
   (`firebase deploy --only firestore:indexes`) before this works in
   production — the emulator doesn't enforce missing indexes the way
   production Firestore does.
+- `POST /webhooks/twilio-status` — sent/delivered/failed/undelivered
+  updates from Twilio, matched back to a message the same way as the
+  Resend webhook. `twilioSender.js`'s `sendSMS`/`sendWhatsApp` now accept
+  an optional `statusCallback`, passed through only by `/v1/sms` — the
+  internal `/messages/send` route's existing Twilio sends are unaffected.
+  Verifies `X-Twilio-Signature` via the `twilio` package's own
+  `validateRequest` (already a dependency).
 
 ### Not yet included
 
 - Self-serve project/API-key management (currently manual, via the
   provisioning script).
 - Message history / listing (`GET /v1/messages` beyond a single id).
-- Twilio delivery-status callbacks — unlike Resend's single webhook
-  endpoint, this means passing a `statusCallback` URL on every outbound
-  Twilio send, which touches `twilioSender.js`'s shared `sendSMS`/
-  `sendWhatsApp` — also used by the internal `/messages/send` route — so
-  it's being treated as its own change rather than bundled in here.
 - `/v1/whatsapp`.
 - A `functions/.secret.local` file must exist locally (gitignored, not
   committed) with placeholder provider secrets before running the Functions
