@@ -6,6 +6,7 @@ const { withIdempotency } = require("./idempotency");
 const { requireRateLimit } = require("./rateLimit");
 const { recordUsage } = require("./usage");
 const { getMessagingProvider } = require("../providers/messaging");
+const { twilioStatusCallbackUrl } = require("./webhooks");
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -73,7 +74,7 @@ router.post("/sms", async (req, res) => {
         const provider = getMessagingProvider();
         let result;
         try {
-          result = await provider.sendSms({ to, body: text });
+          result = await provider.sendSms({ to, body: text, statusCallback: twilioStatusCallbackUrl() });
         } catch (err) {
           // e164() in twilioSender.js throws a plain Error (no .code) for a malformed
           // recipient; anything with a .code is a real provider/config failure.

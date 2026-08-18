@@ -3,8 +3,8 @@ const resend = require("./resend");
 
 const providers = {
   twilio: {
-    sendSms: ({ to, body }) => sendSMS(to, body),
-    sendWhatsApp: ({ to, body }) => sendWhatsApp(to, body),
+    sendSms: ({ to, body, statusCallback }) => sendSMS(to, body, { statusCallback }),
+    sendWhatsApp: ({ to, body, statusCallback }) => sendWhatsApp(to, body, { statusCallback }),
     sendEmail: resend.sendEmail,
   },
 };

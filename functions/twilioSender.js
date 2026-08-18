@@ -50,7 +50,7 @@ function e164(value, label) {
   return normalized;
 }
 
-async function sendSMS(to, message) {
+async function sendSMS(to, message, { statusCallback } = {}) {
   const body = String(message || "").trim();
   if (!body || body.length > 1600) {
     throw new Error("Enter an SMS message under 1600 characters.");
@@ -60,10 +60,11 @@ async function sendSMS(to, message) {
     to: e164(to, "SMS recipient"),
     from: e164(TWILIO_FROM.value(), "Twilio SMS sender"),
     body,
+    ...(statusCallback ? { statusCallback } : {}),
   });
 }
 
-async function sendWhatsApp(to, message) {
+async function sendWhatsApp(to, message, { statusCallback } = {}) {
   const body = String(message || "").trim();
   if (!body || body.length > 4096) {
     throw new Error("Enter a WhatsApp message under 4096 characters.");
@@ -73,6 +74,7 @@ async function sendWhatsApp(to, message) {
     to: `whatsapp:${e164(to, "WhatsApp recipient")}`,
     from: `whatsapp:${e164(TWILIO_WHATSAPP_FROM.value(), "Twilio WhatsApp sender")}`,
     body,
+    ...(statusCallback ? { statusCallback } : {}),
   });
 }
 
