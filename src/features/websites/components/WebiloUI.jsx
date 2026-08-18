@@ -184,6 +184,7 @@ export function AppLayout({ children }) {
           ))}
           <p className="wl-nav-label">Manage</p>
           <NavLink to="/onboarding"><Icon name="plus" /><span>Add business</span></NavLink>
+          <NavLink to="/webilo-apis"><Icon name="external" /><span>Webilo APIs</span></NavLink>
           <NavLink to="/usage"><Icon name="clock" /><span>Usage</span></NavLink>
           <NavLink to="/profile"><Icon name="settings" /><span>Account settings</span></NavLink>
           <NavLink to="/pro" className={({ isActive }) => `wl-pro-nav ${isActive ? "active" : ""}`}>
