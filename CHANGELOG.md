@@ -51,13 +51,17 @@ this is an additive interface over infrastructure that already existed
   internal `/messages/send` route's existing Twilio sends are unaffected.
   Verifies `X-Twilio-Signature` via the `twilio` package's own
   `validateRequest` (already a dependency).
+- `POST /v1/whatsapp` — same request/response shape as `/v1/sms`, sharing
+  its handler (`createTwilioSendHandler`) now that both are near-identical
+  wraps around `getMessagingProvider().sendWhatsApp`/`sendSms`. Covered by
+  the Twilio status-callback webhook and usage/rate-limit tracking the
+  same way `/v1/sms` is.
 
 ### Not yet included
 
 - Self-serve project/API-key management (currently manual, via the
   provisioning script).
 - Message history / listing (`GET /v1/messages` beyond a single id).
-- `/v1/whatsapp`.
 - A `functions/.secret.local` file must exist locally (gitignored, not
   committed) with placeholder provider secrets before running the Functions
   emulator, so local/emulator runs never fetch real Resend/Twilio credentials
