@@ -3,6 +3,9 @@ const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const PLAN_CATALOG = {
   core: {
     id: "core",
+    entitlements: {
+      paidCheckout: false,
+    },
     limits: {
       aiRequests: 30,
       aiTokens: 150000,
@@ -14,6 +17,9 @@ const PLAN_CATALOG = {
     id: "pro",
     price: 299,
     periodDays: 30,
+    entitlements: {
+      paidCheckout: true,
+    },
     limits: {
       aiRequests: 500,
       aiTokens: 2000000,

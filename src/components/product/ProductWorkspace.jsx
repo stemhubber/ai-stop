@@ -9,7 +9,12 @@ import BusinessAdvisor from "./BusinessAdvisor";
 import WebiloAnimatedLogo from "../WebiloAnimatedLogo";
 import VoiceInput from "../VoiceInput";
 import { FeatureGate, ProPrompt } from "../../features/plans/PlanUI";
+import { usePlan } from "../../context/PlanContext";
 import { buildLaunchPath, JOURNEY_RESOURCES } from "./businessJourney";
+import {
+  connectPaystackSubaccount,
+  getPaymentConnection,
+} from "../../services/paymentConnectionService";
 import "./product.css";
 
 const TAB_MODULES = {
@@ -51,7 +56,7 @@ const MODULE_DETAILS = {
   marketing: ["Campaigns", "Saved marketing campaigns", "sparkles"],
   analytics: ["Analytics", "Live business performance", "grid"],
   ai: ["AI tools", "Image import and assisted setup", "sparkles"],
-  payments: ["Payments", "Online checkout integration", "settings"],
+  payments: ["Online checkout", "Cart and webhook-confirmed Paystack payments", "settings"],
 };
 
 export default function ProductWorkspace() {
@@ -250,6 +255,7 @@ export default function ProductWorkspace() {
               modules={modules}
               setModules={setModules}
               onOpen={setTab}
+              onBusinessSaved={refreshBusinesses}
             />
           )}
         </main>
@@ -538,23 +544,71 @@ function BusinessProfile({ business, onSaved }) {
   );
 }
 
-function ModuleSettings({ businessId, modules, setModules, onOpen }) {
+function ModuleSettings({ businessId, modules, setModules, onOpen, onBusinessSaved }) {
   const [pendingId, setPendingId] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [paymentConnection, setPaymentConnection] = useState(null);
+  const [subaccountCode, setSubaccountCode] = useState("");
+  const [connectionState, setConnectionState] = useState("loading");
+  const { can } = usePlan();
+
+  useEffect(() => {
+    let cancelled = false;
+    setConnectionState("loading");
+    getPaymentConnection(businessId)
+      .then((connection) => {
+        if (!cancelled) {
+          setPaymentConnection(connection);
+          setConnectionState("ready");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setConnectionState("ready");
+      });
+    return () => { cancelled = true; };
+  }, [businessId]);
 
   const toggle = async (module) => {
-    if (module.moduleId === "payments") return;
+    if (module.moduleId === "payments" && !can("paidCheckout")) {
+      setFeedback("Online checkout requires Webilo Pro.");
+      return;
+    }
+    if (module.moduleId === "payments" && paymentConnection?.status !== "connected") {
+      setFeedback("Connect a Paystack settlement account before enabling checkout.");
+      return;
+    }
     const nextEnabled = !module.enabled;
     setPendingId(module.id);
     setFeedback("");
     try {
       await setModuleEnabled(businessId, module.moduleId, nextEnabled);
+      if (module.moduleId === "payments") {
+        await updateBusiness(businessId, { checkoutEnabled: nextEnabled });
+        await onBusinessSaved?.();
+      }
       setModules((all) => all.map((item) => item.id === module.id ? { ...item, enabled: nextEnabled } : item));
       setFeedback(`${MODULE_DETAILS[module.moduleId]?.[0] || module.moduleId} ${nextEnabled ? "enabled" : "disabled"}.`);
     } catch (error) {
       setFeedback(error.message || "The module could not be updated.");
     } finally {
       setPendingId("");
+    }
+  };
+
+  const connectPayments = async () => {
+    setConnectionState("saving");
+    setFeedback("");
+    try {
+      const connection = await connectPaystackSubaccount(businessId, subaccountCode.trim());
+      setPaymentConnection(connection);
+      setSubaccountCode("");
+      setFeedback(`Paystack settlement connected for ${connection.businessName || "this business"}. Enable checkout when ready.`);
+      setModules((all) => all.map((item) => item.moduleId === "payments" ? { ...item, enabled: false } : item));
+      await onBusinessSaved?.();
+    } catch (error) {
+      setFeedback(error.message || "Paystack could not be connected.");
+    } finally {
+      setConnectionState("ready");
     }
   };
 
@@ -569,20 +623,35 @@ function ModuleSettings({ businessId, modules, setModules, onOpen }) {
       <div className="product-module-grid">
         {modules.map((module) => {
           const [title, description, icon] = MODULE_DETAILS[module.moduleId] || [module.moduleId, "Business capability", "grid"];
-          const comingSoon = module.moduleId === "payments";
+          const proLocked = module.moduleId === "payments" && !can("paidCheckout");
           return (
             <article className={`product-module-card ${module.enabled ? "active" : ""}`} key={module.id}>
               <span><Icon name={icon} /></span>
               <div>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <small>{comingSoon ? "Coming soon" : module.enabled ? "Connected" : "Not shown in workspace"}</small>
+                <small>{proLocked ? "Webilo Pro" : module.enabled ? "Connected" : "Not shown in workspace"}</small>
               </div>
-              <label className="wb-toggle" title={comingSoon ? "Coming soon" : `${module.enabled ? "Disable" : "Enable"} ${title}`}>
-                <input type="checkbox" checked={module.enabled && !comingSoon} disabled={comingSoon || pendingId === module.id} onChange={() => toggle(module)} />
+              <label className="wb-toggle" title={proLocked ? "Upgrade to Pro to enable checkout" : `${module.enabled ? "Disable" : "Enable"} ${title}`}>
+                <input type="checkbox" checked={module.enabled && !proLocked} disabled={proLocked || pendingId === module.id || (module.moduleId === "payments" && paymentConnection?.status !== "connected")} onChange={() => toggle(module)} />
                 <span className="wb-toggle-track" />
                 <span className="wb-toggle-thumb" />
               </label>
+              {module.moduleId === "payments" && !proLocked && (
+                <div className="product-payment-connect">
+                  {paymentConnection?.status === "connected" ? (
+                    <p><Icon name="check" size={14} /> Settlement connected to <strong>{paymentConnection.businessName || paymentConnection.subaccountCode}</strong></p>
+                  ) : (
+                    <>
+                      <p>Connect a Paystack subaccount belonging to this integration. Customer revenue settles to that account.</p>
+                      <div>
+                        <input className="wb-input" value={subaccountCode} onChange={(event) => setSubaccountCode(event.target.value)} placeholder="ACCT_…" aria-label="Paystack subaccount code" />
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" disabled={connectionState === "saving" || !subaccountCode.trim()} onClick={connectPayments}>{connectionState === "saving" ? "Checking…" : "Connect"}</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               {module.enabled && TAB_MODULES && Object.values(TAB_MODULES).includes(module.moduleId) && (
                 <button onClick={() => onOpen(Object.keys(TAB_MODULES).find((tab) => TAB_MODULES[tab] === module.moduleId))}>Open</button>
               )}

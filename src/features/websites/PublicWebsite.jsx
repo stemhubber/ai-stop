@@ -6,6 +6,8 @@ import { submitPublicBusinessRequest } from "../../services/commerceService";
 import WebsitePreview from "./components/WebsitePreview";
 import { EmptyState, Icon } from "./components/WebiloUI";
 import WebiloAnimatedLogo from "../../components/WebiloAnimatedLogo";
+import PublicCheckoutPanel from "../commerce/PublicCheckoutPanel";
+import { checkoutEligible, useCommerceCart } from "../commerce/cart";
 
 const emptyRequest = {
   name: "",
@@ -33,6 +35,7 @@ export default function PublicWebsite() {
   const [requestState, setRequestState] = useState("idle");
   const [requestMessage, setRequestMessage] = useState("");
   const [pendingTarget, setPendingTarget] = useState("");
+  const cart = useCommerceCart(business?.slug || slug);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +106,10 @@ export default function PublicWebsite() {
   };
 
   const chooseProduct = (product) => {
+    if (business?.checkoutEnabled && checkoutEligible(product)) {
+      cart.add(product);
+      return;
+    }
     setRequest((current) => ({
       ...current,
       requestType: "order",
@@ -268,8 +275,10 @@ export default function PublicWebsite() {
         products={products}
         services={services}
         contactForm={contactForm}
+        checkoutEnabled={business?.checkoutEnabled}
         interactive={false}
       />
+      <PublicCheckoutPanel business={business} cart={cart} accentColor={project.theme.primary} />
     </main>
   );
 }

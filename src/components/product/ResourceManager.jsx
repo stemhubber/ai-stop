@@ -435,6 +435,12 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                         {record.fulfilment.requestedStartTime ? ` · ${formatDate(record.fulfilment.requestedStartTime)}` : ""}
                       </small>
                     )}
+                    {resource === "orders" && record.paymentStatus && (
+                      <small className="product-record-detail">
+                        Payment: {label(record.paymentStatus)}
+                        {record.payment?.channel ? ` · ${label(record.payment.channel)}` : ""}
+                      </small>
+                    )}
                     {resource === "bookings" && record.startTime && (
                       <small className="product-record-detail">{formatDate(record.startTime)}</small>
                     )}

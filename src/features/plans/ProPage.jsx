@@ -6,10 +6,11 @@ import { PlanBadge } from "./PlanUI";
 import "./plans.css";
 
 const proCapabilities = [
+  ["grid", "Paid customer checkout", "Multi-item cart, server-priced checkout, and webhook-confirmed Paystack payments.", "Available now"],
   ["grid", "Advanced insights", "Order completion, customer value, conversion, and operational trends.", "Available now"],
   ["sparkles", "More AI capacity", "Higher monthly limits for business setup, content, images, and voice.", "Available now"],
   ["clock", "Automations", "Reminders, review requests, and follow-ups triggered by business activity.", "Coming next"],
-  ["site", "Growth tools", "Custom domains, branding controls, customer segments, and paid checkout.", "Coming next"],
+  ["site", "Growth tools", "Custom domains, branding controls, and customer segments.", "Coming next"],
   ["settings", "Team controls", "Staff access, roles, assignments, and an accountable activity history.", "Coming next"],
   ["clock", "Advanced bookings", "Availability, deposits, staff calendars, reminders, and rescheduling.", "Coming next"],
 ];
@@ -18,6 +19,7 @@ const comparison = [
   ["Business workspace", true, true],
   ["Connected website", true, true],
   ["Orders and booking requests", true, true],
+  ["Cart and Paystack checkout", false, true],
   ["AI actions each month", "30", "500"],
   ["Messages each month", "25", "1,000"],
   ["Advanced analytics", false, true],

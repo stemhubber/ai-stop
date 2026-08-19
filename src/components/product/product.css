@@ -933,6 +933,24 @@
   cursor: pointer;
 }
 
+.product-payment-connect {
+  grid-column: 1 / -1;
+  padding-top: 14px;
+  border-top: 1px solid var(--wb-border);
+}
+
+.product-payment-connect > p {
+  color: var(--wb-muted);
+  font-size: 12px;
+}
+
+.product-payment-connect > div {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
 .product-inline-status {
   margin: -8px 0 18px;
   padding: 10px 12px;

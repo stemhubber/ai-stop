@@ -51,6 +51,7 @@ export default function WebsitePreview({
   products = [],
   services = [],
   contactForm,
+  checkoutEnabled = false,
   interactive = true,
 }) {
   if (!project || !page) return null;
@@ -178,7 +179,7 @@ export default function WebsitePreview({
                   {product.description && <p>{product.description}</p>}
                   <footer>
                     <strong>{offerPrice(product)}</strong>
-                    <button type="button" style={{ background: project.theme.primary }} onClick={() => onChooseProduct?.(product)}>{product.pricingMode === "quote" ? "Request quote" : "Place order"}</button>
+                    <button type="button" style={{ background: project.theme.primary }} onClick={() => onChooseProduct?.(product)}>{checkoutEnabled && product.pricingMode === "fixed" && Number(product.price) > 0 ? "Add to cart" : product.pricingMode === "quote" ? "Request quote" : "Place order"}</button>
                   </footer>
                 </div>
               </article>

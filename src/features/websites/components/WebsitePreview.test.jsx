@@ -65,3 +65,17 @@ test("connects public menu and contact actions", () => {
   fireEvent.click(screen.getAllByRole("button", { name: "Get in touch" })[0]);
   expect(onNavigate).toHaveBeenCalledWith("contact");
 });
+
+test("shows add to cart for checkout-enabled fixed-price offers", () => {
+  render(
+    <WebsitePreview
+      project={project}
+      page={project.pages[0]}
+      products={[{ id: "meal-1", name: "Lunch box", price: 12500, pricingMode: "fixed" }]}
+      checkoutEnabled
+      interactive={false}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "Add to cart" })).toBeInTheDocument();
+});
