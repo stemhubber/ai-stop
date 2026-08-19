@@ -23,6 +23,7 @@ import { useAuth } from "./context/AuthContext";
 import { LoadingScreen } from "./features/websites/components/WebiloUI";
 import ProPage from "./features/plans/ProPage";
 import UsagePage from "./features/plans/UsagePage";
+import CommerceCheckoutComplete from "./features/commerce/CommerceCheckoutComplete";
 import DeveloperApiPage from "./features/developerApi/DeveloperApiPage";
 
 function EntryRoute({ children }) {
@@ -51,6 +52,7 @@ function App() {
           {/* Billing */}
           <Route path="/billing" element={<RequireAuth><BillingPage/></RequireAuth>}/>
           <Route path="/payment-complete" element={<RequireAuth><PaymentComplete/></RequireAuth>}/>
+          <Route path="/checkout-complete" element={<CommerceCheckoutComplete />} />
           <Route path="/app" element={<RequireAuth><Navigate to="/business" replace /></RequireAuth>} />
           <Route path="/websites" element={<RequireAuth><WebsiteDashboard /></RequireAuth>} />
           <Route path="/create" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />

@@ -38,7 +38,7 @@ export const PLAN_CATALOG = {
   pro: {
     id: "pro",
     name: "Pro",
-    description: "Higher limits, deeper insights, and early access to new growth tools.",
+    description: "Higher limits, deeper insights, and online customer checkout.",
     price: 299,
     periodDays: 30,
     limits: {
@@ -63,7 +63,7 @@ export const PLAN_CATALOG = {
       customDomain: false,
       removeBranding: false,
       teamMembers: false,
-      paidCheckout: false,
+      paidCheckout: true,
       advancedBookings: false,
     },
   },

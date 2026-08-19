@@ -12,6 +12,8 @@ service cloud.firestore {
         request.resource.data.status == resource.data.status ||
         (resource.data.status in ["requested", "pending"] &&
          request.resource.data.status in ["confirmed", "cancelled"]) ||
+        (resource.data.status == "awaiting_payment" &&
+         request.resource.data.status == "cancelled") ||
         (resource.data.status == "confirmed" &&
          request.resource.data.status in ["processing", "completed", "cancelled"]) ||
         (resource.data.status == "processing" &&
@@ -28,7 +30,9 @@ service cloud.firestore {
           request.resource.data.items == resource.data.items &&
           request.resource.data.pricingSnapshot == resource.data.pricingSnapshot &&
           request.resource.data.total == resource.data.total &&
-          request.resource.data.currency == resource.data.currency
+          request.resource.data.currency == resource.data.currency &&
+          request.resource.data.payment == resource.data.payment &&
+          request.resource.data.paymentStatus == resource.data.paymentStatus
         );
     }
 
@@ -127,6 +131,11 @@ service cloud.firestore {
         allow update: if ownsBusiness(businessId) &&
           validOrderStatusTransition() &&
           preservesOrderSnapshot();
+
+        match /events/{eventId} {
+          allow read: if ownsBusiness(businessId);
+          allow write: if false;
+        }
       }
 
       match /bookings/{itemId} {
@@ -134,8 +143,27 @@ service cloud.firestore {
         allow create: if ownsBusiness(businessId);
       }
 
-      match /{document=**} {
+      match /messages/{itemId} {
         allow read, write: if ownsBusiness(businessId);
+      }
+
+      match /campaigns/{itemId} {
+        allow read, write: if ownsBusiness(businessId);
+      }
+
+      match /advisorActivity/{itemId} {
+        allow read: if ownsBusiness(businessId);
+        allow write: if false;
+      }
+
+      match /checkoutSessions/{sessionId} {
+        allow read: if ownsBusiness(businessId);
+        allow write: if false;
+      }
+
+      match /paymentConnections/{providerId} {
+        allow read: if ownsBusiness(businessId);
+        allow write: if false;
       }
     }
 
@@ -153,6 +181,10 @@ service cloud.firestore {
     match /payments/{paymentId} {
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
       allow write: if false;
+    }
+
+    match /paymentWebhookEvents/{eventId} {
+      allow read, write: if false;
     }
 
     // Developer API (/v1/*) data model. API-key auth does not produce

@@ -179,6 +179,9 @@ The exported `api` Cloud Function exposes:
 
 ```text
 POST /public/businesses/:slug/requests
+POST /public/businesses/:slug/checkout-sessions
+GET  /public/businesses/:slug/checkout-sessions/:sessionId
+POST /payments/paystack/webhook
 POST /paystack/init
 GET  /paystack/verify/:ref
 GET  /paystack/health

@@ -109,6 +109,7 @@ exports.followUpScheduler = onSchedule(
 const functions = require("firebase-functions");
 const express = require("express");
 const cors = require("cors");
+const crypto = require("crypto");
 const { getPaymentProvider } = require("./providers/payment");
 const { getAIProvider } = require("./providers/ai");
 const {
@@ -118,7 +119,7 @@ const {
 } = require("./providers/ai/schemas");
 const { getMessagingProvider } = require("./providers/messaging");
 const resend = require("./providers/messaging/resend");
-const { PLAN_CATALOG, recordUsage, reserveUsage } = require("./plans");
+const { PLAN_CATALOG, effectivePlan, recordUsage, reserveUsage } = require("./plans");
 const {
   buildOrder,
   cleanText,
@@ -127,6 +128,14 @@ const {
   offerSnapshot,
   requestFingerprint,
 } = require("./commerce");
+const {
+  buildCheckoutOrder,
+  checkoutSecret,
+  hashCheckoutSecret,
+  normalizeCheckoutSelections,
+  validCommercePayment,
+  validIdempotencyKey,
+} = require("./commerceCheckout");
 const {
   bookingCreatedEmails,
   bookingStatusEmail,
@@ -141,7 +150,12 @@ const developerApiSelfServiceRouter = require("./developerApi/selfService");
 
 const app = express();
 app.use(cors({ origin: true }));
-app.use(express.json({ limit: "8mb" }));
+app.use(express.json({
+  limit: "8mb",
+  verify: (req, res, buffer) => {
+    req.commerceRawBody = Buffer.from(buffer);
+  },
+}));
 app.use("/v1", developerApiRouter);
 app.use("/webhooks", developerApiWebhooksRouter);
 app.use("/developer", developerApiSelfServiceRouter);
@@ -293,6 +307,374 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
     return res.status(error.statusCode || 500).json({
       error: error.statusCode ? error.message : "Could not submit this request.",
     });
+  }
+});
+
+async function requirePaidCheckout(business) {
+  const [accountSnapshot, moduleSnapshot, connectionSnapshot] = await Promise.all([
+    db.collection("users").doc(business.ownerId).get(),
+    db.collection("businesses").doc(business.id).collection("modules").doc("payments").get(),
+    db.collection("businesses").doc(business.id).collection("paymentConnections").doc("paystack").get(),
+  ]);
+  if (!effectivePlan(accountSnapshot.data()).entitlements?.paidCheckout) {
+    const error = new Error("Online payment is available when this business enables Webilo Pro checkout.");
+    error.statusCode = 403;
+    error.code = "PRO_CHECKOUT_REQUIRED";
+    throw error;
+  }
+  if (business.checkoutEnabled !== true || moduleSnapshot.data()?.enabled !== true) {
+    const error = new Error("This business has not enabled online checkout.");
+    error.statusCode = 409;
+    error.code = "CHECKOUT_DISABLED";
+    throw error;
+  }
+  const connection = connectionSnapshot.data();
+  if (
+    !connectionSnapshot.exists ||
+    connection?.status !== "connected" ||
+    !/^ACCT_[A-Za-z0-9]+$/.test(String(connection?.subaccountCode || ""))
+  ) {
+    const error = new Error("This business has not connected a Paystack settlement account.");
+    error.statusCode = 409;
+    error.code = "PAYSTACK_SETTLEMENT_REQUIRED";
+    throw error;
+  }
+  return connection;
+}
+
+async function checkoutOfferSnapshots(businessId, selections) {
+  return Promise.all(selections.map(async (selection) => {
+    const document = await db
+      .collection("businesses")
+      .doc(businessId)
+      .collection(selection.resource)
+      .doc(selection.id)
+      .get();
+    const data = document.data();
+    const unavailable = !document.exists ||
+      data?.status === "inactive" ||
+      (selection.resource === "offers" && data?.status !== "active");
+    if (unavailable) {
+      const error = new Error("One or more cart items are no longer available.");
+      error.statusCode = 409;
+      throw error;
+    }
+    return offerSnapshot(selection.resource, document.id, data);
+  }));
+}
+
+function secureHashEqual(first, second) {
+  const left = Buffer.from(String(first || ""));
+  const right = Buffer.from(String(second || ""));
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
+  let sessionRef;
+  let orderRef;
+  let checkoutPersisted = false;
+  try {
+    if (cleanText(req.body?.company, 100)) {
+      return res.status(202).json({ accepted: true });
+    }
+    await enforcePublicRequestRateLimit(req);
+    const business = await publicBusinessFromSlug(cleanText(req.params.slug, 160));
+    if (!business) return res.status(404).json({ error: "Business not found." });
+    const paymentConnection = await requirePaidCheckout(business);
+
+    const idempotencyKey = String(req.body?.idempotencyKey || "");
+    const clientSecret = String(req.body?.clientSecret || "");
+    if (!validIdempotencyKey(idempotencyKey) || !/^[A-Za-z0-9_-]{24,120}$/.test(clientSecret)) {
+      return res.status(400).json({ error: "Start a new checkout and try again." });
+    }
+    const selections = normalizeCheckoutSelections(req.body?.selections);
+    const offers = await checkoutOfferSnapshots(business.id, selections);
+    const customerRef = db.collection("businesses").doc(business.id).collection("customers").doc();
+    orderRef = db.collection("businesses").doc(business.id).collection("orders").doc();
+    const sessionId = hashCheckoutSecret(`${business.id}:${idempotencyKey}`).slice(0, 40);
+    sessionRef = db.collection("businesses").doc(business.id).collection("checkoutSessions").doc(sessionId);
+    const now = Timestamp.now();
+    const order = buildCheckoutOrder({
+      businessId: business.id,
+      customerId: customerRef.id,
+      customer: req.body?.customer,
+      selections,
+      offers,
+      fulfilmentMethod: req.body?.fulfilmentMethod,
+      notes: req.body?.notes,
+      orderId: orderRef.id,
+      now,
+    });
+
+    let existingSession = null;
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(sessionRef);
+      if (existing.exists) {
+        existingSession = existing.data();
+        if (!secureHashEqual(existingSession.clientSecretHash, hashCheckoutSecret(clientSecret))) {
+          const error = new Error("This checkout session cannot be resumed.");
+          error.statusCode = 403;
+          throw error;
+        }
+        return;
+      }
+      transaction.set(customerRef, {
+        name: order.customerName,
+        email: order.customerEmail,
+        phone: order.customerPhone,
+        notes: order.notes,
+        source: "website_checkout",
+        status: "customer",
+        lastRequestType: "paid_order",
+        createdAt: now,
+        updatedAt: now,
+      });
+      transaction.set(orderRef, order);
+      transaction.set(orderRef.collection("events").doc(), {
+        type: "checkout_started",
+        status: order.status,
+        source: "website",
+        createdAt: now,
+      });
+      transaction.set(sessionRef, {
+        schemaVersion: 1,
+        sessionId,
+        businessId: business.id,
+        businessSlug: business.slug,
+        orderId: orderRef.id,
+        customerId: customerRef.id,
+        clientSecretHash: hashCheckoutSecret(clientSecret),
+        status: "initializing",
+        amount: order.total,
+        currency: order.currency,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    checkoutPersisted = !existingSession;
+
+    if (existingSession) {
+      if (existingSession.authorizationUrl) {
+        return res.json({
+          sessionId,
+          authorizationUrl: existingSession.authorizationUrl,
+          reference: existingSession.paymentReference,
+          status: existingSession.status,
+        });
+      }
+      return res.status(existingSession.status === "paid" ? 200 : 409).json({
+        sessionId,
+        status: existingSession.status,
+        error: existingSession.status === "paid" ? undefined : "Checkout is already being initialized.",
+      });
+    }
+
+    const callbackOrigin = cleanText(req.body?.returnOrigin, 300);
+    const callbackUrl = `${callbackOrigin}/checkout-complete?business=${encodeURIComponent(business.slug)}&session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(clientSecret)}`;
+    const paymentReference = `WCO-${orderRef.id}`;
+    const payment = await getPaymentProvider().initializeTransaction({
+      email: order.customerEmail,
+      amountMinor: order.total,
+      reference: paymentReference,
+      callbackUrl,
+      metadata: {
+        purchaseType: "commerce_order",
+        businessId: business.id,
+        orderId: orderRef.id,
+        checkoutSessionId: sessionId,
+        publicReference: order.publicReference,
+      },
+      subaccountCode: paymentConnection.subaccountCode,
+    });
+    await Promise.all([
+      sessionRef.update({
+        status: "pending",
+        paymentReference: payment.reference,
+        authorizationUrl: payment.authorization_url,
+        accessCode: payment.access_code,
+        updatedAt: Timestamp.now(),
+      }),
+      orderRef.update({
+        "payment.reference": payment.reference,
+        "payment.status": "pending",
+        paymentStatus: "pending",
+        updatedAt: Timestamp.now(),
+      }),
+    ]);
+    return res.status(201).json({
+      sessionId,
+      authorizationUrl: payment.authorization_url,
+      reference: payment.reference,
+      publicReference: order.publicReference,
+      pricing: order.pricingSnapshot,
+      status: "pending",
+    });
+  } catch (error) {
+    if (checkoutPersisted && sessionRef && orderRef) {
+      await Promise.all([
+        sessionRef.set({
+          status: "failed",
+          failureCode: error.code || "CHECKOUT_INITIALIZATION_FAILED",
+          updatedAt: Timestamp.now(),
+        }, { merge: true }).catch(() => null),
+        orderRef.set({
+          "payment.status": "failed",
+          paymentStatus: "failed",
+          updatedAt: Timestamp.now(),
+        }, { merge: true }).catch(() => null),
+      ]);
+    }
+    console.error("Commerce checkout initialization failed", {
+      message: error.message,
+      code: error.code,
+    });
+    return res.status(error.statusCode || 500).json({
+      error: error.statusCode ? error.message : "Could not start online checkout.",
+      code: error.code || "CHECKOUT_INITIALIZATION_FAILED",
+    });
+  }
+});
+
+app.get("/public/businesses/:slug/checkout-sessions/:sessionId", async (req, res) => {
+  try {
+    const business = await publicBusinessFromSlug(cleanText(req.params.slug, 160));
+    if (!business) return res.status(404).json({ error: "Checkout session not found." });
+    const sessionId = cleanText(req.params.sessionId, 80);
+    const tokenHash = hashCheckoutSecret(String(req.query.token || ""));
+    const snapshot = await db
+      .collection("businesses")
+      .doc(business.id)
+      .collection("checkoutSessions")
+      .doc(sessionId)
+      .get();
+    if (!snapshot.exists) return res.status(404).json({ error: "Checkout session not found." });
+    const session = snapshot.data();
+    if (!secureHashEqual(session.clientSecretHash, tokenHash)) {
+      return res.status(403).json({ error: "Checkout session not found." });
+    }
+    const order = await db
+      .collection("businesses")
+      .doc(session.businessId)
+      .collection("orders")
+      .doc(session.orderId)
+      .get();
+    return res.json({
+      sessionId,
+      status: session.status,
+      paymentStatus: order.data()?.paymentStatus || "pending",
+      orderStatus: order.data()?.status || "awaiting_payment",
+      publicReference: order.data()?.publicReference || "",
+      amount: session.amount,
+      currency: session.currency,
+      businessSlug: session.businessSlug,
+    });
+  } catch (error) {
+    console.error("Checkout status lookup failed", error.message);
+    return res.status(500).json({ error: "Could not check payment status." });
+  }
+});
+
+app.post("/payments/paystack/webhook", async (req, res) => {
+  const rawBody = req.rawBody || req.commerceRawBody || Buffer.from(JSON.stringify(req.body || {}));
+  if (!getPaymentProvider().verifyWebhookSignature(rawBody, req.headers["x-paystack-signature"])) {
+    return res.status(401).send("Invalid signature");
+  }
+  const event = req.body || {};
+  if (event.event !== "charge.success") return res.sendStatus(200);
+
+  try {
+    const data = event.data || {};
+    const reference = String(data.reference || "");
+    let metadata = data.metadata || {};
+    if (typeof metadata === "string") {
+      try {
+        metadata = JSON.parse(metadata);
+      } catch {
+        metadata = {};
+      }
+    }
+    if (
+      metadata.purchaseType !== "commerce_order" ||
+      typeof metadata.businessId !== "string" ||
+      typeof metadata.checkoutSessionId !== "string"
+    ) return res.sendStatus(200);
+    const sessionRef = db
+      .collection("businesses")
+      .doc(metadata.businessId)
+      .collection("checkoutSessions")
+      .doc(metadata.checkoutSessionId);
+    const sessionSnapshot = await sessionRef.get();
+    if (!sessionSnapshot.exists) return res.sendStatus(200);
+    const session = sessionSnapshot.data();
+    const orderRef = db.collection("businesses").doc(session.businessId).collection("orders").doc(session.orderId);
+    const eventId = `paystack_${String(data.id || reference).replace(/[^A-Za-z0-9_-]/g, "_")}`;
+    const eventRef = db.collection("paymentWebhookEvents").doc(eventId);
+
+    await db.runTransaction(async (transaction) => {
+      const [eventSnapshot, latestSession, orderSnapshot] = await Promise.all([
+        transaction.get(eventRef),
+        transaction.get(sessionRef),
+        transaction.get(orderRef),
+      ]);
+      if (eventSnapshot.exists || !orderSnapshot.exists) return;
+      const storedSession = latestSession.data() || {};
+      const order = orderSnapshot.data() || {};
+      const validPayment = validCommercePayment(data, storedSession, order);
+
+      transaction.set(eventRef, {
+        provider: "paystack",
+        event: event.event,
+        providerEventId: String(data.id || ""),
+        reference,
+        businessId: session.businessId,
+        orderId: session.orderId,
+        status: validPayment ? "processed" : "rejected",
+        reason: validPayment ? null : "PAYMENT_DETAILS_MISMATCH",
+        createdAt: Timestamp.now(),
+      });
+      if (!validPayment) {
+        transaction.update(sessionRef, {
+          status: "review_required",
+          updatedAt: Timestamp.now(),
+        });
+        transaction.update(orderRef, {
+          "payment.status": "review_required",
+          paymentStatus: "review_required",
+          updatedAt: Timestamp.now(),
+        });
+        return;
+      }
+      if (order.paymentStatus === "paid") return;
+      transaction.update(sessionRef, {
+        status: "paid",
+        paidAt: Timestamp.now(),
+        providerTransactionId: String(data.id || ""),
+        updatedAt: Timestamp.now(),
+      });
+      transaction.update(orderRef, {
+        status: "confirmed",
+        "payment.status": "paid",
+        "payment.amount": Number(data.amount),
+        "payment.currency": data.currency,
+        "payment.channel": data.channel || null,
+        "payment.transactionId": String(data.id || ""),
+        "payment.paidAt": Timestamp.now(),
+        paymentStatus: "paid",
+        updatedAt: Timestamp.now(),
+      });
+      transaction.set(orderRef.collection("events").doc(), {
+        type: "payment_confirmed",
+        status: "confirmed",
+        paymentStatus: "paid",
+        provider: "paystack",
+        reference,
+        createdAt: Timestamp.now(),
+      });
+    });
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("Paystack webhook processing failed", error);
+    return res.status(500).send("Webhook processing failed");
   }
 });
 
@@ -545,7 +927,12 @@ exports.orderCreatedNotification = onDocumentCreated(
   },
   async (event) => {
     const order = event.data?.data();
-    if (!order || order.source !== "website" || order.notificationMode === "booking") return null;
+    if (
+      !order ||
+      order.source !== "website" ||
+      order.notificationMode === "booking" ||
+      order.status === "awaiting_payment"
+    ) return null;
     const business = await notificationBusiness(event.params.businessId);
     if (!business) return null;
     const emails = orderCreatedEmails(business, order);
@@ -587,6 +974,30 @@ exports.orderStatusNotification = onDocumentUpdated(
     ) return null;
     const business = await notificationBusiness(event.params.businessId);
     if (!business) return null;
+    const paidCheckoutConfirmed =
+      before?.status === "awaiting_payment" &&
+      order.status === "confirmed" &&
+      order.paymentStatus === "paid";
+    if (paidCheckoutConfirmed) {
+      const emails = orderCreatedEmails(business, order);
+      emails.owner.to = await ownerEmailFor(business);
+      return Promise.all([
+        sendTransactionalEmailOnce({
+          id: `order_${event.params.orderId}_paid_owner`,
+          type: "paid_order_created_owner",
+          businessId: business.id,
+          userId: business.ownerId,
+          email: emails.owner,
+        }),
+        sendTransactionalEmailOnce({
+          id: `order_${event.params.orderId}_paid_customer`,
+          type: "paid_order_created_customer",
+          businessId: business.id,
+          userId: business.ownerId,
+          email: emails.customer,
+        }),
+      ]);
+    }
     return sendTransactionalEmailOnce({
       id: `order_${event.params.orderId}_status_${order.status}`,
       type: `order_status_${order.status}`,
@@ -747,6 +1158,64 @@ async function verifyPaymentHandler(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
+app.post("/businesses/:businessId/payments/paystack/connect", requireAuth, async (req, res) => {
+  try {
+    const business = await ownedBusiness(req.user.uid, req.params.businessId);
+    const account = await db.collection("users").doc(req.user.uid).get();
+    if (!effectivePlan(account.data()).entitlements?.paidCheckout) {
+      return res.status(403).json({
+        error: "Connect a settlement account after upgrading to Webilo Pro.",
+        code: "PRO_CHECKOUT_REQUIRED",
+      });
+    }
+    const subaccountCode = cleanText(req.body?.subaccountCode, 80);
+    const subaccount = await getPaymentProvider().fetchSubaccount(subaccountCode);
+    if (subaccount.active === false || subaccount.active === 0) {
+      return res.status(409).json({ error: "This Paystack subaccount is inactive." });
+    }
+    if (subaccount.currency && subaccount.currency !== "ZAR") {
+      return res.status(409).json({ error: "The Paystack subaccount must settle in ZAR." });
+    }
+    const now = Timestamp.now();
+    await Promise.all([
+      db.collection("businesses").doc(business.id)
+        .collection("paymentConnections").doc("paystack").set({
+          provider: "paystack",
+          subaccountCode: subaccount.subaccount_code,
+          businessName: cleanText(subaccount.business_name, 160),
+          currency: subaccount.currency || "ZAR",
+          percentageCharge: Number(subaccount.percentage_charge || 0),
+          status: "connected",
+          connectedBy: req.user.uid,
+          connectedAt: now,
+          updatedAt: now,
+        }),
+      db.collection("businesses").doc(business.id).update({
+        checkoutEnabled: false,
+        updatedAt: now,
+      }),
+      db.collection("businesses").doc(business.id)
+        .collection("modules").doc("payments").set({
+          moduleId: "payments",
+          enabled: false,
+          updatedAt: now,
+        }, { merge: true }),
+    ]);
+    return res.json({
+      provider: "paystack",
+      subaccountCode: subaccount.subaccount_code,
+      businessName: subaccount.business_name,
+      currency: subaccount.currency || "ZAR",
+      status: "connected",
+    });
+  } catch (error) {
+    console.error("Paystack settlement connection failed", error.response?.data || error.message);
+    return res.status(error.statusCode || 500).json({
+      error: error.response?.data?.message || error.message || "Could not connect this settlement account.",
+    });
+  }
+});
 
 app.post("/payments/init", requireAuth, initializePaymentHandler);
 app.get("/payments/verify/:ref", requireAuth, verifyPaymentHandler);

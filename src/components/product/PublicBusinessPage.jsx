@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getBusinessBySlug, listPublicOffers } from "../../services/businessRepository";
 import { submitPublicBusinessRequest } from "../../services/commerceService";
+import PublicCheckoutPanel from "../../features/commerce/PublicCheckoutPanel";
+import { checkoutEligible, useCommerceCart } from "../../features/commerce/cart";
 import "./product.css";
 
 const emptyForm = {
@@ -26,6 +28,7 @@ export default function PublicBusinessPage() {
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const cart = useCommerceCart(slug);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +171,8 @@ export default function PublicBusinessPage() {
             title={title}
             records={records}
             onChoose={selectOffer}
+            onAdd={cart.add}
+            checkoutEnabled={business.checkoutEnabled}
             key={title}
           />
         ))}
@@ -264,11 +269,12 @@ export default function PublicBusinessPage() {
           </form>
         </div>
       </section>
+      <PublicCheckoutPanel business={business} cart={cart} />
     </div>
   );
 }
 
-function PublicCollection({ title, records, onChoose }) {
+function PublicCollection({ title, records, onChoose, onAdd, checkoutEnabled }) {
   return (
     <section className="public-section">
       <div className="wb-container">
@@ -281,9 +287,14 @@ function PublicCollection({ title, records, onChoose }) {
               <h3 className="wb-heading">{record.name}</h3>
               <p className="wb-secondary">{record.description}</p>
               <strong>{offerPrice(record)}</strong>
-              <button className="wb-btn wb-btn-primary" onClick={() => onChoose(record)}>
-                {offerAction(record)}
-              </button>
+              <div className="wb-row">
+                {checkoutEnabled && checkoutEligible(record) && (
+                  <button className="wb-btn wb-btn-primary" onClick={() => onAdd(record)}>Add to cart</button>
+                )}
+                <button className={`wb-btn ${checkoutEnabled && checkoutEligible(record) ? "" : "wb-btn-primary"}`} onClick={() => onChoose(record)}>
+                  {offerAction(record)}
+                </button>
+              </div>
             </article>
           ))}
         </div>

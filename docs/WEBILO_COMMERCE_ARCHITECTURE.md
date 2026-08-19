@@ -101,13 +101,37 @@ A future backfill should be idempotent. It should create canonical offers with a
 
 ## Pro extensions
 
-The next commerce phases should extend the current records rather than introduce a second order system:
+### Pro Phase 1: implemented
 
-1. Multi-item cart and server-created checkout sessions.
-2. Paystack customer payments with verified webhooks and idempotency keys.
-3. Stock reservations and inventory movements.
-4. Delivery and pickup fulfilment workflows.
-5. Invoices, receipts, and customer tracking links.
-6. Fulfilment-gated service ratings.
+Pro businesses can enable the Payments module and expose a multi-item cart on both `/b/:slug` business pages and generated `/w/:slug` websites.
+
+```text
+POST /public/businesses/:slug/checkout-sessions
+GET  /public/businesses/:slug/checkout-sessions/:sessionId
+POST /payments/paystack/webhook
+```
+
+The backend checks the owner’s active Pro entitlement, enabled Payments module, and server-validated Paystack subaccount connection. It reloads every offer, calculates the complete pricing snapshot, creates an idempotent checkout session, and initializes Paystack in ZAR minor units. Only fixed-price, positive-value offers with a shared fulfilment method can enter paid checkout.
+
+Each business must connect a Paystack subaccount before checkout can be enabled. The subaccount must belong to the configured Paystack integration, be active, and settle in ZAR. Transactions are initialized with that subaccount and `bearer: subaccount`, preventing customer revenue from silently settling only to Webilo’s platform account. Webilo stores the subaccount code and public business name, never bank-account credentials.
+
+Paystack callbacks do not mark orders paid. The signed `charge.success` webhook validates the HMAC SHA512 signature, reference, amount, currency, business, session, and order before atomically setting the checkout session and order to paid. Duplicate webhook events are ignored through `paymentWebhookEvents`.
+
+The callback page reads a token-protected, customer-safe session status. It never receives payment credentials or authoritative mutation permissions.
+
+Configure this Paystack webhook URL:
+
+```text
+https://us-central1-smart-shop-bb140.cloudfunctions.net/api/payments/paystack/webhook
+```
+
+### Remaining commerce phases
+
+The next phases should extend the current records rather than introduce a second order system:
+
+1. Stock reservations and inventory movements.
+2. Delivery addresses, zones, fees, and fulfilment workflows.
+3. Invoices, receipts, refunds, and customer tracking links.
+4. Fulfilment-gated service ratings.
 
 AI token allowances apply to AI generation only. Normal orders, payment updates, and fulfilment actions use separate plan entitlements and fair-usage controls.

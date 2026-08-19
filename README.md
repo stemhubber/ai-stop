@@ -128,6 +128,8 @@ The library is opt-in and is not loaded by the current React application automat
 
 The component stylesheet depends on the variables in `webilo-tokens.css`; reversing the import order will leave its `var(--wb-*)` declarations unresolved. See the [UI usage guide](docs/WEBILO_UI_USAGE_GUIDE.md) for component examples and current application conventions.
 
+For design principles that can be copied into another product, especially an educational app refactor, use the [portable edtech UX refactor guide](docs/PORTABLE_EDTECH_UX_REFACTOR_GUIDE.md).
+
 ## Prerequisites
 
 - Node.js and npm

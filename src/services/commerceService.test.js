@@ -1,4 +1,8 @@
-import { submitPublicBusinessRequest } from "./commerceService";
+import {
+  getCommerceCheckoutStatus,
+  startCommerceCheckout,
+  submitPublicBusinessRequest,
+} from "./commerceService";
 
 describe("submitPublicBusinessRequest", () => {
   beforeEach(() => {
@@ -29,5 +33,34 @@ describe("submitPublicBusinessRequest", () => {
     expect(body.selection).toEqual({ resource: "offers", id: "offer-1", quantity: 2 });
     expect(body).not.toHaveProperty("total");
     expect(body).not.toHaveProperty("price");
+  });
+
+  it("starts checkout without sending client prices or totals", async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ authorizationUrl: "https://checkout.paystack.com/demo" }),
+    });
+    await startCommerceCheckout({
+      slug: "demo",
+      customer: { name: "Customer", email: "customer@example.com", phone: "0712345678" },
+      selections: [{ resource: "offers", id: "offer-1", quantity: 2 }],
+      fulfilmentMethod: "pickup",
+      idempotencyKey: "checkout_123456789",
+      clientSecret: "secret_123456789012345678901234",
+      returnOrigin: "https://example.com",
+    });
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.selections[0]).toEqual({ resource: "offers", id: "offer-1", quantity: 2 });
+    expect(body).not.toHaveProperty("total");
+    expect(body).not.toHaveProperty("amount");
+  });
+
+  it("reads webhook-confirmed checkout status", async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ status: "paid" }),
+    });
+    await expect(getCommerceCheckoutStatus({ slug: "demo", sessionId: "session", token: "token" }))
+      .resolves.toEqual({ status: "paid" });
   });
 });

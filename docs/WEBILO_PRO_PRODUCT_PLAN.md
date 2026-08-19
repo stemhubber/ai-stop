@@ -21,10 +21,12 @@ back into a website-first product.
 - Server-side fair-use enforcement
 - Firestore rules that prevent clients from granting themselves Pro
 - Paystack-priced Pro checkout with idempotent 30-day activation after verification
+- Multi-item customer cart and server-priced commerce checkout
+- HMAC-verified, idempotent Paystack commerce webhooks
+- Token-protected public payment status and confirmation page
 - Core analytics plus a Pro-gated advanced insight panel
 
-This foundation does not imply that every target capability in the matrix is
-already implemented.
+Inventory, delivery pricing, invoices, refunds, and ratings remain phased targets.
 
 ## Product decision
 
