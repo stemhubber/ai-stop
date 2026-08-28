@@ -80,7 +80,15 @@ Delivered:
 
 ETA: `max(item.prepMinutes)` if any, else `business.prepDefaultMinutes`, else 15; zeroed once the order is `ready` / `out_for_delivery` / `completed` / `cancelled`. `prepMinutes` / `prepDefaultMinutes` don't exist until Phases 4 / 3, so ETA currently shows the 15-min fallback. Signed single-doc Firestore listener instead of polling is a later optimisation.
 
-### 2.3 "Accepting orders" toggle + hours  ·  Priority: P1
+### 2.3 "Accepting orders" toggle + hours  ·  Priority: P1 — ✅ IMPLEMENTED (Phase 3)
+
+Delivered:
+- `businesses/{id}` optional fields: `ordering: { acceptingOrders, pausedReason, pausedUntil }`, `hours: { display }`, `prepDefaultMinutes`, plus the `foodOrdering` escape-hatch boolean. `pausedUntil` is stored as an ISO string (not a Firestore Timestamp) — a value in the past auto-reopens.
+- `src/features/commerce/OrderingSettingsCard.jsx` (+ `orderingSettings.css`) — owner control with the accepting-orders switch, customer-facing paused reason + reopen time, opening-hours string, default prep minutes, and the `foodOrdering` toggle. Rendered in the **Business profile** tab (always reachable, so a non-food business can switch food tools on) and at the top of the **Kitchen** tab.
+- Server enforcement: `functions/ordering.js` `assertAcceptingOrders(business)` — throws `409 { code: "ORDERING_PAUSED" }` — called in both `POST /public/businesses/:slug/requests` (offer path only, not contact) and `POST /public/businesses/:slug/checkout-sessions`. `firestore.rules` `orders` block carries a comment pointing at it.
+- Public surfaces: `src/features/commerce/ordering.js` `orderingPaused(business)` mirrors the server check. `PublicBusinessPage` shows a closed banner (reason + reopen time), hides offer actions and the "View offers" CTA, and blocks offer submits; `PublicWebsite` blocks non-contact submits and surfaces the server reason; `PublicCheckoutPanel` returns null when paused. `hours.display` renders in the `PublicBusinessPage` hero.
+
+### 2.3-original "Accepting orders" toggle + hours (spec)
 
 BitePilot: `src/views/StoreStatusController.jsx` (`isOpen` flip with flavour-text messages) + `NotificationPopover` shows a "store is closed 💔" banner with `openingTimes`.
 

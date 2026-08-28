@@ -1,3 +1,9 @@
+.product-kitchen-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-6, 24px);
+}
+
 .kitchen-board {
   display: flex;
   flex-direction: column;

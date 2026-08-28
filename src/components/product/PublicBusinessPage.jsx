@@ -4,6 +4,7 @@ import { getBusinessBySlug, listPublicOffers } from "../../services/businessRepo
 import { submitPublicBusinessRequest } from "../../services/commerceService";
 import PublicCheckoutPanel from "../../features/commerce/PublicCheckoutPanel";
 import { checkoutEligible, useCommerceCart } from "../../features/commerce/cart";
+import { orderingPaused } from "../../features/commerce/ordering";
 import "./product.css";
 
 const emptyForm = {
@@ -50,6 +51,7 @@ export default function PublicBusinessPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  const paused = orderingPaused(business);
   const selectedOffer = useMemo(
     () => offers.find((offer) => offer.key === form.offerKey),
     [form.offerKey, offers]
@@ -110,6 +112,10 @@ export default function PublicBusinessPage() {
       return setMessage("Choose an available offer.");
     }
 
+    if (form.requestType === "offer" && paused) {
+      return setMessage(paused.reason);
+    }
+
     setSubmitting(true);
     setMessage("");
     setTrackUrl("");
@@ -161,12 +167,27 @@ export default function PublicBusinessPage() {
           <span className="wb-label">{business.category}</span>
           <h1 className="wb-display">{business.name}</h1>
           <p className="wb-secondary">{business.description}</p>
+          {business.hours?.display && (
+            <p className="wb-body-sm public-hours">Hours: {business.hours.display}</p>
+          )}
           <div className="wb-row">
-            {offers.length > 0 && <a className="wb-btn wb-btn-primary" href="#offers">View offers</a>}
+            {offers.length > 0 && !paused && <a className="wb-btn wb-btn-primary" href="#offers">View offers</a>}
             {business.phone && <a className="wb-btn wb-btn-accent" href={`tel:${business.phone}`}>Call {business.phone}</a>}
           </div>
         </div>
       </header>
+
+      {paused && (
+        <div className="public-closed-banner" role="status">
+          <div className="wb-container">
+            <strong>Not accepting orders right now.</strong>
+            <span>{paused.reason}</span>
+            {paused.until && (
+              <span>Reopens {new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium", timeStyle: "short" }).format(paused.until)}.</span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div id="offers">
         {offerGroups.map(([title, records]) => (
@@ -176,6 +197,7 @@ export default function PublicBusinessPage() {
             onChoose={selectOffer}
             onAdd={cart.add}
             checkoutEnabled={business.checkoutEnabled}
+            paused={Boolean(paused)}
             key={title}
           />
         ))}
@@ -280,7 +302,7 @@ export default function PublicBusinessPage() {
   );
 }
 
-function PublicCollection({ title, records, onChoose, onAdd, checkoutEnabled }) {
+function PublicCollection({ title, records, onChoose, onAdd, checkoutEnabled, paused }) {
   return (
     <section className="public-section">
       <div className="wb-container">
@@ -293,14 +315,18 @@ function PublicCollection({ title, records, onChoose, onAdd, checkoutEnabled }) 
               <h3 className="wb-heading">{record.name}</h3>
               <p className="wb-secondary">{record.description}</p>
               <strong>{offerPrice(record)}</strong>
-              <div className="wb-row">
-                {checkoutEnabled && checkoutEligible(record) && (
-                  <button className="wb-btn wb-btn-primary" onClick={() => onAdd(record)}>Add to cart</button>
-                )}
-                <button className={`wb-btn ${checkoutEnabled && checkoutEligible(record) ? "" : "wb-btn-primary"}`} onClick={() => onChoose(record)}>
-                  {offerAction(record)}
-                </button>
-              </div>
+              {paused ? (
+                <p className="wb-body-sm wb-secondary">Ordering is paused.</p>
+              ) : (
+                <div className="wb-row">
+                  {checkoutEnabled && checkoutEligible(record) && (
+                    <button className="wb-btn wb-btn-primary" onClick={() => onAdd(record)}>Add to cart</button>
+                  )}
+                  <button className={`wb-btn ${checkoutEnabled && checkoutEligible(record) ? "" : "wb-btn-primary"}`} onClick={() => onChoose(record)}>
+                    {offerAction(record)}
+                  </button>
+                </div>
+              )}
             </article>
           ))}
         </div>

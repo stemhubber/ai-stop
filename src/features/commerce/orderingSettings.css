@@ -1,0 +1,23 @@
+.wb-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wb-space-4, 16px);
+  padding: var(--wb-space-3, 12px) 0;
+  border-top: 1px solid var(--wb-border, #dbe3e0);
+}
+
+.wb-toggle-row:first-of-type {
+  border-top: 0;
+}
+
+.wb-toggle-row > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wb-toggle-row small {
+  color: var(--wb-ink-3, #5b6b66);
+  font-size: 0.82rem;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { startCommerceCheckout } from "../../services/commerceService";
 import { Icon } from "../websites/components/WebiloUI";
+import { orderingPaused } from "./ordering";
 import "./commerce.css";
 
 const emptyCustomer = { name: "", email: "", phone: "", notes: "", company: "" };
@@ -27,6 +28,7 @@ export default function PublicCheckoutPanel({ business, cart, accentColor }) {
   }, [cart.fulfilmentMethods, fulfilmentMethod]);
 
   if (!business?.checkoutEnabled) return null;
+  if (orderingPaused(business)) return null;
 
   const checkout = async (event) => {
     event.preventDefault();
