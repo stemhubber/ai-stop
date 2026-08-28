@@ -40,6 +40,7 @@ function buildCheckoutOrder({
   notes,
   orderId,
   now,
+  clientTokenHash,
 }) {
   const customer = normalizeCustomer(customerInput);
   if (!customer.email) {
@@ -98,6 +99,9 @@ function buildCheckoutOrder({
     schemaVersion: 2,
     businessId,
     customerId,
+    // sha256 of the customer's order-tracker token (the checkout clientSecret is
+    // reused as that token). The raw token is never stored.
+    ...(clientTokenHash ? { clientTokenHash: String(clientTokenHash) } : {}),
     customerName: customer.name,
     customerEmail: customer.email,
     customerPhone: customer.phone,

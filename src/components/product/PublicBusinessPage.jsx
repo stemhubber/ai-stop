@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getBusinessBySlug, listPublicOffers } from "../../services/businessRepository";
 import { submitPublicBusinessRequest } from "../../services/commerceService";
 import PublicCheckoutPanel from "../../features/commerce/PublicCheckoutPanel";
@@ -27,6 +27,7 @@ export default function PublicBusinessPage() {
   const [state, setState] = useState("loading");
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
+  const [trackUrl, setTrackUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const cart = useCommerceCart(slug);
 
@@ -111,6 +112,7 @@ export default function PublicBusinessPage() {
 
     setSubmitting(true);
     setMessage("");
+    setTrackUrl("");
     try {
       const result = await submitPublicBusinessRequest({
         slug,
@@ -137,6 +139,7 @@ export default function PublicBusinessPage() {
         : "Thanks. The business has received your contact details.";
       setForm(emptyForm);
       setMessage(success);
+      if (result.statusUrl) setTrackUrl(result.statusUrl);
     } catch (error) {
       setMessage(error.message || "Could not send your request. Please contact the business directly.");
     } finally {
@@ -266,6 +269,9 @@ export default function PublicBusinessPage() {
               {submitting ? "Sending…" : form.requestType === "offer" ? "Submit request" : "Send contact details"}
             </button>
             {message && <p className="wb-body-sm" role="status">{message}</p>}
+            {trackUrl && (
+              <Link className="wb-btn wb-btn-accent" to={trackUrl}>Track your order</Link>
+            )}
           </form>
         </div>
       </section>

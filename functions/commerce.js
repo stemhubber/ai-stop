@@ -90,6 +90,7 @@ function buildOrder({
   notes,
   orderId,
   now,
+  clientTokenHash,
 }) {
   if (!offer.name) {
     const error = new Error("This offer is unavailable.");
@@ -123,6 +124,9 @@ function buildOrder({
     schemaVersion: 2,
     businessId,
     customerId,
+    // sha256 of the customer's order-tracker token. Absent for orders created
+    // without a tracker (e.g. manual captures). The raw token is never stored.
+    ...(clientTokenHash ? { clientTokenHash: String(clientTokenHash) } : {}),
     customerName: customer.name,
     customerEmail: customer.email,
     customerPhone: customer.phone,

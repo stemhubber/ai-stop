@@ -74,3 +74,12 @@ export async function getCommerceCheckoutStatus({ slug, sessionId, token }) {
   if (!response.ok) throw new Error(data.error || "Could not check payment status.");
   return data;
 }
+
+export async function getPublicOrderStatus({ slug, publicReference, token }) {
+  const response = await fetch(
+    `${apiBaseUrl}/public/businesses/${encodeURIComponent(slug)}/orders/${encodeURIComponent(publicReference)}?token=${encodeURIComponent(token)}`
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Could not find this order.");
+  return data;
+}

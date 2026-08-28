@@ -31,6 +31,23 @@ test("buildOrder creates an immutable pricing snapshot from a legacy product", (
   assert.equal(order.pricingSnapshot.total, 25000);
   assert.equal(order.status, "requested");
   assert.equal(order.payment.status, "not_required");
+  assert.ok(!("clientTokenHash" in order), "no tracker token unless one is supplied");
+});
+
+test("buildOrder stores a supplied client token hash and nothing else", () => {
+  const offer = offerSnapshot("products", "product-1", { name: "Tea", price: 5000, currency: "ZAR" });
+  const withToken = buildOrder({
+    businessId: "business-1",
+    customerId: "customer-1",
+    customer: normalizeCustomer({ name: "Amahle", phone: "0735534588" }),
+    selection: normalizeSelection({ resource: "products", id: "product-1", quantity: 1 }),
+    offer,
+    fulfilmentMethod: "pickup",
+    orderId: "abcdefgh1234",
+    now: "now",
+    clientTokenHash: "deadbeef",
+  });
+  assert.equal(withToken.clientTokenHash, "deadbeef");
 });
 
 test("quote offers produce a quote request without trusting a client total", () => {

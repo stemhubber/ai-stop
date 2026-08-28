@@ -68,18 +68,17 @@ BitePilot: `src/views/AdminView.jsx` — subscribes to all orders via `OrderServ
   - Sound: small `useKitchenSound` hook; play on snapshot `docChanges()` of type `"added"`. Ship the `.wav`s under `public/sounds/` (BitePilot's `soundMap` in `src/utils/Constants.js` is a fine starting list). Gate behind a per-user toggle stored in `localStorage`; browsers block autoplay until the first interaction, so arm it on a visible "Enable sound" button.
 - **Notes:** staff-who-aren't-the-owner need kitchen access — see §4 (roles).
 
-### 2.2 Customer live order tracker (public, no account)  ·  Priority: P0
+### 2.2 Customer live order tracker (public, no account)  ·  Priority: P0 — ✅ IMPLEMENTED (Phase 2)
 
-BitePilot: `src/views/UserOrderTracker.jsx` + `CustomerOrdersView.jsx` — a stepper (`Pending → Preparing → Ready → Delivery → Completed`) filtered by `user.uid`, plus a phone-number lookup.
+Delivered:
+- Public route `/o/:slug/:publicReference?t=<token>` → `src/features/commerce/PublicOrderStatus.jsx` (+ `orderStatus.css`). Registered in `src/App.js`. Short-polls every 8 s, stops on `completed` / `cancelled`.
+- `GET /public/businesses/:slug/orders/:publicReference?token=…` in `functions/index.js` — looks the order up by `publicReference` (Firestore auto-indexes the single field), gates on `secureHashEqual(order.clientTokenHash, hashCheckoutSecret(token))`, and returns a **customer-safe projection only** (`status`, `fulfilmentMethod`, item name+qty, `etaMinutes`, business name/phone, currency, total) — never the raw doc. Unknown ref or bad token → 404.
+- Token: `functions/commerce.js` `buildOrder` takes an optional `clientTokenHash` and writes it verbatim (stays crypto-free). The `/requests` handler generates the raw token with `checkoutSecret()` and hashes it with `hashCheckoutSecret()`. Paid checkout reuses the checkout `clientSecret` as the tracker token (`buildCheckoutOrder` gets the same arg).
+- `clientTokenHash` added to `preservesOrderSnapshot()` in `firestore.rules` (via `.get("clientTokenHash", "")` so pre-existing orders without it still validate).
+- Response wiring: `/requests` 201 keeps `reference`, adds `publicReference` + `statusUrl`; `checkout-sessions` POST + GET projection add `statusUrl`. `PublicBusinessPage` shows a "Track your order" link on submit; `CommerceCheckoutComplete` shows one once paid.
+- Stepper labels from `fulfilmentMethod` (`pickup`: …→ Ready for collection → Completed; `delivery`: …→ Ready → On the way → Delivered). Presentational only; stored status stays the §3.3 canonical set.
 
-- **Keep:** a public, link-addressable page showing one order's live status as a stepper; no login; optional phone lookup for "where's my order".
-- **Drop:** `sessionStorage` user identity; client-side filter of the whole collection; phone number used as a primary key.
-- **Map:**
-  - New public route, e.g. `/o/:publicReference?t=<token>` → `PublicOrderStatus.jsx` in `src/features/commerce/`. Mirror the existing `CommerceCheckoutComplete` + `getCommerceCheckoutStatus` token pattern: the server returns a **customer-safe projection** (status, item names, ETA, business name/phone) — never the raw order doc.
-  - Add `GET /public/businesses/:slug/orders/:publicReference` to the Express app in `functions/index.js`, guarded by a token issued when the order/checkout-session is created (store `clientToken` hash on the order, like checkout sessions already do).
-  - The order-created response (`submitPublicBusinessRequest` / `startCommerceCheckout`) should return `{ publicReference, statusUrl }` so `PublicCheckoutPanel` / the request form can redirect or show a "track your order" link.
-  - Stepper labels come from `fulfilment.method`: pickup → `…→ ready → completed` ("Ready for collection"); delivery → `…→ ready → out_for_delivery → completed`. Keep it presentational; the stored status stays the canonical set from §3.3.
-  - Optional live updates: short polling (checkout-complete already polls) is fine for v1; a signed Firestore listener on a single doc is a later optimisation.
+ETA: `max(item.prepMinutes)` if any, else `business.prepDefaultMinutes`, else 15; zeroed once the order is `ready` / `out_for_delivery` / `completed` / `cancelled`. `prepMinutes` / `prepDefaultMinutes` don't exist until Phases 4 / 3, so ETA currently shows the 15-min fallback. Signed single-doc Firestore listener instead of polling is a later optimisation.
 
 ### 2.3 "Accepting orders" toggle + hours  ·  Priority: P1
 
@@ -222,13 +221,13 @@ Delivered touch points:
 
 ### 3.4 New Cloud Function routes (Express app in `functions/index.js`)
 
-- `GET /public/businesses/:slug/orders/:publicReference?token=…` — token-guarded customer-safe order status projection (§2.2).
+- ✅ `GET /public/businesses/:slug/orders/:publicReference?token=…` — token-guarded customer-safe order status projection (§2.2). Shipped in Phase 2.
 - `POST /ai/menu-extract` (or extend the existing AI import route) — image URL → draft offer array (§2.7).
 - Ordering-paused guard added to the existing `requests` and `checkout-sessions` handlers (§2.3).
 
 ### 3.5 New public routes (`src/App.js`)
 
-- `/o/:publicReference` → `PublicOrderStatus` (public, token in query).
+- ✅ `/o/:slug/:publicReference` → `PublicOrderStatus` (public, token in `?t=`). Shipped in Phase 2 (slug moved into the path so the client never guesses it).
 - (optional) `/discover` → category directory.
 
 Kitchen board is **not** a new top-level route — it's a tab inside `/business` (`ProductWorkspace`).

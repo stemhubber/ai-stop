@@ -1,5 +1,6 @@
 import {
   getCommerceCheckoutStatus,
+  getPublicOrderStatus,
   startCommerceCheckout,
   submitPublicBusinessRequest,
 } from "./commerceService";
@@ -62,5 +63,25 @@ describe("submitPublicBusinessRequest", () => {
     });
     await expect(getCommerceCheckoutStatus({ slug: "demo", sessionId: "session", token: "token" }))
       .resolves.toEqual({ status: "paid" });
+  });
+
+  it("reads a token-guarded public order status", async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ status: "ready", etaMinutes: 0 }),
+    });
+    await expect(getPublicOrderStatus({ slug: "demo", publicReference: "WEB-ABCD1234", token: "tok" }))
+      .resolves.toEqual({ status: "ready", etaMinutes: 0 });
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toContain("/public/businesses/demo/orders/WEB-ABCD1234?token=tok");
+  });
+
+  it("surfaces a not-found order as an error", async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "Order not found." }),
+    });
+    await expect(getPublicOrderStatus({ slug: "demo", publicReference: "WEB-X", token: "bad" }))
+      .rejects.toThrow("Order not found.");
   });
 });

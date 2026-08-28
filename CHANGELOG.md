@@ -8,6 +8,36 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 2: Public order tracker (2026-08-28)
+
+Builds on Phase 1. Additive.
+
+- **`GET /public/businesses/:slug/orders/:publicReference?token=…`** — a public,
+  token-guarded endpoint returning a customer-safe order projection (status,
+  fulfilment method, item name+qty, ETA, business name/phone, currency, total).
+  Never exposes the raw order document; unknown ref or bad token → 404. Order
+  lookup is by `publicReference` (Firestore auto-indexes single fields).
+- **Order-tracker token** — `functions/commerce.js` `buildOrder` and
+  `functions/commerceCheckout.js` `buildCheckoutOrder` take an optional
+  `clientTokenHash` and store it verbatim (`commerce.js` stays crypto-free). The
+  `/requests` handler mints the raw token with `checkoutSecret()` and hashes it
+  with `hashCheckoutSecret()`; paid checkout reuses its `clientSecret` as the
+  token. `clientTokenHash` added to `preservesOrderSnapshot()` in
+  `firestore.rules` (via `.get(..., "")` so pre-existing orders still validate).
+- **`statusUrl` in responses** — `/requests` 201 keeps `reference`, adds
+  `publicReference` + `statusUrl`; `checkout-sessions` POST and the
+  `checkout-sessions/:sessionId` GET projection add `statusUrl`.
+- **`src/features/commerce/PublicOrderStatus.jsx`** (+ `orderStatus.css`) — new
+  public route `/o/:slug/:publicReference` in `src/App.js`. A no-login status
+  stepper (labels derived from `fulfilmentMethod`), short-polling every 8 s and
+  stopping on `completed` / `cancelled`. `getPublicOrderStatus()` added to
+  `commerceService.js`.
+- **"Track your order"** link surfaced on `PublicBusinessPage` after a request
+  and on `CommerceCheckoutComplete` once payment is confirmed.
+- ETA = `max(item.prepMinutes)` else `business.prepDefaultMinutes` else 15,
+  zeroed once the order is ready/out-for-delivery/completed/cancelled. Those
+  fields arrive in Phases 3–4, so ETA currently shows the 15-min fallback.
+
 ### Added — Food-ordering vertical, Phase 1: Kitchen board (2026-08-28)
 
 First slice of `docs/WEBILO_FOOD_ORDERING_VERTICAL.md`. Additive — no change to

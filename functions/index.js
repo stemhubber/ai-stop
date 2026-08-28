@@ -242,6 +242,7 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
 
     const snapshot = offerSnapshot(selection.resource, offerDocument.id, offerData);
     const orderRef = db.collection("businesses").doc(business.id).collection("orders").doc();
+    const clientToken = checkoutSecret();
     const order = buildOrder({
       businessId: business.id,
       customerId: customerRef.id,
@@ -253,6 +254,7 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
       notes: req.body?.notes,
       orderId: orderRef.id,
       now,
+      clientTokenHash: hashCheckoutSecret(clientToken),
     });
     const batch = db.batch();
     batch.set(customerRef, { ...customerRecord, lastRequestType: order.orderType });
@@ -296,6 +298,8 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
       requestType: order.orderType,
       orderId: orderRef.id,
       reference: order.publicReference,
+      publicReference: order.publicReference,
+      statusUrl: `/o/${business.slug}/${order.publicReference}?t=${clientToken}`,
       pricing: order.pricingSnapshot,
       status: order.status,
     });
@@ -404,6 +408,7 @@ app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
       notes: req.body?.notes,
       orderId: orderRef.id,
       now,
+      clientTokenHash: hashCheckoutSecret(clientSecret),
     });
 
     let existingSession = null;
@@ -506,6 +511,7 @@ app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
       authorizationUrl: payment.authorization_url,
       reference: payment.reference,
       publicReference: order.publicReference,
+      statusUrl: `/o/${business.slug}/${order.publicReference}?t=${clientSecret}`,
       pricing: order.pricingSnapshot,
       status: "pending",
     });
@@ -558,12 +564,16 @@ app.get("/public/businesses/:slug/checkout-sessions/:sessionId", async (req, res
       .collection("orders")
       .doc(session.orderId)
       .get();
+    const publicReference = order.data()?.publicReference || "";
     return res.json({
       sessionId,
       status: session.status,
       paymentStatus: order.data()?.paymentStatus || "pending",
       orderStatus: order.data()?.status || "awaiting_payment",
-      publicReference: order.data()?.publicReference || "",
+      publicReference,
+      statusUrl: publicReference
+        ? `/o/${session.businessSlug}/${publicReference}?t=${encodeURIComponent(String(req.query.token || ""))}`
+        : "",
       amount: session.amount,
       currency: session.currency,
       businessSlug: session.businessSlug,
@@ -571,6 +581,56 @@ app.get("/public/businesses/:slug/checkout-sessions/:sessionId", async (req, res
   } catch (error) {
     console.error("Checkout status lookup failed", error.message);
     return res.status(500).json({ error: "Could not check payment status." });
+  }
+});
+
+// Public, token-guarded order tracker. Returns a customer-safe projection only —
+// never the raw order document. The token is the raw client token issued when
+// the order was created (for paid checkout, the checkout clientSecret).
+app.get("/public/businesses/:slug/orders/:publicReference", async (req, res) => {
+  try {
+    const business = await publicBusinessFromSlug(cleanText(req.params.slug, 160));
+    if (!business) return res.status(404).json({ error: "Order not found." });
+    const publicReference = cleanText(req.params.publicReference, 40);
+    const snapshot = await db
+      .collection("businesses")
+      .doc(business.id)
+      .collection("orders")
+      .where("publicReference", "==", publicReference)
+      .limit(1)
+      .get();
+    if (snapshot.empty) return res.status(404).json({ error: "Order not found." });
+    const order = snapshot.docs[0].data();
+    const tokenHash = hashCheckoutSecret(String(req.query.token || ""));
+    if (!order.clientTokenHash || !secureHashEqual(order.clientTokenHash, tokenHash)) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    const settled = ["ready", "out_for_delivery", "completed", "cancelled"].includes(order.status);
+    const itemPrep = Array.isArray(order.items)
+      ? order.items.map((item) => Number(item.prepMinutes || 0)).filter((value) => value > 0)
+      : [];
+    const etaMinutes = settled
+      ? 0
+      : (itemPrep.length ? Math.max(...itemPrep) : Number(business.prepDefaultMinutes) || 15);
+
+    return res.json({
+      publicReference: order.publicReference || publicReference,
+      status: order.status || "requested",
+      fulfilmentMethod: order.fulfilment?.method || "pickup",
+      items: (Array.isArray(order.items) ? order.items : []).map((item) => ({
+        name: cleanText(item.name, 160),
+        quantity: Number(item.quantity || 1),
+      })),
+      etaMinutes,
+      businessName: cleanText(business.name, 160),
+      businessPhone: cleanText(business.phone, 40),
+      currency: order.currency || "ZAR",
+      total: order.total ?? null,
+    });
+  } catch (error) {
+    console.error("Public order status lookup failed", error.message);
+    return res.status(500).json({ error: "Could not check this order." });
   }
 });
 
