@@ -22,7 +22,10 @@ const authPersistenceReady = setPersistence(auth, browserLocalPersistence).catch
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
 
-if (process.env.REACT_APP_USE_FIREBASE_EMULATORS === "true") {
+if (
+  process.env.NODE_ENV !== "production" &&
+  process.env.REACT_APP_USE_FIREBASE_EMULATORS === "true"
+) {
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
   connectFirestoreEmulator(db, "127.0.0.1", 8080);
   connectStorageEmulator(storage, "127.0.0.1", 9199);

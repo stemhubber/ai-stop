@@ -19,7 +19,9 @@ export function resolveApiBaseUrl({
 export function getApiBaseUrl() {
   return resolveApiBaseUrl({
     configured: process.env.REACT_APP_API_BASE_URL?.trim(),
-    useEmulators: process.env.REACT_APP_USE_FIREBASE_EMULATORS === "true",
+    useEmulators:
+      process.env.NODE_ENV !== "production" &&
+      process.env.REACT_APP_USE_FIREBASE_EMULATORS === "true",
     projectId:
       process.env.REACT_APP_FIREBASE_PROJECT_ID || "smart-shop-bb140",
   });
