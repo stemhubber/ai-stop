@@ -74,12 +74,15 @@ function orderStatusEmail(business, order) {
   const statusCopy = {
     confirmed: "Your order has been accepted and is being processed.",
     processing: "Your order is now being prepared.",
+    ready: "Your order is ready for collection.",
+    out_for_delivery: "Your order is on the way.",
     completed: "Your order has been marked as completed.",
     cancelled: "Your order has been cancelled. Reply to this email if you need clarification.",
   }[status] || `Your order status is now ${status}.`;
+  const statusLabel = status.replace(/_/g, " ");
   return {
     to: clean(order.customerEmail),
-    subject: `Order ${status} — ${businessName}`,
+    subject: `Order ${statusLabel} — ${businessName}`,
     body: [
       `Hi ${customerName},`,
       "",

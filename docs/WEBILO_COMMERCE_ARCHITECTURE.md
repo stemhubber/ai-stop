@@ -71,11 +71,16 @@ Each item contains an immutable offer and price snapshot. Editing the original o
 Core order status progresses through:
 
 ```text
-requested → confirmed → processing → completed
-          ↘ cancelled
+requested → confirmed → processing → ready → completed
+                                   ↘ ready → out_for_delivery → completed
+          ↘ cancelled (from any open status)
 ```
 
-Older `pending` orders remain accepted by the dashboard and security rules. Payment and fulfilment states remain separate from order state.
+`ready` (prepared, awaiting handoff) and `out_for_delivery` (delivery orders only)
+were added for the food-ordering vertical; they are optional stages — a business
+may still go `processing → completed` directly. Older `pending` orders remain
+accepted by the dashboard and security rules. Payment and fulfilment states
+remain separate from order state.
 
 Booking requests create a linked booking projection. Firestore triggers synchronize status changes between the order and booking without creating separate business transactions.
 

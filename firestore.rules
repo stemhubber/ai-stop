@@ -17,6 +17,10 @@ service cloud.firestore {
         (resource.data.status == "confirmed" &&
          request.resource.data.status in ["processing", "completed", "cancelled"]) ||
         (resource.data.status == "processing" &&
+         request.resource.data.status in ["ready", "completed", "cancelled"]) ||
+        (resource.data.status == "ready" &&
+         request.resource.data.status in ["out_for_delivery", "completed", "cancelled"]) ||
+        (resource.data.status == "out_for_delivery" &&
          request.resource.data.status in ["completed", "cancelled"]);
     }
     function preservesOrderSnapshot() {

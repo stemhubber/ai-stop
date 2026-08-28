@@ -6,6 +6,8 @@ import { listModules, listRecords, setModuleEnabled, updateBusiness } from "../.
 import { AppLayout, Icon } from "../../features/websites/components/WebiloUI";
 import ResourceManager from "./ResourceManager";
 import BusinessAdvisor from "./BusinessAdvisor";
+import KitchenBoard from "../../features/commerce/KitchenBoard";
+import { isFoodBusiness } from "../../features/commerce/foodMode";
 import WebiloAnimatedLogo from "../WebiloAnimatedLogo";
 import VoiceInput from "../VoiceInput";
 import { FeatureGate, ProPrompt } from "../../features/plans/PlanUI";
@@ -23,6 +25,7 @@ const TAB_MODULES = {
   services: "commerce",
   customers: "customers",
   orders: "orders",
+  kitchen: "orders",
   bookings: "bookings",
   messages: "messages",
   campaigns: "marketing",
@@ -37,12 +40,16 @@ const TABS = [
   ["services", "Services"],
   ["customers", "Customers"],
   ["orders", "Orders"],
+  ["kitchen", "Kitchen"],
   ["bookings", "Bookings"],
   ["messages", "Messages"],
   ["campaigns", "Campaigns"],
   ["analytics", "Analytics"],
   ["modules", "Modules"],
 ];
+
+// Tabs that only exist for businesses in the food-ordering vertical.
+const FOOD_TABS = new Set(["kitchen"]);
 
 const VIRTUAL_TABS = ["sell", "more"];
 
@@ -125,18 +132,29 @@ export default function ProductWorkspace() {
     () => new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId)),
     [modules]
   );
+  const foodAware = isFoodBusiness(activeBusiness);
+  // The single source of truth for which tabs this business can reach — feeds the
+  // nav, the Today overview cards, and the "All tools" hub so food-only tabs
+  // never leak into a non-food workspace.
+  const availableTabs = useMemo(
+    () => TABS.filter(([id]) => !FOOD_TABS.has(id) || foodAware),
+    [foodAware]
+  );
   const visibleTabs = useMemo(
-    () => TABS.filter(([id]) => !TAB_MODULES[id] || enabledModules.has(TAB_MODULES[id])),
-    [enabledModules]
+    () => availableTabs.filter(([id]) => !TAB_MODULES[id] || enabledModules.has(TAB_MODULES[id])),
+    [availableTabs, enabledModules]
   );
 
   useEffect(() => {
     if (moduleState !== "ready") return;
     const requiredModule = TAB_MODULES[tab];
-    if (requiredModule && !enabledModules.has(requiredModule)) {
+    if (
+      (requiredModule && !enabledModules.has(requiredModule)) ||
+      (FOOD_TABS.has(tab) && !foodAware)
+    ) {
       setSearchParams({ tab: "overview" }, { replace: true });
     }
-  }, [enabledModules, moduleState, setSearchParams, tab]);
+  }, [enabledModules, foodAware, moduleState, setSearchParams, tab]);
 
   const setTab = (nextTab) => {
     if (nextTab === "website") {
@@ -223,6 +241,7 @@ export default function ProductWorkspace() {
               businesses={businesses}
               activeBusinessId={activeBusinessId}
               modules={modules}
+              availableTabs={availableTabs}
               records={journeyRecords}
               journeyState={journeyState}
               projects={projects}
@@ -233,8 +252,11 @@ export default function ProductWorkspace() {
             />
           )}
           {tab === "sell" && <SellHub modules={modules} onOpen={setTab} />}
-          {tab === "more" && <MoreHub modules={modules} onOpen={setTab} />}
-          {Object.hasOwn(TAB_MODULES, tab) && tab !== "analytics" && (
+          {tab === "more" && <MoreHub modules={modules} availableTabs={availableTabs} onOpen={setTab} />}
+          {tab === "kitchen" && foodAware && (
+            <KitchenBoard key={activeBusinessId} businessId={activeBusinessId} business={activeBusiness} />
+          )}
+          {Object.hasOwn(TAB_MODULES, tab) && tab !== "analytics" && tab !== "kitchen" && (
             <ResourceManager
               key={`${activeBusinessId}:${tab}`}
               businessId={activeBusinessId}
@@ -275,6 +297,7 @@ function Overview({
   businesses,
   activeBusinessId,
   modules,
+  availableTabs,
   records,
   journeyState,
   projects,
@@ -287,7 +310,7 @@ function Overview({
   const cards = [
     ["Business profile", "profile", "settings"],
     ...(enabled.has("website") ? [["Website", "website", "site"]] : []),
-    ...TABS
+    ...availableTabs
     .filter(([id]) => TAB_MODULES[id] && enabled.has(TAB_MODULES[id]))
     .map(([id, title]) => [title, id, MODULE_DETAILS[TAB_MODULES[id]]?.[2] || "grid"]),
   ];
@@ -430,12 +453,12 @@ function SellHub({ modules, onOpen }) {
   );
 }
 
-function MoreHub({ modules, onOpen }) {
+function MoreHub({ modules, availableTabs, onOpen }) {
   const enabled = new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId));
   const actions = [
     { title: "Business profile", target: "profile", description: "Identity, audience, goals, and contact details" },
     { title: "Website", target: "website", description: "Build, publish, and manage your public site" },
-    ...TABS.filter(([id]) => TAB_MODULES[id] && enabled.has(TAB_MODULES[id])).map(([id, title]) => ({
+    ...availableTabs.filter(([id]) => TAB_MODULES[id] && enabled.has(TAB_MODULES[id])).map(([id, title]) => ({
       title,
       target: id,
       description: MODULE_DETAILS[TAB_MODULES[id]]?.[1] || `Manage ${title.toLowerCase()}`,

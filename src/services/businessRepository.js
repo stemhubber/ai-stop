@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -108,6 +109,21 @@ export async function listRecords(businessId, resource) {
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
+// Live subscription to a business subcollection. `constraints` is an array of
+// Firestore query constraints (where/orderBy/limit). `onChange` receives
+// (records, docChanges) so callers can react to individual additions (e.g. a
+// kitchen sound on a newly created order). Returns the unsubscribe function.
+export function subscribeRecords(businessId, resource, constraints, onChange, onError) {
+  return onSnapshot(
+    query(subcollection(businessId, resource), ...constraints),
+    (snap) => onChange(
+      snap.docs.map((item) => ({ id: item.id, ...item.data() })),
+      snap.docChanges()
+    ),
+    onError
+  );
+}
+
 export async function listActiveRecords(businessId, resource) {
   const snap = await getDocs(query(
     subcollection(businessId, resource),
@@ -178,5 +194,9 @@ export function updateRecord(businessId, resource, id, data) {
 export function deleteRecord(businessId, resource, id) {
   return deleteDoc(doc(db, "businesses", businessId, resource, id));
 }
+
+// Re-exported so callers can build `subscribeRecords` constraints without a
+// direct firebase/firestore import.
+export { limit, orderBy, where };
 
 export { MODULES, slugify };
