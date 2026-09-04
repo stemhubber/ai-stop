@@ -1552,7 +1552,7 @@ app.post("/ai/extract-business-image", requireAuth, async (req, res) => {
   try {
     const { imageDataUrl, resource = "products" } = req.body || {};
     if (
-      !["products", "services"].includes(resource) ||
+      !["products", "services", "offers"].includes(resource) ||
       typeof imageDataUrl !== "string" ||
       !/^data:image\/(png|jpeg|webp);base64,/i.test(imageDataUrl) ||
       imageDataUrl.length > 7000000
@@ -1573,7 +1573,9 @@ app.post("/ai/extract-business-image", requireAuth, async (req, res) => {
         "Use 0 durationMinutes when no duration is visible and confidence from 0 to 1.",
         "Descriptions should be short and factual. Return only schema-conforming data.",
       ].join(" "),
-      prompt: `Extract ${resource} that the signed-in business owner can review before importing.`,
+      prompt: resource === "offers"
+        ? "Extract menu items, grouping each into a short category (e.g. Starters, Mains, Drinks) when the image shows one, for the signed-in business owner to review before importing."
+        : `Extract ${resource} that the signed-in business owner can review before importing.`,
     });
     await trackModelUsage(req.user.uid, result);
     return res.json(result);
