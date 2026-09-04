@@ -266,6 +266,7 @@ export default function ProductWorkspace() {
               businessId={activeBusinessId}
               resource={tab}
               aiEnabled={enabledModules.has("ai")}
+              foodAware={foodAware}
             />
           )}
           {tab === "profile" && (

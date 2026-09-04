@@ -8,6 +8,58 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 4: Food catalogue shape (2026-09-05)
+
+Additive, builds on Phases 1–3.
+
+- **`businesses/{id}/offers/{id}` optional fields**: `category`, `variants:
+  [{label, priceDeltaCents}]`, `modifierGroups: [{name, min, max, options:
+  [{label, priceCents}]}]`, `prepMinutes`, `available` (default true),
+  `stockCount`. Sanitized and capped by `offerSnapshot()` in
+  `functions/commerce.js` (12 variants / 8 groups / 20 options max).
+- **`functions/commerce.js` `resolveSelectedOptions(offer, rawSelection)`** —
+  turns a customer's `{ variant, modifiers[] }` labels into server-priced
+  entries against the *reloaded* offer; rejects a missing required variant, an
+  unknown label, or a group min/max violation with `400`. Shared by `buildOrder`
+  (free/quote requests) and `buildCheckoutOrder` (paid checkout — imported into
+  `commerceCheckout.js`).
+- **`commerceCheckout.js` `normalizeCheckoutSelections`** now groups cart lines
+  by offer id *and* selected options, so distinct variants of the same offer
+  stay separate lines instead of merging quantities.
+- **Availability enforcement**: both public order-creation paths (`/requests`,
+  `checkoutOfferSnapshots`) reject `available === false` offers with `409`,
+  alongside the existing `status !== "active"` check.
+- **Stock, decremented atomically with the order write**: `/requests`
+  decrements `stockCount` in the same `db.batch()` that writes the order
+  (`409` if insufficient at read time); `/checkout-sessions` re-reads live
+  `stockCount` *inside* its existing `db.runTransaction()`, so a concurrent
+  sale is caught by Firestore's transaction retry. Hits 0 → `available` flips
+  to `false` automatically. Deliberately short of a full reservation/hold
+  system — that's the separate "Stock reservations" commerce-roadmap item.
+- **Owner editor**: `ResourceManager.jsx` offers form gains `available` (all
+  businesses) and food-aware-only `category` / `prepMinutes` fields plus a new
+  `OfferOptionsEditor` — repeatable rows for variants and modifier groups
+  (Rand in the UI, converted to minor units on save, same as `price`). A
+  one-tap "Mark sold out" / "Mark available" toggle was added to the offers
+  table row actions. `foodAware` now flows from `ProductWorkspace` into
+  `ResourceManager`.
+- **Public menu**: `PublicBusinessPage` groups offers by `category` when
+  present, renders a variant `<select>` + modifier checkboxes with a
+  live-priced summary in the request form, badges "Sold out" cards, and
+  disables sold-out options in the offer picker. `PublicWebsite`'s
+  product/service selects disable sold-out items too.
+- **Known scope boundary**: the paid-checkout cart (`cart.js`
+  `checkoutEligible`, `PublicCheckoutPanel`) does not yet support choosing a
+  variant or a *required* modifier — such offers stay request-only until the
+  cart gets its own picker. Optional (`min: 0`) modifier groups don't block
+  checkout eligibility but also can't be selected from the cart yet.
+  `PublicWebsite` doesn't render the variant/modifier picker either (its
+  contact/order form still submits without `selectedOptions` for those
+  fields) — both are documented follow-ups, not silent gaps.
+- Tests: `functions/commerce.test.js`, `functions/commerceCheckout.test.js`,
+  `ResourceManager.test.jsx`, `cart.test.js` — 52 frontend / 50 functions
+  tests total, all green.
+
 ### Added — Food-ordering vertical, Phase 3: Accepting-orders toggle + hours (2026-08-28)
 
 Additive, builds on Phases 1–2.

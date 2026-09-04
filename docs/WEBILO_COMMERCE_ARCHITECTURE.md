@@ -16,7 +16,7 @@ New offers are stored at:
 businesses/{businessId}/offers/{offerId}
 ```
 
-An offer records its type, pricing mode, price in minor currency units, fulfilment methods, images, status, and service duration where relevant.
+An offer records its type, pricing mode, price in minor currency units, fulfilment methods, images, status, and service duration where relevant. The food-ordering vertical adds optional `category`, `variants` (size/option price deltas), `modifierGroups` (add-ons with a min/max per group), `prepMinutes`, `available`, and `stockCount` — all sanitized server-side in `offerSnapshot()` (`functions/commerce.js`) and additive, so offers without them behave exactly as before. See `docs/WEBILO_FOOD_ORDERING_VERTICAL.md` §2.4/§2.5.
 
 The public catalogue uses a compatibility adapter:
 
@@ -64,7 +64,7 @@ createdAt
 updatedAt
 ```
 
-Each item contains an immutable offer and price snapshot. Editing the original offer does not rewrite historical transactions.
+Each item contains an immutable offer and price snapshot. Editing the original offer does not rewrite historical transactions. When the offer has variants or modifier groups, `items[].unitPrice` already includes the resolved deltas and `items[].selectedOptions` records what was chosen (`{ type: "variant"|"modifier", label, priceCents, groupName? }[]`) — resolved and priced server-side (`resolveSelectedOptions()` in `functions/commerce.js`) from the reloaded offer, never from client input.
 
 ### Lifecycle
 

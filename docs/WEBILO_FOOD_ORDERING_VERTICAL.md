@@ -100,7 +100,16 @@ BitePilot: `src/views/StoreStatusController.jsx` (`isOpen` flip with flavour-tex
   - Enforcement (important — this is a server rule, not a UI hint): in `functions` `requests` + `checkout-sessions` handlers, after resolving the business, reject with `409` if `ordering.acceptingOrders === false`. Add a matching check to `firestore.rules` for any direct client order create path (there is none today, but keep them in sync).
   - Public: `PublicBusinessPage` / generated `/w/:slug` show a closed banner and hide the cart when `acceptingOrders` is false or `hours` say closed. `PublicCheckoutPanel` already early-returns on `!business.checkoutEnabled`; add the ordering-paused check there too.
 
-### 2.4 Food catalogue shape: categories, variants, add-ons, prep time  ·  Priority: P1
+### 2.4 Food catalogue shape: categories, variants, add-ons, prep time  ·  Priority: P1 — ✅ IMPLEMENTED (Phase 4)
+
+Delivered:
+- `businesses/{id}/offers/{id}` optional fields exactly as specced below (§3.2), sanitized/capped by `offerSnapshot()` in `functions/commerce.js` (12 variants max, 8 modifier groups max, 20 options per group max).
+- `functions/commerce.js` `resolveSelectedOptions(offer, rawSelection)` — the single place that turns a customer's `{ variant, modifiers[] }` labels into priced entries, checked against the *reloaded* offer (never trusts a client price). Rejects a missing required variant, an unknown label, or a modifier count outside a group's `min`/`max` with `400`. Used by both `buildOrder` (free/quote requests) and `buildCheckoutOrder` (paid checkout) — `commerceCheckout.js` requires it from `commerce.js`.
+- `commerceCheckout.js` `normalizeCheckoutSelections` groups cart lines by offer id **and** selected options, so a "Large" and a "Small" of the same burger stay separate lines instead of merging quantities.
+- Owner editor: `ResourceManager.jsx` `CONFIG.offers.fields` gains `available` (all businesses), `category` + `prepMinutes` (food-aware only), plus a repeatable `OfferOptionsEditor` for variants and modifier groups (food-aware only, `foodAware` passed down from `ProductWorkspace`). Rand↔minor-unit conversion happens in `edit()`/`save()`, same pattern as `price`.
+- Public menu: `PublicBusinessPage` groups by `category` when any offer has one (falls back to product/service/package grouping otherwise), renders a variant `<select>` + modifier checkboxes in the request form with a live-priced order summary, and sends `selectedOptions` through `submitPublicBusinessRequest`.
+- `src/features/commerce/cart.js` `checkoutEligible` excludes offers with variants or a *required* (`min > 0`) modifier group from the simple paid-checkout cart — **the paid-checkout cart UI does not yet support choosing a variant or a required add-on**; those items stay request-only (free enquiry flow) until the cart gets its own picker. Optional (`min: 0`) modifier groups don't block checkout eligibility, they just can't be picked from the cart yet either. `PublicWebsite`'s product/service selects disable sold-out items but don't yet render the variant/modifier picker — same deferred scope.
+- Tests: `functions/commerce.test.js` (`offerSnapshot` sanitization, `resolveSelectedOptions`, `buildOrder` pricing), `functions/commerceCheckout.test.js` (checkout pricing + grouping), `ResourceManager.test.jsx`, `cart.test.js`.
 
 BitePilot: `ProductController` synthesises "(Large)" / "(Small)" rows from one menu entry with `small`/`large` prices; `productsData.extra_toppings` / `extra_packages`; `Product.waitingTime` ("11 minutes"); `isAvailable` flag; `MenuItemModal` edits name/price/description/image/available/waitingTime.
 
@@ -112,16 +121,16 @@ BitePilot: `ProductController` synthesises "(Large)" / "(Small)" rows from one m
   - `functions/commerce.js` `offerSnapshot` + `buildOrder` must price variants/modifiers server-side from the reloaded offer and add them to `lineTotal` — the browser keeps sending only references + quantities (§ commerce doc: "never submits an authoritative price").
   - Public menu grouping by `category` is a pure rendering change in `PublicBusinessPage` / `features/commerce` cart source (`listPublicOffers`).
 
-### 2.5 Item availability / "86" + light stock counts  ·  Priority: P2
+### 2.5 Item availability / "86" + light stock counts  ·  Priority: P2 — ✅ IMPLEMENTED (Phase 4)
 
 BitePilot: `isAvailable` on products; `StockManagerController.useStockManager` derives an "ingredient" list from description text and decrements on orders (heuristic, not real).
 
 - **Keep:** instant "mark unavailable / sold out" from the kitchen board and the menu manager; hide or grey-out unavailable items on the public menu; optional per-item countdown quantity for the day ("12 left").
 - **Drop:** the ingredient-inference engine entirely — it's guesswork on `description.split(',')`.
-- **Map:**
-  - `available: boolean` on the offer (from §2.4). Kitchen board and `ResourceManager` both get a one-tap toggle → `updateRecord(..., { available })`.
-  - `listPublicOffers` / public renderers filter or badge on `available === false`.
-  - Optional `stockCount` (number, nullable): decrement in the server `buildOrder` batch (same transaction that writes the order), set `available:false` at zero. Keep it opt-in per item. This is the "Stock reservations" bullet already listed as a remaining commerce phase — align with that rather than shipping a parallel system.
+- **Delivered:**
+  - `available: boolean` on the offer (default true). `ResourceManager` offers rows get a one-tap "Mark sold out"/"Mark available" toggle (`toggleAvailable` → `updateRecord(..., { available })`); the kitchen board doesn't duplicate this toggle (owners use the offers list) — a follow-up could surface it there too.
+  - Both public creation paths (`/requests`, `checkoutOfferSnapshots`) reject `available === false` offers with `409`, same spot as the existing `status !== "active"` check. `PublicBusinessPage` badges "Sold out" on the card and disables it in the request-form `<select>`; `PublicWebsite`'s product select disables sold-out items too.
+  - `stockCount` (number, nullable, opt-in): **decremented atomically with the order write**, not as a separate follow-up call — `POST /requests` decrements in the same `db.batch()` that writes the order (checked against the value read moments earlier; a `409 "Not enough stock left"` short-circuits if insufficient); `POST /checkout-sessions` re-reads the live `stockCount` **inside** the existing `db.runTransaction()` (it already wraps order creation) so a concurrent sale is caught by Firestore's transaction conflict retry, not just raced. `stockCount` hits 0 → `available` flips to `false` automatically. This intentionally stops short of a full reservation/hold system — that's the "Stock reservations" item already on the commerce roadmap; don't build a parallel one.
 
 ### 2.6 Kitchen ticket / receipt printing  ·  Priority: P2
 
@@ -195,7 +204,7 @@ prepDefaultMinutes: number | null
 ratingSummary: { count: number, average: number } | null         // written by trigger (§2.10)
 ```
 
-### 3.2 `businesses/{businessId}/offers/{offerId}` — new optional fields
+### 3.2 `businesses/{businessId}/offers/{offerId}` — new optional fields — ✅ IMPLEMENTED (Phase 4)
 
 ```
 category: string | null
@@ -273,10 +282,10 @@ For kitchen staff who are not the owner:
 
 | Phase | Ships | Depends on |
 | --- | --- | --- |
-| **1** | Kitchen board tab (2.1) + `ready` status (3.3) + sound (2.8) | status/rules/trigger change, kitchen index |
-| **2** | Public order tracker (2.2) + token route (3.4) | order-created responses returning `statusUrl` |
-| **3** | Accepting-orders toggle + hours (2.3) | `businesses` fields + server guard |
-| **4** | Food catalogue fields: categories, variants, modifiers, prep time, availability (2.4, 2.5) | `offers` fields + `offerSnapshot`/`buildOrder` pricing |
+| **1** ✅ | Kitchen board tab (2.1) + `ready` status (3.3) + sound (2.8) | status/rules/trigger change, kitchen index |
+| **2** ✅ | Public order tracker (2.2) + token route (3.4) | order-created responses returning `statusUrl` |
+| **3** ✅ | Accepting-orders toggle + hours (2.3) | `businesses` fields + server guard |
+| **4** ✅ | Food catalogue fields: categories, variants, modifiers, prep time, availability, light stock (2.4, 2.5) | `offers` fields + `offerSnapshot`/`buildOrder` pricing |
 | **5** | Kitchen ticket printing (2.6) | none |
 | **6** | Menu photo import (2.7) | AI route |
 | **7** | Announcements (2.9), storefront sections (2.11), discovery (2.12) | product decisions |

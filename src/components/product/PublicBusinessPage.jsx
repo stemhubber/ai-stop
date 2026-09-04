@@ -18,6 +18,8 @@ const emptyForm = {
   fulfilmentMethod: "",
   startTime: "",
   company: "",
+  selectedVariant: "",
+  selectedModifiers: [],
 };
 
 export default function PublicBusinessPage() {
@@ -57,6 +59,15 @@ export default function PublicBusinessPage() {
     [form.offerKey, offers]
   );
   const offerGroups = useMemo(() => {
+    if (offers.some((offer) => offer.category)) {
+      const byCategory = new Map();
+      offers.forEach((offer) => {
+        const key = offer.category || (offer.offerType === "service" ? "Services" : "Menu");
+        if (!byCategory.has(key)) byCategory.set(key, []);
+        byCategory.get(key).push(offer);
+      });
+      return [...byCategory.entries()];
+    }
     const products = offers.filter((offer) => offer.offerType === "product");
     const services = offers.filter((offer) => offer.offerType === "service");
     const packages = offers.filter((offer) => !["product", "service"].includes(offer.offerType));
@@ -76,6 +87,8 @@ export default function PublicBusinessPage() {
       quantity: 1,
       fulfilmentMethod: offer.fulfilmentMethods?.[0] || "pickup",
       startTime: "",
+      selectedVariant: offer.variants?.[0]?.label || "",
+      selectedModifiers: [],
     }));
     window.setTimeout(
       () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
@@ -90,6 +103,17 @@ export default function PublicBusinessPage() {
       offerKey,
       fulfilmentMethod: offer?.fulfilmentMethods?.[0] || "",
       startTime: "",
+      selectedVariant: offer?.variants?.[0]?.label || "",
+      selectedModifiers: [],
+    }));
+  };
+
+  const toggleModifier = (label) => {
+    setForm((current) => ({
+      ...current,
+      selectedModifiers: current.selectedModifiers.includes(label)
+        ? current.selectedModifiers.filter((item) => item !== label)
+        : [...current.selectedModifiers, label],
     }));
   };
 
@@ -100,6 +124,8 @@ export default function PublicBusinessPage() {
       offerKey: requestType === "offer" ? current.offerKey : "",
       fulfilmentMethod: requestType === "offer" ? current.fulfilmentMethod : "",
       startTime: "",
+      selectedVariant: "",
+      selectedModifiers: [],
     }));
   };
 
@@ -110,6 +136,9 @@ export default function PublicBusinessPage() {
     }
     if (form.requestType === "offer" && !selectedOffer) {
       return setMessage("Choose an available offer.");
+    }
+    if (form.requestType === "offer" && selectedOffer?.variants?.length > 0 && !form.selectedVariant) {
+      return setMessage("Choose an option before submitting.");
     }
 
     if (form.requestType === "offer" && paused) {
@@ -133,6 +162,7 @@ export default function PublicBusinessPage() {
               resource: selectedOffer.sourceResource,
               id: selectedOffer.sourceId,
               quantity: Math.max(1, Number(form.quantity || 1)),
+              selectedOptions: { variant: form.selectedVariant, modifiers: form.selectedModifiers },
             }
           : undefined,
         fulfilmentMethod: form.fulfilmentMethod,
@@ -245,14 +275,45 @@ export default function PublicBusinessPage() {
                   <select className="wb-input wb-select" value={form.offerKey} onChange={(event) => changeOffer(event.target.value)}>
                     <option value="">Choose an offer</option>
                     {offers.map((offer) => (
-                      <option key={offer.key} value={offer.key}>
-                        {offer.name} · {offerPrice(offer)}
+                      <option key={offer.key} value={offer.key} disabled={offer.available === false}>
+                        {offer.name} · {offer.available === false ? "Sold out" : offerPrice(offer)}
                       </option>
                     ))}
                   </select>
                 </label>
                 {selectedOffer && (
                   <>
+                    {selectedOffer.variants?.length > 0 && (
+                      <label className="wb-field">
+                        <span className="wb-field-label">Option</span>
+                        <select className="wb-input wb-select" value={form.selectedVariant} onChange={(event) => setForm({ ...form, selectedVariant: event.target.value })}>
+                          {selectedOffer.variants.map((variant) => (
+                            <option value={variant.label} key={variant.label}>
+                              {variant.label}{variant.priceDeltaCents ? ` (+${money(variant.priceDeltaCents, selectedOffer.currency)})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {selectedOffer.modifierGroups?.length > 0 && (
+                      <div className="wb-field product-field--wide public-modifier-groups">
+                        {selectedOffer.modifierGroups.map((group) => (
+                          <fieldset className="public-modifier-group" key={group.name}>
+                            <legend>{group.name}{group.min > 0 ? ` (choose ${group.min === group.max ? group.min : `${group.min}–${group.max}`})` : " (optional)"}</legend>
+                            {group.options.map((option) => (
+                              <label className="public-modifier-option" key={option.label}>
+                                <input
+                                  type="checkbox"
+                                  checked={form.selectedModifiers.includes(option.label)}
+                                  onChange={() => toggleModifier(option.label)}
+                                />
+                                {option.label}{option.priceCents ? ` (+${money(option.priceCents, selectedOffer.currency)})` : ""}
+                              </label>
+                            ))}
+                          </fieldset>
+                        ))}
+                      </div>
+                    )}
                     <label className="wb-field">
                       <span className="wb-field-label">Quantity</span>
                       <input className="wb-input" type="number" min="1" max="99" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} />
@@ -271,7 +332,7 @@ export default function PublicBusinessPage() {
                     )}
                     <div className="public-order-summary" aria-live="polite">
                       <span>{selectedOffer.name} × {Math.max(1, Number(form.quantity || 1))}</span>
-                      <strong>{offerTotal(selectedOffer, form.quantity)}</strong>
+                      <strong>{offerTotal(selectedOffer, form.quantity, form.selectedVariant, form.selectedModifiers)}</strong>
                       <small>Final pricing is confirmed by {business.name}.</small>
                     </div>
                   </>
@@ -309,13 +370,15 @@ function PublicCollection({ title, records, onChoose, onAdd, checkoutEnabled, pa
         <h2 className="wb-display">{title}</h2>
         <div className="wb-grid-3">
           {records.map((record) => (
-            <article className="wb-card public-record-card" key={record.key}>
+            <article className={`wb-card public-record-card ${record.available === false ? "public-record-card--unavailable" : ""}`} key={record.key}>
               {record.imageUrl && <img src={record.imageUrl} alt={record.name} />}
               <span className="wb-label">{offerTypeLabel(record.offerType)}</span>
               <h3 className="wb-heading">{record.name}</h3>
               <p className="wb-secondary">{record.description}</p>
               <strong>{offerPrice(record)}</strong>
-              {paused ? (
+              {record.available === false ? (
+                <p className="wb-body-sm wb-secondary">Sold out</p>
+              ) : paused ? (
                 <p className="wb-body-sm wb-secondary">Ordering is paused.</p>
               ) : (
                 <div className="wb-row">
@@ -347,10 +410,16 @@ const offerPrice = (offer) => {
   return offer.pricingMode === "starting_from" ? `From ${amount}` : amount;
 };
 
-const offerTotal = (offer, quantity) => {
+const offerTotal = (offer, quantity, selectedVariant, selectedModifiers = []) => {
   if (offer.pricingMode === "quote") return "Quote required";
   if (offer.pricingMode === "free") return "Free";
-  return money(Number(offer.price || 0) * Math.max(1, Number(quantity || 1)), offer.currency);
+  const variantDelta = offer.variants?.find((variant) => variant.label === selectedVariant)?.priceDeltaCents || 0;
+  const modifierDelta = (offer.modifierGroups || [])
+    .flatMap((group) => group.options)
+    .filter((option) => selectedModifiers.includes(option.label))
+    .reduce((sum, option) => sum + (option.priceCents || 0), 0);
+  const unitPrice = Number(offer.price || 0) + variantDelta + modifierDelta;
+  return money(unitPrice * Math.max(1, Number(quantity || 1)), offer.currency);
 };
 
 const offerAction = (offer) => offer.fulfilmentMethods?.includes("booking")

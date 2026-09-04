@@ -239,10 +239,15 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
     const offerData = offerDocument.data();
     const unavailable = !offerDocument.exists ||
       offerData?.status === "inactive" ||
+      offerData?.available === false ||
       (selection.resource === "offers" && offerData?.status !== "active");
     if (unavailable) return res.status(409).json({ error: "This offer is no longer available." });
 
     const snapshot = offerSnapshot(selection.resource, offerDocument.id, offerData);
+    if (snapshot.stockCount != null && snapshot.stockCount < selection.quantity) {
+      return res.status(409).json({ error: "Not enough stock left for this item." });
+    }
+
     const orderRef = db.collection("businesses").doc(business.id).collection("orders").doc();
     const clientToken = checkoutSecret();
     const order = buildOrder({
@@ -270,6 +275,14 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
       source: "website",
       createdAt: now,
     });
+    if (snapshot.stockCount != null) {
+      const nextStock = snapshot.stockCount - selection.quantity;
+      batch.update(offerRef, {
+        stockCount: nextStock,
+        available: nextStock > 0,
+        updatedAt: now,
+      });
+    }
 
     if (order.orderType === "booking_request") {
       const bookingRef = db.collection("businesses").doc(business.id).collection("bookings").doc();
@@ -359,6 +372,7 @@ async function checkoutOfferSnapshots(businessId, selections) {
     const data = document.data();
     const unavailable = !document.exists ||
       data?.status === "inactive" ||
+      data?.available === false ||
       (selection.resource === "offers" && data?.status !== "active");
     if (unavailable) {
       const error = new Error("One or more cart items are no longer available.");
@@ -426,6 +440,27 @@ app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
         }
         return;
       }
+      // Stock check/decrement: re-read each stock-tracked offer inside the
+      // transaction (not the pre-fetched `offers` snapshots) so a concurrent
+      // sale is caught and the transaction retries or fails cleanly.
+      const stockUpdates = [];
+      for (let index = 0; index < selections.length; index += 1) {
+        const offer = offers[index];
+        if (offer.stockCount == null) continue;
+        const selection = selections[index];
+        const offerRef = db.collection("businesses").doc(business.id)
+          .collection(selection.resource).doc(selection.id);
+        // eslint-disable-next-line no-await-in-loop
+        const liveDoc = await transaction.get(offerRef);
+        const liveStock = Number(liveDoc.data()?.stockCount);
+        if (!Number.isFinite(liveStock) || liveStock < selection.quantity) {
+          const error = new Error(`${offer.name || "An item"} sold out while you were checking out.`);
+          error.statusCode = 409;
+          throw error;
+        }
+        stockUpdates.push({ ref: offerRef, nextStock: liveStock - selection.quantity });
+      }
+
       transaction.set(customerRef, {
         name: order.customerName,
         email: order.customerEmail,
@@ -443,6 +478,9 @@ app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
         status: order.status,
         source: "website",
         createdAt: now,
+      });
+      stockUpdates.forEach(({ ref, nextStock }) => {
+        transaction.update(ref, { stockCount: nextStock, available: nextStock > 0, updatedAt: now });
       });
       transaction.set(sessionRef, {
         schemaVersion: 1,
