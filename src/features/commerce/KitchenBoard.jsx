@@ -15,6 +15,7 @@ import {
   nextOrderStep,
 } from "./orderTransitions";
 import { useKitchenSound } from "./useKitchenSound";
+import { usePrintTicket } from "./PrintableTicket";
 import "./kitchen.css";
 
 const money = (cents) =>
@@ -53,6 +54,7 @@ export default function KitchenBoard({ businessId, business }) {
   const [now, setNow] = useState(() => Date.now());
   const seenRef = useRef(null);
   const { soundEnabled, enableSound, disableSound, playNewOrder, playReady } = useKitchenSound();
+  const printTicket = usePrintTicket();
   // Keep the latest cue callbacks in a ref so toggling sound doesn't tear down
   // and rebuild the Firestore subscription.
   const cuesRef = useRef({ playNewOrder, playReady });
@@ -266,6 +268,12 @@ export default function KitchenBoard({ businessId, business }) {
                               WhatsApp
                             </a>
                           )}
+                          <button
+                            className="wb-btn wb-btn-sm wb-btn-ghost"
+                            onClick={() => printTicket(order, business, "kitchen")}
+                          >
+                            Print ticket
+                          </button>
                           {canCancelOrder(order.status) && (
                             <button
                               className="wb-btn wb-btn-sm wb-btn-ghost kitchen-cancel"

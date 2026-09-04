@@ -8,6 +8,28 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 5: Kitchen ticket / receipt printing (2026-09-05)
+
+Additive, builds on Phases 1–4. Frontend-only — no backend or routing changes.
+
+- **`src/features/commerce/PrintableTicket.jsx`** (+ `print.css`, `printBus.js`)
+  — a single `<PrintSurface/>`, mounted once in `ProductWorkspace.jsx`, that
+  portals (`createPortal`) the requested ticket directly onto `document.body`
+  (sibling to `#root`). `@media print` hides `#root` and shows only the
+  ticket; it clears itself on the browser's `afterprint` event.
+- **`usePrintTicket()`** hook — `printTicket(order, business, variant)` from
+  any component, via a tiny module-level pub-sub (`printBus.js`) rather than
+  threading a callback down every tab, and rather than mounting a hidden
+  ticket per row (which would conflict if several existed at once).
+- One component, two variants: `"kitchen"` (ref, time, items +
+  `selectedOptions`, notes front-and-centre, fulfilment method) and
+  `"receipt"` (adds unit/line prices, a total, thank-you footer). Wired to a
+  "Print ticket" button on `KitchenBoard` cards and a "Print receipt" button
+  on `ResourceManager`'s `orders` rows (schemaVersion 2 orders).
+- Tests: `PrintableTicket.test.jsx` (portal mount, `window.print()` call,
+  receipt-vs-kitchen content, `afterprint` cleanup) — 55 frontend / 50
+  functions tests total, all green.
+
 ### Added — Food-ordering vertical, Phase 4: Food catalogue shape (2026-09-05)
 
 Additive, builds on Phases 1–3.

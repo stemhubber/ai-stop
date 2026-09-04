@@ -132,13 +132,18 @@ BitePilot: `isAvailable` on products; `StockManagerController.useStockManager` d
   - Both public creation paths (`/requests`, `checkoutOfferSnapshots`) reject `available === false` offers with `409`, same spot as the existing `status !== "active"` check. `PublicBusinessPage` badges "Sold out" on the card and disables it in the request-form `<select>`; `PublicWebsite`'s product select disables sold-out items too.
   - `stockCount` (number, nullable, opt-in): **decremented atomically with the order write**, not as a separate follow-up call — `POST /requests` decrements in the same `db.batch()` that writes the order (checked against the value read moments earlier; a `409 "Not enough stock left"` short-circuits if insufficient); `POST /checkout-sessions` re-reads the live `stockCount` **inside** the existing `db.runTransaction()` (it already wraps order creation) so a concurrent sale is caught by Firestore's transaction conflict retry, not just raced. `stockCount` hits 0 → `available` flips to `false` automatically. This intentionally stops short of a full reservation/hold system — that's the "Stock reservations" item already on the commerce roadmap; don't build a parallel one.
 
-### 2.6 Kitchen ticket / receipt printing  ·  Priority: P2
+### 2.6 Kitchen ticket / receipt printing  ·  Priority: P2 — ✅ IMPLEMENTED (Phase 5)
 
 BitePilot: `src/views/ReceiptView.jsx` + `PrintModal.jsx` — `window.print()` on a styled receipt DOM, `@media print` CSS, `/print` route.
 
 - **Keep:** a print-friendly kitchen ticket (order ref, time, items + options, notes, fulfilment method) and a customer receipt; trigger from the kitchen card and the order detail.
 - **Drop:** a dedicated `/print` route that depends on in-memory `receiptOrders` state; `JENETE APPS ©` hardcoded footer.
-- **Map:** a `<PrintableTicket order={…} business={…} />` component rendered into a hidden container, `@media print` styles scoped with a `print-only` class, `window.print()` on click. No routing, no backend. Pull business name/phone/address from the business doc. Later: an ESC/POS / share-to-printer path is out of scope for v1.
+- **Delivered:** `src/features/commerce/PrintableTicket.jsx` (+ `print.css`, `printBus.js`) — no routing, no backend, exactly as specced, but built as a **single shared print surface** rather than a modal per row:
+  - `<PrintSurface />` is mounted once in `ProductWorkspace.jsx` and portals (`createPortal`) the requested ticket directly onto `document.body`, sibling to `#root`. `@media print { #root { display: none } }` hides the app; the ticket (`.print-ticket`, hidden outside `@media print`) is the only thing left to print. Clears itself on the browser's `afterprint` event.
+  - `usePrintTicket()` — a one-line hook (`printTicket(order, business, variant)`) any component can call without threading a prop chain; it publishes to a tiny module-level pub-sub (`printBus.js`) that `<PrintSurface/>` listens on. Avoids mounting a hidden ticket per row/card, which would conflict if several existed at once.
+  - One component, two variants: `"kitchen"` (terse — ref, time, items + `selectedOptions`, notes front-and-centre for allergies/special requests, fulfilment method) and `"receipt"` (adds unit/line prices, a total, and a thank-you footer). Wired to a "Print ticket" button on each `KitchenBoard` card and a "Print receipt" button on `ResourceManager`'s `orders` rows (v2 orders only).
+  - ESC/POS / share-to-printer path remains out of scope, as specced.
+  - Tests: `PrintableTicket.test.jsx` (portal mount, `window.print()` call, receipt-vs-kitchen content, `afterprint` cleanup).
 
 ### 2.7 Menu import (photo → draft items)  ·  Priority: P2
 
@@ -286,7 +291,7 @@ For kitchen staff who are not the owner:
 | **2** ✅ | Public order tracker (2.2) + token route (3.4) | order-created responses returning `statusUrl` |
 | **3** ✅ | Accepting-orders toggle + hours (2.3) | `businesses` fields + server guard |
 | **4** ✅ | Food catalogue fields: categories, variants, modifiers, prep time, availability, light stock (2.4, 2.5) | `offers` fields + `offerSnapshot`/`buildOrder` pricing |
-| **5** | Kitchen ticket printing (2.6) | none |
+| **5** ✅ | Kitchen ticket printing (2.6) | none |
 | **6** | Menu photo import (2.7) | AI route |
 | **7** | Announcements (2.9), storefront sections (2.11), discovery (2.12) | product decisions |
 | **later** | Fulfilment-gated reviews (2.10) | commerce roadmap Pro phase |

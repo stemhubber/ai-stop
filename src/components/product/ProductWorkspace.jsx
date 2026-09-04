@@ -8,6 +8,7 @@ import ResourceManager from "./ResourceManager";
 import BusinessAdvisor from "./BusinessAdvisor";
 import KitchenBoard from "../../features/commerce/KitchenBoard";
 import OrderingSettingsCard from "../../features/commerce/OrderingSettingsCard";
+import { PrintSurface } from "../../features/commerce/PrintableTicket";
 import { isFoodBusiness } from "../../features/commerce/foodMode";
 import WebiloAnimatedLogo from "../WebiloAnimatedLogo";
 import VoiceInput from "../VoiceInput";
@@ -203,6 +204,7 @@ export default function ProductWorkspace() {
 
   return (
     <AppLayout>
+      <PrintSurface />
       <div className="product-page">
         <header className="product-workspace-header">
           <div>
@@ -267,6 +269,7 @@ export default function ProductWorkspace() {
               resource={tab}
               aiEnabled={enabledModules.has("ai")}
               foodAware={foodAware}
+              business={activeBusiness}
             />
           )}
           {tab === "profile" && (
