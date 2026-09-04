@@ -9,6 +9,7 @@ import WebiloAnimatedLogo from "../../components/WebiloAnimatedLogo";
 import PublicCheckoutPanel from "../commerce/PublicCheckoutPanel";
 import { checkoutEligible, useCommerceCart } from "../commerce/cart";
 import { orderingPaused } from "../commerce/ordering";
+import AnnouncementBanner from "../announcements/AnnouncementBanner";
 
 const emptyRequest = {
   name: "",
@@ -279,6 +280,7 @@ export default function PublicWebsite() {
 
   return (
     <main className="wl-public-site" ref={siteRef}>
+      {business?.id && <AnnouncementBanner businessId={business.id} />}
       <WebsitePreview
         project={project}
         page={page}

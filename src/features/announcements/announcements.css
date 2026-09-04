@@ -1,0 +1,39 @@
+.announcement-strip {
+  display: flex;
+  flex-direction: column;
+}
+
+.announcement-strip-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.announcement-strip-item--info {
+  background: #e5f2ee;
+  color: #105347;
+}
+
+.announcement-strip-item--warning {
+  background: #fff4e5;
+  color: #7a4a12;
+}
+
+.announcement-strip-item button {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0 2px;
+}
+
+.announcement-strip-item button:hover {
+  opacity: 1;
+}

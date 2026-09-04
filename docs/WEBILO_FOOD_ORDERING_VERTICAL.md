@@ -166,13 +166,19 @@ BitePilot: `playOrderSound` (`new Audio('/sounds/…')`), `soundMap`; `speakText
 - **Drop:** voice *command* control (`listenForSpeechCommand` → status update) — brittle, `webkit`-only, and `confirmAction` was never wired up. Skip it.
 - **Map:** `useKitchenSound` hook (see §2.1). Optional `announceReady` util wrapping `speechSynthesis` behind a toggle. All client-only, `localStorage` prefs.
 
-### 2.9 Broadcast alerts from a business to its customers  ·  Priority: P3
+### 2.9 Broadcast alerts from a business to its customers  ·  Priority: P3 — ✅ IMPLEMENTED (Phase 7, partial)
 
 BitePilot: `AlertController` + `AdminAlertManager` + `NotificationPopover` — a top-level `alerts` collection (`storeId`, `message`, `alertType`, `replies[]`), live subscription, a bell with unread count (last-read timestamp in `localStorage`), threaded replies.
 
 - **Keep:** owner posts a short notice ("out of ribs today", "load-shedding, 30-min delays"); customers on the business page see it; optional replies.
 - **Drop:** a global `alerts` collection filtered client-side by `storeId`; identity via `localStorage` user; unread state in `localStorage`.
-- **Map:** `businesses/{id}/announcements/{id}` subcollection (`message`, `level`, `createdBy`, `expiresAt`, `createdAt`). Owner CRUD via `businessRepository` generic helpers; `firestore.rules`: `read: if true` (public, like `offers` active), `write: if ownsBusiness`. Render a dismissible strip on `PublicBusinessPage` / `/w/:slug`. Replies → defer; if wanted, model as `announcements/{id}/replies`. This overlaps conceptually with `campaigns`/`messages` — check with the team whether an announcement is just a `campaign` with a public channel before adding a collection.
+- **Decided:** own subcollection, not a `campaign`. `campaigns` are SMS drafts sent to specific customers (`CONFIG.campaigns` in `ResourceManager`: `name`/`channel`/`message`, never publicly readable) — a genuinely different shape and audience from an unauthenticated storefront banner. Reusing them would mean either loosening `campaigns`' rules to public-read (wrong — campaign drafts shouldn't be public) or forking behaviour by field, which is worse than one small additive collection.
+- **Delivered:**
+  - `businesses/{id}/announcements/{id}` (`message`, `level: "info"|"warning"`, `expiresAt` optional ISO string, `createdAt`/`updatedAt`). `firestore.rules`: `allow read: if true; allow write: if ownsBusiness(businessId);` — same public-read pattern as active offers.
+  - Owner CRUD is a new `ResourceManager` `CONFIG.announcements` entry (message/level/expiresAt fields, ISO round-trip on save/edit) — no new component, reused the existing generic form. Surfaced as an `announcements` tab gated on the `marketing` module (same module as `campaigns`, so no new module/seeding migration).
+  - `src/features/announcements/AnnouncementBanner.jsx` (+ `announcements.css`) — a public, dismissible strip on both `PublicBusinessPage` and `PublicWebsite`. Filters expired announcements client-side; dismissal is remembered per browser/business in `localStorage` (not account-based, since customers aren't authenticated).
+  - **Replies deferred**, as specced — no `announcements/{id}/replies` subcollection.
+  - Tests: `ResourceManager.test.jsx` (ISO conversion on save), `AnnouncementBanner.test.jsx` (active/expired filtering, empty state, dismissal persistence).
 
 ### 2.10 Fulfilment-gated reviews  ·  Priority: P3
 
@@ -298,7 +304,7 @@ For kitchen staff who are not the owner:
 | **4** ✅ | Food catalogue fields: categories, variants, modifiers, prep time, availability, light stock (2.4, 2.5) | `offers` fields + `offerSnapshot`/`buildOrder` pricing |
 | **5** ✅ | Kitchen ticket printing (2.6) | none |
 | **6** ✅ | Menu photo import (2.7) | AI route |
-| **7** | Announcements (2.9), storefront sections (2.11), discovery (2.12) | product decisions |
+| **7** ✅ (partial) | Announcements (2.9) shipped; storefront sections (2.11) left presentational/unscheduled; discovery (2.12) deliberately not built — positioning call | product decisions |
 | **later** | Fulfilment-gated reviews (2.10) | commerce roadmap Pro phase |
 
 Phases 1–3 are the minimum that makes Webilo usable for a live food business.
@@ -307,9 +313,15 @@ Phases 1–3 are the minimum that makes Webilo usable for a live food business.
 
 ## 7. Open questions for the Webilo team
 
-1. **Status set:** OK to add `ready` (and maybe `out_for_delivery`) to the canonical order lifecycle, or should the kitchen board derive those from `fulfilment.status` instead of `order.status`?
-2. **Staff access:** expand order rules to `members` roles now (§4), or keep the kitchen board owner-only for v1?
-3. **Food fields on `offers`:** extend the `offers` doc with `variants` / `modifierGroups`, or model modifiers as their own linked offers/packages (the architecture doc mentions "package" and "bundle" offer types)?
-4. **Announcements:** new `announcements` subcollection, or is this just a `campaign` with a `public` channel?
-5. **Discovery surface:** does a `/discover` directory fit Webilo's positioning, or stay out?
-6. **Category gating:** should food-specific UI (kitchen tab, topping editors, prep time) key off `business.category`, a dedicated `modules` entry, or always-on?
+1. ✅ **Status set:** decided — added `ready` and `out_for_delivery` to the canonical `order.status` lifecycle (Phase 1).
+2. **Staff access:** expand order rules to `members` roles now (§4), or keep the kitchen board owner-only for v1? **Still open** — shipped owner-only, as the doc's safe default. Expanding this is a `firestore.rules` change with real blast radius; spec and review it separately before building.
+3. ✅ **Food fields on `offers`:** decided — extended the `offers` doc directly with `variants`/`modifierGroups` rather than modelling modifiers as linked offers/packages (Phase 4). Simpler to price and snapshot; the "package"/"bundle" offer types remain for bundling whole offers together, a different concern.
+4. ✅ **Announcements:** decided — a new `announcements` subcollection, not a `campaign` (Phase 7; reasoning in §2.9).
+5. **Discovery surface:** does a `/discover` directory fit Webilo's positioning, or stay out? **Still open, deliberately not built.** This is a positioning call (marketplace vs. business platform) beyond an implementation default — see §"Not built in Phase 7" below.
+6. ✅ **Category gating:** decided — `business.category` in a food set (`restaurant`/`takeaway`/`cafe`/`food`) plus a `foodOrdering` escape-hatch boolean, not a dedicated module (Phase 1; `src/features/commerce/foodMode.js`).
+
+### Not built in Phase 7
+
+- **Discovery (§2.12, open question 5):** left out. Building a public `/discover` directory is a product-positioning decision (does Webilo present itself as a marketplace customers browse, or purely a platform businesses run on?) — not something to default through in an implementation pass. Revisit as a deliberate product decision, not a follow-on task.
+- **Storefront polish (§2.11):** hero/hours/map sections already exist from earlier phases (hours in Phase 3); gallery and "meet the team" sections were left out of Phase 7 as presentational scope with no open technical question forcing them now — pick up alongside other website-builder polish work rather than bundling into the food vertical.
+- **Fulfilment-gated reviews (§2.10):** intentionally deferred by the spec itself ("implement later, via the commerce roadmap... don't build the BitePilot version first") — not part of Phase 7's scope to begin with.

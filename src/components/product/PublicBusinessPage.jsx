@@ -5,6 +5,7 @@ import { submitPublicBusinessRequest } from "../../services/commerceService";
 import PublicCheckoutPanel from "../../features/commerce/PublicCheckoutPanel";
 import { checkoutEligible, useCommerceCart } from "../../features/commerce/cart";
 import { orderingPaused } from "../../features/commerce/ordering";
+import AnnouncementBanner from "../../features/announcements/AnnouncementBanner";
 import "./product.css";
 
 const emptyForm = {
@@ -192,6 +193,7 @@ export default function PublicBusinessPage() {
 
   return (
     <div className="product-shell">
+      <AnnouncementBanner businessId={business.id} />
       <header className="public-hero">
         <div className="wb-container">
           <span className="wb-label">{business.category}</span>
