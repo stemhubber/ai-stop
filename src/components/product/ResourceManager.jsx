@@ -5,6 +5,7 @@ import { Icon } from "../../features/websites/components/WebiloUI";
 import AIVisualImporter from "./AIVisualImporter";
 import { uploadBusinessImage } from "../../services/websiteAssetService";
 import { canCancelOrder, nextOrderStep } from "../../features/commerce/orderTransitions";
+import { usePrintTicket } from "../../features/commerce/PrintableTicket";
 
 const CONFIG = {
   offers: {
@@ -105,7 +106,8 @@ const SELECT_FIELDS = {
   ],
 };
 
-export default function ResourceManager({ businessId, resource, aiEnabled = false, foodAware = false }) {
+export default function ResourceManager({ businessId, resource, aiEnabled = false, foodAware = false, business = null }) {
+  const printTicket = usePrintTicket();
   const config = CONFIG[resource];
   const [records, setRecords] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -569,6 +571,9 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                         <button className="wb-btn wb-btn-sm" onClick={() => toggleAvailable(record)}>
                           {record.available === false ? "Mark available" : "Mark sold out"}
                         </button>
+                      )}
+                      {resource === "orders" && record.schemaVersion === 2 && (
+                        <button className="wb-btn wb-btn-sm" onClick={() => printTicket(record, business, "receipt")}>Print receipt</button>
                       )}
                       <button className="wb-btn wb-btn-danger wb-btn-sm" onClick={() => remove(record)}>Delete</button>
                     </div>
