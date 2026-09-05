@@ -8,6 +8,36 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 7 (partial): Announcements (2026-09-05)
+
+Additive, builds on Phases 1–6. Only the announcements item from Phase 7 was
+built — storefront-discovery (`/discover`) and gallery/team storefront
+sections were deliberately left out (the former is a marketplace-vs-platform
+positioning call, not a technical default to make; the latter is
+presentational scope with no forcing question). See
+`docs/WEBILO_FOOD_ORDERING_VERTICAL.md` §7 for the reasoning.
+
+- **`businesses/{id}/announcements/{id}`** (`message`, `level: "info"|"warning"`,
+  optional `expiresAt` ISO string). `firestore.rules`: public read (same
+  pattern as active offers), owner-only write. Decided against reusing
+  `campaigns` — those are SMS drafts to specific customers, never publicly
+  readable; forking their rules or shape would be worse than one small
+  additive collection.
+- **`ResourceManager.jsx`**: new `CONFIG.announcements` entry (message/level/
+  expiresAt, with local-datetime ↔ ISO conversion on save/edit — same pattern
+  as `OrderingSettingsCard`'s `pausedUntil`). Surfaced as an `announcements`
+  tab under the existing `marketing` module (alongside `campaigns`), so no new
+  module or seeding migration.
+- **`src/features/announcements/AnnouncementBanner.jsx`** (+ `announcements.css`)
+  — a public, dismissible strip wired into both `PublicBusinessPage` and
+  `PublicWebsite`. Filters expired announcements client-side; dismissal is
+  remembered per browser/business in `localStorage` (no customer accounts to
+  hang state off).
+- Tests: `ResourceManager.test.jsx` (ISO round-trip), new
+  `AnnouncementBanner.test.jsx` (active/expired filtering, empty state,
+  dismissal persistence across remounts) — 61 frontend / 50 functions tests
+  total, all green. `firestore.rules` validated against the emulator.
+
 ### Added — Food-ordering vertical, Phase 6: Menu photo import (2026-09-05)
 
 Additive, builds on Phases 1–5. Reuses the existing AI import path end to end

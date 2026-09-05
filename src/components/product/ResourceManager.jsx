@@ -75,6 +75,13 @@ const CONFIG = {
     required: ["name", "message"],
     defaults: { status: "draft", type: "promotion", channel: "sms" },
   },
+  announcements: {
+    singular: "announcement",
+    description: "A short public notice shown on your business page — closures, delays, out-of-stock items.",
+    fields: ["message", "level", "expiresAt"],
+    required: ["message"],
+    defaults: { level: "info", expiresAt: "" },
+  },
 };
 
 const TEXTAREA_FIELDS = new Set(["description", "notes", "body", "message"]);
@@ -103,6 +110,10 @@ const SELECT_FIELDS = {
     ["booking", "Booking"],
     ["digital", "Digital delivery"],
     ["quote", "Quote request"],
+  ],
+  level: [
+    ["info", "Notice"],
+    ["warning", "Urgent"],
   ],
 };
 
@@ -217,6 +228,9 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
         })
         .filter((group) => group.options.length > 0);
     }
+    if (resource === "announcements") {
+      normalized.expiresAt = normalized.expiresAt ? new Date(normalized.expiresAt).toISOString() : null;
+    }
 
     try {
       if (editing) await updateRecord(businessId, resource, editing, normalized);
@@ -260,6 +274,9 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
           price: (option.priceCents || 0) / 100,
         })),
       }));
+    }
+    if (resource === "announcements") {
+      next.expiresAt = toLocalInput(next.expiresAt);
     }
     setForm(next);
     setEditing(record.id);
@@ -466,7 +483,7 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                   <span className="wb-field-label">{field === "prepMinutes" ? "Prep time (minutes)" : label(field)}</span>
                   <input
                     className="wb-input"
-                    type={NUMBER_FIELDS.has(field) ? "number" : field === "startTime" ? "datetime-local" : field === "email" || (field === "to" && form.channel === "email") ? "email" : "text"}
+                    type={NUMBER_FIELDS.has(field) ? "number" : field === "startTime" || field === "expiresAt" ? "datetime-local" : field === "email" || (field === "to" && form.channel === "email") ? "email" : "text"}
                     min={NUMBER_FIELDS.has(field) ? "0" : undefined}
                     step={field === "price" || field === "total" ? "0.01" : undefined}
                     value={form[field] || ""}
@@ -516,7 +533,10 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
               {records.map((record) => (
                 <tr key={record.id}>
                   <td data-label="Name">
-                    <strong>{record.name || record.customerName || record.serviceName || "Untitled"}</strong>
+                    <strong>{record.name || record.customerName || record.serviceName || record.message || "Untitled"}</strong>
+                    {resource === "announcements" && record.expiresAt && (
+                      <small className="product-record-detail">Expires {formatDate(record.expiresAt)}</small>
+                    )}
                     {resource === "offers" && record.available === false && (
                       <small className="product-record-detail product-record-detail--danger">Sold out</small>
                     )}
@@ -547,7 +567,15 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                       <small className="product-record-detail">{formatDate(record.startTime)}</small>
                     )}
                   </td>
-                  <td data-label="Status"><span className={`wb-badge ${badge(record.status)}`}>{record.status || "active"}</span></td>
+                  <td data-label="Status">
+                    {resource === "announcements" ? (
+                      <span className={`wb-badge ${record.level === "warning" ? "wb-badge-warning" : "wb-badge-success"}`}>
+                        {record.level === "warning" ? "Urgent" : "Notice"}
+                      </span>
+                    ) : (
+                      <span className={`wb-badge ${badge(record.status)}`}>{record.status || "active"}</span>
+                    )}
+                  </td>
                   <td data-label="Value">{money(record.price ?? record.total)}</td>
                   <td data-label="Actions">
                     <div className="product-row-actions">
@@ -733,3 +761,11 @@ const formatDate = (value) => {
 const friendlyError = (message) => /No document to update/i.test(message)
   ? "This item was removed elsewhere. Refresh the list and try again."
   : message;
+// ISO string -> "YYYY-MM-DDTHH:mm" in local time, what <input type="datetime-local"> expects.
+const toLocalInput = (value) => {
+  if (!value) return "";
+  const date = value?.toDate?.() || new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};

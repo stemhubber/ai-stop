@@ -31,6 +31,7 @@ const TAB_MODULES = {
   bookings: "bookings",
   messages: "messages",
   campaigns: "marketing",
+  announcements: "marketing",
   analytics: "analytics",
 };
 
@@ -46,6 +47,7 @@ const TABS = [
   ["bookings", "Bookings"],
   ["messages", "Messages"],
   ["campaigns", "Campaigns"],
+  ["announcements", "Announcements"],
   ["analytics", "Analytics"],
   ["modules", "Modules"],
 ];

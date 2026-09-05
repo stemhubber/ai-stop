@@ -171,6 +171,30 @@ test("creates a canonical offer with pricing and fulfilment settings", async () 
   ));
 });
 
+test("creates a public announcement with an expiry converted to an ISO timestamp", async () => {
+  createRecord.mockResolvedValue("announcement-1");
+
+  render(<ResourceManager businessId="business-1" resource="announcements" />);
+
+  await screen.findByText("No announcements yet");
+  fireEvent.click(screen.getByRole("button", { name: "Add announcement", expanded: false }));
+  fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Kitchen closed today" } });
+  fireEvent.change(screen.getByLabelText("Level"), { target: { value: "warning" } });
+  fireEvent.change(screen.getByLabelText("Expires At"), { target: { value: "2026-12-31T10:00" } });
+  fireEvent.click(within(screen.getByLabelText("Message").closest("form")).getByRole("button", { name: "Add announcement" }));
+
+  const expectedIso = new Date("2026-12-31T10:00").toISOString();
+  await waitFor(() => expect(createRecord).toHaveBeenCalledWith(
+    "business-1",
+    "announcements",
+    expect.objectContaining({
+      message: "Kitchen closed today",
+      level: "warning",
+      expiresAt: expectedIso,
+    })
+  ));
+});
+
 test("hides food catalogue fields for a non-food business", async () => {
   render(<ResourceManager businessId="business-1" resource="offers" foodAware={false} />);
   await screen.findByText("No offers yet");

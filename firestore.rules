@@ -160,6 +160,14 @@ service cloud.firestore {
         allow read, write: if ownsBusiness(businessId);
       }
 
+      match /announcements/{itemId} {
+        // Public, unauthenticated reads — a storefront banner ("kitchen
+        // closed today", "load-shedding delays"). Distinct from campaigns
+        // (SMS drafts sent to specific customers, never publicly readable).
+        allow read: if true;
+        allow write: if ownsBusiness(businessId);
+      }
+
       match /advisorActivity/{itemId} {
         allow read: if ownsBusiness(businessId);
         allow write: if false;
