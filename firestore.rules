@@ -30,6 +30,7 @@ service cloud.firestore {
           request.resource.data.businessId == resource.data.businessId &&
           request.resource.data.customerId == resource.data.customerId &&
           request.resource.data.publicReference == resource.data.publicReference &&
+          request.resource.data.get("clientTokenHash", "") == resource.data.get("clientTokenHash", "") &&
           request.resource.data.source == resource.data.source &&
           request.resource.data.items == resource.data.items &&
           request.resource.data.pricingSnapshot == resource.data.pricingSnapshot &&

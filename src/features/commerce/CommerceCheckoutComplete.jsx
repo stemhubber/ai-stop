@@ -66,6 +66,7 @@ export default function CommerceCheckoutComplete() {
         {state === "error" && <><h1>We could not check this payment</h1><p>{error}</p></>}
         <div>
           {["pending", "error"].includes(state) && <button onClick={refresh}>Check again</button>}
+          {state === "paid" && checkout?.statusUrl && <Link to={checkout.statusUrl}>Track your order</Link>}
           {checkout?.businessSlug && <Link to={`/b/${checkout.businessSlug}`}>Return to business</Link>}
         </div>
       </section>
