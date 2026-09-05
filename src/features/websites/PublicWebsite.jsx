@@ -230,7 +230,11 @@ export default function PublicWebsite() {
               setRequest({ ...request, offerKey: event.target.value, fulfilmentMethod: offer?.fulfilmentMethods?.[0] || "pickup" });
             }}>
               <option value="">Choose a product</option>
-              {products.map((product) => <option value={product.key} key={product.key}>{product.name}</option>)}
+              {products.map((product) => (
+                <option value={product.key} key={product.key} disabled={product.available === false}>
+                  {product.name}{product.available === false ? " (sold out)" : ""}
+                </option>
+              ))}
             </select>
           </label>
           <label><span>Quantity</span><input type="number" min="1" value={request.quantity} onChange={(event) => setRequest({ ...request, quantity: event.target.value })} /></label>

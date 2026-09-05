@@ -170,3 +170,62 @@ test("creates a canonical offer with pricing and fulfilment settings", async () 
     })
   ));
 });
+
+test("hides food catalogue fields for a non-food business", async () => {
+  render(<ResourceManager businessId="business-1" resource="offers" foodAware={false} />);
+  await screen.findByText("No offers yet");
+  fireEvent.click(screen.getByRole("button", { name: "Add offer", expanded: false }));
+
+  expect(screen.queryByLabelText("Category")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Prep time (minutes)")).not.toBeInTheDocument();
+  expect(screen.queryByText("Size / variant options")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("In stock / available")).toBeInTheDocument();
+});
+
+test("saves a food offer's category, prep time, and a priced variant in minor units", async () => {
+  createRecord.mockResolvedValue("offer-1");
+  render(<ResourceManager businessId="business-1" resource="offers" foodAware />);
+  await screen.findByText("No offers yet");
+  fireEvent.click(screen.getByRole("button", { name: "Add offer", expanded: false }));
+
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Burger" } });
+  fireEvent.change(screen.getByLabelText("Price"), { target: { value: "80" } });
+  fireEvent.change(screen.getByLabelText("Category"), { target: { value: "Mains" } });
+  fireEvent.change(screen.getByLabelText("Prep time (minutes)"), { target: { value: "12" } });
+
+  fireEvent.click(screen.getByRole("button", { name: "Add variant" }));
+  fireEvent.change(screen.getByPlaceholderText("Label, e.g. Large"), { target: { value: "Large" } });
+  fireEvent.change(screen.getByPlaceholderText("+ price (R)"), { target: { value: "20" } });
+
+  fireEvent.click(within(screen.getByLabelText("Name").closest("form")).getByRole("button", { name: "Add offer" }));
+
+  await waitFor(() => expect(createRecord).toHaveBeenCalledWith(
+    "business-1",
+    "offers",
+    expect.objectContaining({
+      category: "Mains",
+      prepMinutes: 12,
+      available: true,
+      variants: [{ label: "Large", priceDeltaCents: 2000 }],
+    })
+  ));
+});
+
+test("toggles an offer's availability from the table row", async () => {
+  listRecords.mockResolvedValue([
+    { id: "offer-1", name: "Burger", price: 8000, available: true },
+  ]);
+  updateRecord.mockResolvedValue();
+  render(<ResourceManager businessId="business-1" resource="offers" foodAware />);
+
+  const toggle = await screen.findByRole("button", { name: "Mark sold out" });
+  fireEvent.click(toggle);
+
+  await waitFor(() => expect(updateRecord).toHaveBeenCalledWith(
+    "business-1",
+    "offers",
+    "offer-1",
+    { available: false }
+  ));
+  expect(await screen.findByRole("button", { name: "Mark available" })).toBeInTheDocument();
+});

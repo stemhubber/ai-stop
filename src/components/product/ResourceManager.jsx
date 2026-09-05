@@ -10,7 +10,7 @@ const CONFIG = {
   offers: {
     singular: "offer",
     description: "Everything customers can order, book, buy as a package, or request a quote for.",
-    fields: ["name", "offerType", "description", "pricingMode", "price", "fulfilmentMethod", "durationMinutes"],
+    fields: ["name", "offerType", "description", "pricingMode", "price", "fulfilmentMethod", "durationMinutes", "available", "category", "prepMinutes"],
     required: ["name", "offerType", "pricingMode", "fulfilmentMethod"],
     defaults: {
       status: "active",
@@ -18,6 +18,11 @@ const CONFIG = {
       offerType: "product",
       pricingMode: "fixed",
       fulfilmentMethod: "pickup",
+      available: true,
+      category: "",
+      prepMinutes: "",
+      variants: [],
+      modifierGroups: [],
     },
   },
   products: {
@@ -72,7 +77,10 @@ const CONFIG = {
 };
 
 const TEXTAREA_FIELDS = new Set(["description", "notes", "body", "message"]);
-const NUMBER_FIELDS = new Set(["price", "total", "durationMinutes"]);
+const NUMBER_FIELDS = new Set(["price", "total", "durationMinutes", "prepMinutes"]);
+const CHECKBOX_FIELDS = new Set(["available"]);
+// Only shown to businesses in the food-ordering vertical (see foodMode.js).
+const FOOD_ONLY_FIELDS = new Set(["category", "prepMinutes"]);
 const SELECT_FIELDS = {
   offerType: [
     ["product", "Product"],
@@ -97,7 +105,7 @@ const SELECT_FIELDS = {
   ],
 };
 
-export default function ResourceManager({ businessId, resource, aiEnabled = false }) {
+export default function ResourceManager({ businessId, resource, aiEnabled = false, foodAware = false }) {
   const config = CONFIG[resource];
   const [records, setRecords] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -178,6 +186,34 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
       normalized.fulfilmentMethods = [normalized.fulfilmentMethod];
       delete normalized.fulfilmentMethod;
       if (["quote", "free"].includes(normalized.pricingMode)) normalized.price = 0;
+      normalized.available = normalized.available !== false;
+      normalized.category = String(normalized.category || "").trim() || null;
+      normalized.prepMinutes = normalized.prepMinutes
+        ? Math.max(0, Math.round(Number(normalized.prepMinutes)))
+        : null;
+      normalized.variants = (normalized.variants || [])
+        .filter((variant) => String(variant.label || "").trim())
+        .map((variant) => ({
+          label: String(variant.label).trim(),
+          priceDeltaCents: Math.round(Number(variant.priceDelta || 0) * 100),
+        }));
+      normalized.modifierGroups = (normalized.modifierGroups || [])
+        .filter((group) => String(group.name || "").trim())
+        .map((group) => {
+          const options = (group.options || [])
+            .filter((option) => String(option.label || "").trim())
+            .map((option) => ({
+              label: String(option.label).trim(),
+              priceCents: Math.max(0, Math.round(Number(option.price || 0) * 100)),
+            }));
+          return {
+            name: String(group.name).trim(),
+            min: Math.max(0, Math.round(Number(group.min || 0))),
+            max: Math.max(0, Math.round(Number(group.max || options.length))),
+            options,
+          };
+        })
+        .filter((group) => group.options.length > 0);
     }
 
     try {
@@ -206,6 +242,22 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
     if ("total" in next) next.total = Number(next.total || 0) / 100;
     if (resource === "offers") {
       next.fulfilmentMethod = next.fulfilmentMethods?.[0] || "pickup";
+      next.available = next.available !== false;
+      next.category = next.category || "";
+      next.prepMinutes = next.prepMinutes || "";
+      next.variants = (next.variants || []).map((variant) => ({
+        label: variant.label || "",
+        priceDelta: (variant.priceDeltaCents || 0) / 100,
+      }));
+      next.modifierGroups = (next.modifierGroups || []).map((group) => ({
+        name: group.name || "",
+        min: group.min ?? 0,
+        max: group.max ?? (group.options?.length || 0),
+        options: (group.options || []).map((option) => ({
+          label: option.label || "",
+          price: (option.priceCents || 0) / 100,
+        })),
+      }));
     }
     setForm(next);
     setEditing(record.id);
@@ -302,6 +354,21 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
     }
   };
 
+  const toggleAvailable = async (record) => {
+    const available = !(record.available !== false);
+    setError("");
+    setNotice("");
+    try {
+      await updateRecord(businessId, resource, record.id, { available });
+      setRecords((current) => current.map((item) =>
+        item.id === record.id ? { ...item, available } : item
+      ));
+      setNotice(available ? `${capitalize(config.singular)} marked available.` : `${capitalize(config.singular)} marked sold out.`);
+    } catch (err) {
+      setError(err.message || `Could not update this ${config.singular}.`);
+    }
+  };
+
   return (
     <section>
       <header className="product-header product-header--actions">
@@ -359,33 +426,59 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
         )}
 
         <div className="product-form-grid">
-          {config.fields.map((field) => (
-            <label className={`wb-field ${TEXTAREA_FIELDS.has(field) ? "product-field--wide" : ""}`} key={field}>
-              <span className="wb-field-label">{label(field)}</span>
-              {field === "channel" ? (
-                <select className="wb-input wb-select" value={form.channel || "sms"} onChange={(event) => changeChannel(event.target.value)}>
-                  <option value="sms">SMS</option>
-                  <option value="email">Email</option>
-                </select>
+          {config.fields
+            .filter((field) => foodAware || !FOOD_ONLY_FIELDS.has(field))
+            .map((field) => (
+            <label className={`wb-field ${TEXTAREA_FIELDS.has(field) ? "product-field--wide" : ""} ${CHECKBOX_FIELDS.has(field) ? "wb-field--checkbox" : ""}`} key={field}>
+              {CHECKBOX_FIELDS.has(field) ? (
+                <>
+                  <input
+                    type="checkbox"
+                    checked={form[field] !== false}
+                    onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.checked }))}
+                  />
+                  <span className="wb-field-label">{field === "available" ? "In stock / available" : label(field)}</span>
+                </>
+              ) : field === "channel" ? (
+                <>
+                  <span className="wb-field-label">{label(field)}</span>
+                  <select className="wb-input wb-select" value={form.channel || "sms"} onChange={(event) => changeChannel(event.target.value)}>
+                    <option value="sms">SMS</option>
+                    <option value="email">Email</option>
+                  </select>
+                </>
               ) : SELECT_FIELDS[field] ? (
-                <select className="wb-input wb-select" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}>
-                  {SELECT_FIELDS[field].map(([value, text]) => <option value={value} key={value}>{text}</option>)}
-                </select>
+                <>
+                  <span className="wb-field-label">{label(field)}</span>
+                  <select className="wb-input wb-select" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}>
+                    {SELECT_FIELDS[field].map(([value, text]) => <option value={value} key={value}>{text}</option>)}
+                  </select>
+                </>
               ) : TEXTAREA_FIELDS.has(field) ? (
-                <textarea className="wb-input wb-textarea" rows="3" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
+                <>
+                  <span className="wb-field-label">{label(field)}</span>
+                  <textarea className="wb-input wb-textarea" rows="3" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
+                </>
               ) : (
-                <input
-                  className="wb-input"
-                  type={NUMBER_FIELDS.has(field) ? "number" : field === "startTime" ? "datetime-local" : field === "email" || (field === "to" && form.channel === "email") ? "email" : "text"}
-                  min={NUMBER_FIELDS.has(field) ? "0" : undefined}
-                  step={field === "price" || field === "total" ? "0.01" : undefined}
-                  value={form[field] || ""}
-                  onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
-                />
+                <>
+                  <span className="wb-field-label">{field === "prepMinutes" ? "Prep time (minutes)" : label(field)}</span>
+                  <input
+                    className="wb-input"
+                    type={NUMBER_FIELDS.has(field) ? "number" : field === "startTime" ? "datetime-local" : field === "email" || (field === "to" && form.channel === "email") ? "email" : "text"}
+                    min={NUMBER_FIELDS.has(field) ? "0" : undefined}
+                    step={field === "price" || field === "total" ? "0.01" : undefined}
+                    value={form[field] || ""}
+                    onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
+                  />
+                </>
               )}
             </label>
           ))}
         </div>
+
+        {resource === "offers" && foodAware && (
+          <OfferOptionsEditor form={form} setForm={setForm} />
+        )}
 
         {["offers", "products", "services"].includes(resource) && (
           <div className="product-record-image">
@@ -422,6 +515,12 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                 <tr key={record.id}>
                   <td data-label="Name">
                     <strong>{record.name || record.customerName || record.serviceName || "Untitled"}</strong>
+                    {resource === "offers" && record.available === false && (
+                      <small className="product-record-detail product-record-detail--danger">Sold out</small>
+                    )}
+                    {resource === "offers" && record.stockCount != null && (
+                      <small className="product-record-detail">{record.stockCount} left</small>
+                    )}
                     {resource === "orders" && record.publicReference && (
                       <small className="product-record-detail">{record.publicReference}</small>
                     )}
@@ -466,6 +565,11 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                         <button className="wb-btn wb-btn-sm" onClick={() => changeStatus(record, "cancelled")}>Cancel</button>
                       )}
                       {resource === "messages" && record.status !== "sent" && <button className="wb-btn wb-btn-accent wb-btn-sm" onClick={() => send(record)}>Send {record.channel === "email" ? "email" : "SMS"}</button>}
+                      {resource === "offers" && (
+                        <button className="wb-btn wb-btn-sm" onClick={() => toggleAvailable(record)}>
+                          {record.available === false ? "Mark available" : "Mark sold out"}
+                        </button>
+                      )}
                       <button className="wb-btn wb-btn-danger wb-btn-sm" onClick={() => remove(record)}>Delete</button>
                     </div>
                   </td>
@@ -476,6 +580,134 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
         </div>
       )}
     </section>
+  );
+}
+
+// Repeatable-row editors for an offer's size/variant options and add-on
+// modifier groups. Prices are entered in Rand here; ResourceManager.save()
+// converts to minor units on submit, matching the price/total fields.
+function OfferOptionsEditor({ form, setForm }) {
+  const variants = form.variants || [];
+  const modifierGroups = form.modifierGroups || [];
+
+  const addVariant = () => setForm((current) => ({
+    ...current,
+    variants: [...(current.variants || []), { label: "", priceDelta: 0 }],
+  }));
+  const updateVariant = (index, patch) => setForm((current) => ({
+    ...current,
+    variants: current.variants.map((variant, i) => (i === index ? { ...variant, ...patch } : variant)),
+  }));
+  const removeVariant = (index) => setForm((current) => ({
+    ...current,
+    variants: current.variants.filter((_, i) => i !== index),
+  }));
+
+  const addModifierGroup = () => setForm((current) => ({
+    ...current,
+    modifierGroups: [...(current.modifierGroups || []), { name: "", min: 0, max: 1, options: [{ label: "", price: 0 }] }],
+  }));
+  const updateModifierGroup = (index, patch) => setForm((current) => ({
+    ...current,
+    modifierGroups: current.modifierGroups.map((group, i) => (i === index ? { ...group, ...patch } : group)),
+  }));
+  const removeModifierGroup = (index) => setForm((current) => ({
+    ...current,
+    modifierGroups: current.modifierGroups.filter((_, i) => i !== index),
+  }));
+  const addOption = (groupIndex) => setForm((current) => ({
+    ...current,
+    modifierGroups: current.modifierGroups.map((group, i) =>
+      i === groupIndex ? { ...group, options: [...group.options, { label: "", price: 0 }] } : group
+    ),
+  }));
+  const updateOption = (groupIndex, optionIndex, patch) => setForm((current) => ({
+    ...current,
+    modifierGroups: current.modifierGroups.map((group, i) =>
+      i === groupIndex
+        ? { ...group, options: group.options.map((option, j) => (j === optionIndex ? { ...option, ...patch } : option)) }
+        : group
+    ),
+  }));
+  const removeOption = (groupIndex, optionIndex) => setForm((current) => ({
+    ...current,
+    modifierGroups: current.modifierGroups.map((group, i) =>
+      i === groupIndex ? { ...group, options: group.options.filter((_, j) => j !== optionIndex) } : group
+    ),
+  }));
+
+  return (
+    <div className="product-offer-options">
+      <div className="product-offer-options-section">
+        <div className="product-offer-options-heading">
+          <h4>Size / variant options</h4>
+          <p>e.g. Small, Regular, Large — each with a price difference from the base price.</p>
+        </div>
+        {variants.map((variant, index) => (
+          <div className="product-option-row" key={index}>
+            <input
+              className="wb-input"
+              placeholder="Label, e.g. Large"
+              value={variant.label}
+              onChange={(event) => updateVariant(index, { label: event.target.value })}
+            />
+            <input
+              className="wb-input"
+              type="number"
+              step="0.01"
+              placeholder="+ price (R)"
+              value={variant.priceDelta}
+              onChange={(event) => updateVariant(index, { priceDelta: event.target.value })}
+            />
+            <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => removeVariant(index)}>Remove</button>
+          </div>
+        ))}
+        <button type="button" className="wb-btn wb-btn-sm" onClick={addVariant}>Add variant</button>
+      </div>
+
+      <div className="product-offer-options-section">
+        <div className="product-offer-options-heading">
+          <h4>Add-ons / modifiers</h4>
+          <p>Grouped extras like toppings. Set how many a customer must or may choose per group.</p>
+        </div>
+        {modifierGroups.map((group, groupIndex) => (
+          <div className="product-modifier-group" key={groupIndex}>
+            <div className="product-modifier-group-head">
+              <input
+                className="wb-input"
+                placeholder="Group name, e.g. Extras"
+                value={group.name}
+                onChange={(event) => updateModifierGroup(groupIndex, { name: event.target.value })}
+              />
+              <label>Min <input className="wb-input" type="number" min="0" value={group.min} onChange={(event) => updateModifierGroup(groupIndex, { min: event.target.value })} /></label>
+              <label>Max <input className="wb-input" type="number" min="0" value={group.max} onChange={(event) => updateModifierGroup(groupIndex, { max: event.target.value })} /></label>
+              <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => removeModifierGroup(groupIndex)}>Remove group</button>
+            </div>
+            {group.options.map((option, optionIndex) => (
+              <div className="product-option-row" key={optionIndex}>
+                <input
+                  className="wb-input"
+                  placeholder="Option, e.g. Cheese"
+                  value={option.label}
+                  onChange={(event) => updateOption(groupIndex, optionIndex, { label: event.target.value })}
+                />
+                <input
+                  className="wb-input"
+                  type="number"
+                  step="0.01"
+                  placeholder="+ price (R)"
+                  value={option.price}
+                  onChange={(event) => updateOption(groupIndex, optionIndex, { price: event.target.value })}
+                />
+                <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => removeOption(groupIndex, optionIndex)}>Remove</button>
+              </div>
+            ))}
+            <button type="button" className="wb-btn wb-btn-sm" onClick={() => addOption(groupIndex)}>Add option</button>
+          </div>
+        ))}
+        <button type="button" className="wb-btn wb-btn-sm" onClick={addModifierGroup}>Add modifier group</button>
+      </div>
+    </div>
   );
 }
 

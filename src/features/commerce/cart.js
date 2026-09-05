@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 export function checkoutEligible(offer) {
+  // Variant/required-modifier selection isn't captured by the simple paid-cart
+  // flow yet (Phase 2/4 follow-up) — keep those items request-only rather than
+  // let a customer pay for the wrong size with no way to choose it.
+  const hasUncapturedOptions =
+    offer?.variants?.length > 0 ||
+    (offer?.modifierGroups || []).some((group) => group.min > 0);
   return Boolean(
     offer &&
+    offer.available !== false &&
     offer.pricingMode === "fixed" &&
     Number(offer.price) > 0 &&
+    !hasUncapturedOptions &&
     !offer.fulfilmentMethods?.includes("booking") &&
     !offer.fulfilmentMethods?.includes("quote")
   );

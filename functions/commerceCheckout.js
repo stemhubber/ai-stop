@@ -3,10 +3,19 @@ const {
   cleanText,
   normalizeCustomer,
   normalizeSelection,
+  resolveSelectedOptions,
 } = require("./commerce");
 
 const MAX_CART_ITEMS = 20;
 const MAX_CHECKOUT_TOTAL = 10000000;
+
+// Two lines for the same offer with different variant/modifier picks are
+// distinct cart lines — group by offer id *and* the requested options, not
+// just the offer id, or a "Large" and a "Small" would merge into one line.
+function selectionGroupKey(selection) {
+  const { variant, modifiers } = selection.selectedOptions;
+  return `${selection.resource}:${selection.id}:${variant}:${[...modifiers].sort().join(",")}`;
+}
 
 function normalizeCheckoutSelections(value) {
   if (!Array.isArray(value) || value.length < 1 || value.length > MAX_CART_ITEMS) {
@@ -17,7 +26,7 @@ function normalizeCheckoutSelections(value) {
   const grouped = new Map();
   value.forEach((item) => {
     const selection = normalizeSelection(item);
-    const key = `${selection.resource}:${selection.id}`;
+    const key = selectionGroupKey(selection);
     const current = grouped.get(key);
     const quantity = (current?.quantity || 0) + selection.quantity;
     if (quantity > 99) {
@@ -73,6 +82,8 @@ function buildCheckoutOrder({
       error.statusCode = 400;
       throw error;
     }
+    const { selectedOptions, deltaCents } = resolveSelectedOptions(offer, selection.selectedOptions);
+    const unitPrice = offer.unitPrice + deltaCents;
     return {
       offerId: offer.offerId,
       sourceResource: offer.sourceResource,
@@ -80,10 +91,10 @@ function buildCheckoutOrder({
       offerType: offer.offerType,
       name: offer.name,
       quantity: selection.quantity,
-      selectedOptions: [],
+      selectedOptions,
       pricingMode: offer.pricingMode,
-      unitPrice: offer.unitPrice,
-      lineTotal: offer.unitPrice * selection.quantity,
+      unitPrice,
+      lineTotal: unitPrice * selection.quantity,
       currency: offer.currency,
     };
   });
