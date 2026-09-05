@@ -4,6 +4,7 @@ import { sendMessage } from "../../services/messagingService";
 import { Icon } from "../../features/websites/components/WebiloUI";
 import AIVisualImporter from "./AIVisualImporter";
 import { uploadBusinessImage } from "../../services/websiteAssetService";
+import { canCancelOrder, nextOrderStep } from "../../features/commerce/orderTransitions";
 
 const CONFIG = {
   offers: {
@@ -452,14 +453,8 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                       {!(resource === "orders" && record.schemaVersion === 2) && (
                         <button className="wb-btn wb-btn-sm" onClick={() => edit(record)}>Edit</button>
                       )}
-                      {resource === "orders" && ["requested", "pending"].includes(record.status) && (
-                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "confirmed")}>Accept order</button>
-                      )}
-                      {resource === "orders" && record.status === "confirmed" && (
-                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "processing")}>Start processing</button>
-                      )}
-                      {resource === "orders" && record.status === "processing" && (
-                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "completed")}>Complete</button>
+                      {resource === "orders" && nextOrderStep(record) && (
+                        <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, nextOrderStep(record).status)}>{nextOrderStep(record).label}</button>
                       )}
                       {resource === "bookings" && record.status === "requested" && (
                         <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "confirmed")}>Confirm</button>
@@ -467,7 +462,7 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
                       {resource === "bookings" && record.status === "confirmed" && (
                         <button className="wb-btn wb-btn-primary wb-btn-sm" onClick={() => changeStatus(record, "completed")}>Complete</button>
                       )}
-                      {["orders", "bookings"].includes(resource) && !["completed", "cancelled"].includes(record.status) && (
+                      {["orders", "bookings"].includes(resource) && canCancelOrder(record.status) && (
                         <button className="wb-btn wb-btn-sm" onClick={() => changeStatus(record, "cancelled")}>Cancel</button>
                       )}
                       {resource === "messages" && record.status !== "sent" && <button className="wb-btn wb-btn-accent wb-btn-sm" onClick={() => send(record)}>Send {record.channel === "email" ? "email" : "SMS"}</button>}
@@ -487,7 +482,11 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
 const label = (value) => value.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
 const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
 const money = (cents) => cents == null ? "—" : new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(cents / 100);
-const badge = (status) => status === "active" || status === "completed" || status === "confirmed" || status === "sent" ? "wb-badge-success" : status === "cancelled" ? "wb-badge-danger" : "wb-badge-warning";
+const badge = (status) =>
+  ["active", "completed", "confirmed", "sent"].includes(status) ? "wb-badge-success"
+  : status === "cancelled" ? "wb-badge-danger"
+  : ["ready", "out_for_delivery"].includes(status) ? "wb-badge-accent"
+  : "wb-badge-warning";
 const formatDate = (value) => {
   const date = value?.toDate?.() || new Date(value);
   return Number.isNaN(date.getTime())

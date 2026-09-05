@@ -101,7 +101,7 @@ test("uses a saved customer's email for email messages", async () => {
   expect(screen.getByText("EMAIL")).toBeInTheDocument();
 });
 
-test("lets the owner accept, process, and complete a website order", async () => {
+test("lets the owner advance a website order through the kitchen pipeline", async () => {
   listRecords.mockImplementation((businessId, resource) => Promise.resolve(
     resource === "orders"
       ? [{
@@ -117,24 +117,31 @@ test("lets the owner accept, process, and complete a website order", async () =>
 
   render(<ResourceManager businessId="business-1" resource="orders" />);
 
-  const accept = await screen.findByRole("button", { name: "Accept order" });
-  fireEvent.click(accept);
-
+  fireEvent.click(await screen.findByRole("button", { name: "Accept order" }));
   await waitFor(() => expect(updateRecord).toHaveBeenCalledWith(
     "business-1",
     "orders",
     "order-1",
     { status: "confirmed" }
   ));
-  const process = await screen.findByRole("button", { name: "Start processing" });
-  fireEvent.click(process);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Start preparing" }));
   await waitFor(() => expect(updateRecord).toHaveBeenLastCalledWith(
     "business-1",
     "orders",
     "order-1",
     { status: "processing" }
   ));
-  expect(await screen.findByRole("button", { name: "Complete" })).toBeInTheDocument();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Mark ready" }));
+  await waitFor(() => expect(updateRecord).toHaveBeenLastCalledWith(
+    "business-1",
+    "orders",
+    "order-1",
+    { status: "ready" }
+  ));
+
+  expect(await screen.findByRole("button", { name: "Mark collected" })).toBeInTheDocument();
 });
 
 test("creates a canonical offer with pricing and fulfilment settings", async () => {

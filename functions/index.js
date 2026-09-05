@@ -965,12 +965,15 @@ exports.orderStatusNotification = onDocumentUpdated(
   async (event) => {
     const before = event.data?.before.data();
     const order = event.data?.after.data();
+    // Scope: website-sourced orders only. Manually captured counter/phone orders
+    // (source: "manual") intentionally send no customer notification and have no
+    // client token, so they cannot use the public order tracker either.
     if (
       !order ||
       order.source !== "website" ||
       order.notificationMode === "booking" ||
       before?.status === order.status ||
-      !["confirmed", "processing", "completed", "cancelled"].includes(order.status)
+      !["confirmed", "processing", "ready", "out_for_delivery", "completed", "cancelled"].includes(order.status)
     ) return null;
     const business = await notificationBusiness(event.params.businessId);
     if (!business) return null;

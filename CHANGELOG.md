@@ -8,6 +8,44 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 1: Kitchen board (2026-08-28)
+
+First slice of `docs/WEBILO_FOOD_ORDERING_VERTICAL.md`. Additive — no change to
+how existing (non-food) businesses behave.
+
+- **`ready` / `out_for_delivery` order statuses** added to the canonical lifecycle
+  (`firestore.rules` `validOrderStatusTransition()`), between `processing` and
+  `completed`. Both optional; `processing → completed` still works. Delivery orders
+  can go `ready → out_for_delivery → completed`.
+- **`orderStatusNotification`** now emails customers on `ready` / `out_for_delivery`
+  (website-sourced orders only, as before — manually captured counter/phone orders
+  still send no notification, documented in a code comment).
+  `functions/notifications.js` gains `statusCopy` for both and humanises the
+  `out_for_delivery` subject line.
+- **`src/features/commerce/orderTransitions.js`** (new) — the single next-status
+  map + kitchen column definitions, imported by both `ResourceManager.jsx` (which
+  now renders one `nextOrderStep`-driven advance button instead of three hardcoded
+  ones) and the new `KitchenBoard`.
+- **`KitchenBoard`** (`src/features/commerce/KitchenBoard.jsx` + `kitchen.css`) —
+  a live status-column board, added as a `kitchen` workspace tab in
+  `ProductWorkspace`. Real-time via a new `subscribeRecords()` helper in
+  `businessRepository.js` (first `onSnapshot` use there). One-tap advance,
+  secondary cancel, "text customer" (reuses `messagingService.sendMessage`) +
+  WhatsApp fallback link.
+- **New-order sound** — `useKitchenSound` hook, off by default, per-user
+  (`localStorage`), armed by a visible "Enable sound" button (autoplay policy).
+  Synthesised cues under `public/sounds/`.
+- **Food gating** — `src/features/commerce/foodMode.js` `isFoodBusiness()` keys off
+  `business.category` (`restaurant` / `takeaway` / `cafe` / `food`) with a
+  `business.foodOrdering === true` escape hatch. The `kitchen` tab is filtered out
+  of all three `TABS`-derived surfaces (nav, Today cards, All-tools hub) for
+  non-food businesses. `BusinessOnboarding` category select gains Takeaway and
+  Cafe options.
+- **`firestore.indexes.json`** — `orders` composite index `status ASC, createdAt DESC`
+  for the board query (deploy before production use).
+- Docs: `WEBILO_COMMERCE_ARCHITECTURE.md` Lifecycle section and
+  `WEBILO_FOOD_ORDERING_VERTICAL.md` §3.3 updated.
+
 ### Added — Developer Communications API (`/v1/*`)
 
 A new API surface under `/v1` on the existing `exports.api` Express app, letting

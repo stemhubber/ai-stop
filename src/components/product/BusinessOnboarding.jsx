@@ -111,7 +111,7 @@ export default function BusinessOnboarding() {
         </div>
         <div className="wb-grid-2">
           <Field label="Business name"><input className="wb-input" value={form.name} onChange={change("name")} /></Field>
-          <Field label="Category"><select className="wb-input wb-select" value={form.category} onChange={change("category")}><option value="retail">Retail</option><option value="restaurant">Restaurant</option><option value="salon">Salon</option><option value="services">Professional services</option><option value="education">Education</option><option value="other">Other</option></select></Field>
+          <Field label="Category"><select className="wb-input wb-select" value={form.category} onChange={change("category")}><option value="retail">Retail</option><option value="restaurant">Restaurant</option><option value="takeaway">Takeaway</option><option value="cafe">Cafe / Coffee shop</option><option value="salon">Salon</option><option value="services">Professional services</option><option value="education">Education</option><option value="other">Other</option></select></Field>
           <Field label="Email"><input className="wb-input" type="email" value={form.email} onChange={change("email")} /></Field>
           <Field label="South African phone"><input className="wb-input" value={form.phone} onChange={change("phone")} placeholder="071 234 5678" /></Field>
           <Field label="City"><input className="wb-input" value={form.city} onChange={change("city")} /></Field>
