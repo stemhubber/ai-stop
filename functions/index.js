@@ -128,6 +128,7 @@ const {
   offerSnapshot,
   requestFingerprint,
 } = require("./commerce");
+const { assertAcceptingOrders } = require("./ordering");
 const {
   buildCheckoutOrder,
   checkoutSecret,
@@ -227,6 +228,7 @@ app.post("/public/businesses/:slug/requests", async (req, res) => {
       return res.status(201).json({ accepted: true, requestType });
     }
 
+    assertAcceptingOrders(business);
     const selection = normalizeSelection(req.body?.selection);
     const offerRef = db
       .collection("businesses")
@@ -384,6 +386,7 @@ app.post("/public/businesses/:slug/checkout-sessions", async (req, res) => {
     await enforcePublicRequestRateLimit(req);
     const business = await publicBusinessFromSlug(cleanText(req.params.slug, 160));
     if (!business) return res.status(404).json({ error: "Business not found." });
+    assertAcceptingOrders(business);
     const paymentConnection = await requirePaidCheckout(business);
 
     const idempotencyKey = String(req.body?.idempotencyKey || "");

@@ -131,6 +131,10 @@ service cloud.firestore {
       }
 
       match /orders/{itemId} {
+        // Public order creation goes through the Admin SDK only (functions
+        // /public/... handlers), which also enforce the ordering-paused guard
+        // (assertAcceptingOrders). If a direct client create path is ever added
+        // here, mirror that check.
         allow read, delete: if ownsBusiness(businessId);
         allow create: if ownsBusiness(businessId);
         allow update: if ownsBusiness(businessId) &&

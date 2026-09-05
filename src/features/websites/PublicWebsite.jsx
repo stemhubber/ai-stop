@@ -8,6 +8,7 @@ import { EmptyState, Icon } from "./components/WebiloUI";
 import WebiloAnimatedLogo from "../../components/WebiloAnimatedLogo";
 import PublicCheckoutPanel from "../commerce/PublicCheckoutPanel";
 import { checkoutEligible, useCommerceCart } from "../commerce/cart";
+import { orderingPaused } from "../commerce/ordering";
 
 const emptyRequest = {
   name: "",
@@ -34,8 +35,10 @@ export default function PublicWebsite() {
   const [request, setRequest] = useState(emptyRequest);
   const [requestState, setRequestState] = useState("idle");
   const [requestMessage, setRequestMessage] = useState("");
+  const [requestTrackUrl, setRequestTrackUrl] = useState("");
   const [pendingTarget, setPendingTarget] = useState("");
   const cart = useCommerceCart(business?.slug || slug);
+  const paused = orderingPaused(business);
 
   useEffect(() => {
     let cancelled = false;
@@ -147,9 +150,11 @@ export default function PublicWebsite() {
     if (request.requestType === "booking" && (!service || (request.fulfilmentMethod === "booking" && !request.startTime))) {
       return setRequestMessage("Choose a service and preferred date.");
     }
+    if (request.requestType !== "contact" && paused) return setRequestMessage(paused.reason);
 
     setRequestState("saving");
     setRequestMessage("");
+    setRequestTrackUrl("");
     try {
       const result = await submitPublicBusinessRequest({
         slug: business.slug,
@@ -177,9 +182,10 @@ export default function PublicWebsite() {
           : "Thanks. The business has received your details.";
       setRequest(emptyRequest);
       setRequestMessage(success);
+      setRequestTrackUrl(result.statusUrl || "");
       setRequestState("done");
-    } catch {
-      setRequestMessage("Your request could not be sent. Please try again.");
+    } catch (error) {
+      setRequestMessage(error.message || "Your request could not be sent. Please try again.");
       setRequestState("error");
     }
   };
@@ -258,7 +264,11 @@ export default function PublicWebsite() {
       <button style={{ background: project.theme.primary }} disabled={requestState === "saving"}>
         {requestState === "saving" ? "Sending…" : request.requestType === "order" ? "Place order" : request.requestType === "booking" ? "Request booking" : "Send enquiry"}
       </button>
+      {paused && request.requestType !== "contact" && (
+        <p className="error" role="status">{paused.reason}</p>
+      )}
       {requestMessage && <p className={requestState === "error" ? "error" : ""} role="status">{requestMessage}</p>}
+      {requestTrackUrl && <a className="wl-site-contact-direct" href={requestTrackUrl}>Track your order</a>}
       {business?.phone && <a className="wl-site-contact-direct" href={`tel:${business.phone}`}>Or call {business.phone}</a>}
     </form>
   ) : null;

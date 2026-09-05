@@ -8,6 +8,32 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 3: Accepting-orders toggle + hours (2026-08-28)
+
+Additive, builds on Phases 1–2.
+
+- **`businesses/{id}` optional fields** — `ordering: { acceptingOrders,
+  pausedReason, pausedUntil }`, `hours: { display }`, `prepDefaultMinutes`, and
+  the `foodOrdering` escape-hatch boolean. `pausedUntil` is an ISO string; a
+  value in the past auto-reopens.
+- **`functions/ordering.js` `assertAcceptingOrders(business)`** — throws
+  `409 { code: "ORDERING_PAUSED" }` (with the owner's `pausedReason`). Called in
+  `POST /public/businesses/:slug/requests` (offer path only, contact enquiries
+  still go through) and `POST /public/businesses/:slug/checkout-sessions`.
+  Covered by `functions/ordering.test.js`. `firestore.rules` `orders` block
+  carries a comment pointing at it.
+- **`src/features/commerce/OrderingSettingsCard.jsx`** (+ `orderingSettings.css`)
+  — owner control (accepting switch, paused reason + reopen time, opening-hours
+  string, default prep minutes, `foodOrdering` toggle). Rendered in the Business
+  profile tab (always reachable) and atop the Kitchen tab.
+- **`src/features/commerce/ordering.js` `orderingPaused(business)`** — client
+  mirror of the server guard. `PublicBusinessPage` shows a closed banner, hides
+  offer actions + the "View offers" CTA, and blocks offer submits;
+  `PublicWebsite` blocks non-contact submits and surfaces the server reason;
+  `PublicCheckoutPanel` returns null when paused. `hours.display` renders in the
+  `PublicBusinessPage` hero. `PublicWebsite` now also shows the Phase 2 "Track
+  your order" link and surfaces server error messages.
+
 ### Added — Food-ordering vertical, Phase 2: Public order tracker (2026-08-28)
 
 Builds on Phase 1. Additive.

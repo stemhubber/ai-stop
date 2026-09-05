@@ -7,6 +7,7 @@ import { AppLayout, Icon } from "../../features/websites/components/WebiloUI";
 import ResourceManager from "./ResourceManager";
 import BusinessAdvisor from "./BusinessAdvisor";
 import KitchenBoard from "../../features/commerce/KitchenBoard";
+import OrderingSettingsCard from "../../features/commerce/OrderingSettingsCard";
 import { isFoodBusiness } from "../../features/commerce/foodMode";
 import WebiloAnimatedLogo from "../WebiloAnimatedLogo";
 import VoiceInput from "../VoiceInput";
@@ -254,7 +255,10 @@ export default function ProductWorkspace() {
           {tab === "sell" && <SellHub modules={modules} onOpen={setTab} />}
           {tab === "more" && <MoreHub modules={modules} availableTabs={availableTabs} onOpen={setTab} />}
           {tab === "kitchen" && foodAware && (
-            <KitchenBoard key={activeBusinessId} businessId={activeBusinessId} business={activeBusiness} />
+            <div className="product-kitchen-tab">
+              <OrderingSettingsCard key={activeBusinessId} business={activeBusiness} onSaved={refreshBusinesses} />
+              <KitchenBoard key={`board-${activeBusinessId}`} businessId={activeBusinessId} business={activeBusiness} />
+            </div>
           )}
           {Object.hasOwn(TAB_MODULES, tab) && tab !== "analytics" && tab !== "kitchen" && (
             <ResourceManager
@@ -563,6 +567,7 @@ function BusinessProfile({ business, onSaved }) {
         {feedback && <p className={`product-feedback ${state === "error" ? "product-feedback--error" : "product-feedback--success"}`} role="status">{feedback}</p>}
         <div className="product-form-actions"><button className="wb-btn wb-btn-primary" disabled={state === "saving"}>{state === "saving" ? "Saving…" : "Save business profile"}</button></div>
       </form>
+      <OrderingSettingsCard business={business} onSaved={onSaved} />
     </section>
   );
 }
