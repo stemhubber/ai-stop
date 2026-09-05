@@ -380,9 +380,9 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
           <p>{config.description}</p>
         </div>
         <div className="product-header-actions">
-          {["products", "services"].includes(resource) && aiEnabled && (
+          {(["products", "services"].includes(resource) || (resource === "offers" && foodAware)) && aiEnabled && (
             <button className="wb-btn" onClick={() => setShowAiImport((value) => !value)}>
-              <Icon name="sparkles" size={16} /> {showAiImport ? "Close AI import" : "Import image"}
+              <Icon name="sparkles" size={16} /> {showAiImport ? "Close AI import" : resource === "offers" ? "Import menu photo" : "Import image"}
             </button>
           )}
           <button

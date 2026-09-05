@@ -211,6 +211,18 @@ test("saves a food offer's category, prep time, and a priced variant in minor un
   ));
 });
 
+test("surfaces menu photo import only for food-aware businesses with AI enabled", async () => {
+  const { rerender } = render(<ResourceManager businessId="business-1" resource="offers" foodAware aiEnabled={false} />);
+  await screen.findByText("No offers yet");
+  expect(screen.queryByRole("button", { name: "Import menu photo" })).not.toBeInTheDocument();
+
+  rerender(<ResourceManager businessId="business-1" resource="offers" foodAware aiEnabled />);
+  expect(await screen.findByRole("button", { name: "Import menu photo" })).toBeInTheDocument();
+
+  rerender(<ResourceManager businessId="business-1" resource="offers" foodAware={false} aiEnabled />);
+  expect(screen.queryByRole("button", { name: "Import menu photo" })).not.toBeInTheDocument();
+});
+
 test("toggles an offer's availability from the table row", async () => {
   listRecords.mockResolvedValue([
     { id: "offer-1", name: "Burger", price: 8000, available: true },

@@ -56,6 +56,16 @@ export default function AIVisualImporter({ businessId, resource, onImported, onC
           status: "active",
           source: "ai-image-import",
         };
+        if (resource === "offers") {
+          return createRecord(businessId, "offers", {
+            ...common,
+            offerType: "product",
+            pricingMode: "fixed",
+            fulfilmentMethods: ["pickup"],
+            available: true,
+            prepMinutes: Number(item.durationMinutes || 0) || null,
+          });
+        }
         return createRecord(
           businessId,
           resource,
@@ -75,7 +85,7 @@ export default function AIVisualImporter({ businessId, resource, onImported, onC
   return (
     <section className="wb-card product-ai-importer">
       <header>
-        <div><span className="wb-label">AI visual import</span><h2 className="wb-heading">Turn an old menu or poster into {resource}</h2><p className="wb-secondary">Upload a clear image. AI extracts the details, then you review everything before it is saved.</p></div>
+        <div><span className="wb-label">AI visual import</span><h2 className="wb-heading">{resource === "offers" ? "Turn a menu photo into catalogue items" : `Turn an old menu or poster into ${resource}`}</h2><p className="wb-secondary">Upload a clear image. AI extracts the details, then you review everything before it is saved.</p></div>
         <button className="wb-btn wb-btn-ghost wb-btn-sm" onClick={onClose} aria-label="Close AI import"><Icon name="close" size={16} /> Close</button>
       </header>
 

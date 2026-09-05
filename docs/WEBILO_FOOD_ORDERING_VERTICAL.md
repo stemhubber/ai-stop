@@ -145,13 +145,18 @@ BitePilot: `src/views/ReceiptView.jsx` + `PrintModal.jsx` — `window.print()` o
   - ESC/POS / share-to-printer path remains out of scope, as specced.
   - Tests: `PrintableTicket.test.jsx` (portal mount, `window.print()` call, receipt-vs-kitchen content, `afterprint` cleanup).
 
-### 2.7 Menu import (photo → draft items)  ·  Priority: P2
+### 2.7 Menu import (photo → draft items)  ·  Priority: P2 — ✅ IMPLEMENTED (Phase 6)
 
 BitePilot: `src/views/MenuOCRProductForm.jsx` — `tesseract.js` in the browser, regex `(.+?)\.*\s*R?(\d+)` per line → editable draft rows.
 
 - **Keep:** upload a menu photo, get back editable draft items (name + price), confirm into the catalogue. Big onboarding win for a stall owner with a paper menu.
 - **Drop:** shipping `tesseract.js` (~mb) into the main bundle; naive line regex.
-- **Map:** Webilo already has `AIVisualImporter` + AI proxying in `functions/` (provider registry `providers/ai/`). Add a "menu photo" mode: upload via `websiteAssetService`, send the image URL to an AI extract endpoint in `functions` that returns `[{ name, price, description?, category? }]`, render the existing importer's review table, write via `createRecord(businessId,"offers",…)`. Reuses AI metering/entitlements — don't add a second AI path. `tesseract.js` only as an offline fallback, lazy-loaded, if wanted at all.
+- **Delivered — reused the existing importer, no second AI path:**
+  - `functions/index.js` `POST /ai/extract-business-image` now allows `resource: "offers"` (previously `products`/`services` only). `BUSINESS_IMAGE_SCHEMA` already carried `category` — no schema change needed. The prompt nudges the model to group items into short categories (Starters/Mains/Drinks) when `resource === "offers"`, feeding straight into the Phase 4 category grouping.
+  - `src/components/product/AIVisualImporter.jsx` `importItems()`: for `resource === "offers"`, writes a **complete canonical offer** — `offerType: "product"`, `pricingMode: "fixed"`, `fulfilmentMethods: ["pickup"]`, `available: true`, and the extracted `durationMinutes` repurposed as `prepMinutes` (same field the schema already returns for services' booking duration) — rather than the bare `{name, price, description, category}` the products/services path writes, since an offer needs those fields to render and price correctly everywhere else in the vertical.
+  - `ResourceManager.jsx`: the "Import image" button becomes "Import menu photo" and is surfaced for `resource === "offers"` when `foodAware && aiEnabled` (in addition to its existing `products`/`services` cases).
+  - `tesseract.js` was never shipped — no offline OCR fallback, as scoped.
+  - Tests: `AIVisualImporter.test.jsx` (canonical-offer import shape), `ResourceManager.test.jsx` (button gating on `foodAware` + `aiEnabled`).
 
 ### 2.8 Sound + optional voice call-outs  ·  Priority: P2 (sound is bundled with 2.1)
 
@@ -244,7 +249,7 @@ Delivered touch points:
 ### 3.4 New Cloud Function routes (Express app in `functions/index.js`)
 
 - ✅ `GET /public/businesses/:slug/orders/:publicReference?token=…` — token-guarded customer-safe order status projection (§2.2). Shipped in Phase 2.
-- `POST /ai/menu-extract` (or extend the existing AI import route) — image URL → draft offer array (§2.7).
+- ✅ Extended the existing `POST /ai/extract-business-image` route with an `"offers"` resource rather than adding a new `/ai/menu-extract` route (§2.7). Shipped in Phase 6.
 - Ordering-paused guard added to the existing `requests` and `checkout-sessions` handlers (§2.3).
 
 ### 3.5 New public routes (`src/App.js`)
@@ -292,7 +297,7 @@ For kitchen staff who are not the owner:
 | **3** ✅ | Accepting-orders toggle + hours (2.3) | `businesses` fields + server guard |
 | **4** ✅ | Food catalogue fields: categories, variants, modifiers, prep time, availability, light stock (2.4, 2.5) | `offers` fields + `offerSnapshot`/`buildOrder` pricing |
 | **5** ✅ | Kitchen ticket printing (2.6) | none |
-| **6** | Menu photo import (2.7) | AI route |
+| **6** ✅ | Menu photo import (2.7) | AI route |
 | **7** | Announcements (2.9), storefront sections (2.11), discovery (2.12) | product decisions |
 | **later** | Fulfilment-gated reviews (2.10) | commerce roadmap Pro phase |
 

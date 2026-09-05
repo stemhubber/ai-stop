@@ -8,6 +8,30 @@ grouped by date instead of a release number.
 
 ## [Unreleased]
 
+### Added — Food-ordering vertical, Phase 6: Menu photo import (2026-09-05)
+
+Additive, builds on Phases 1–5. Reuses the existing AI import path end to end
+— no second AI route, no `tesseract.js`.
+
+- **`functions/index.js`** `POST /ai/extract-business-image` now accepts
+  `resource: "offers"` (previously `products`/`services` only).
+  `BUSINESS_IMAGE_SCHEMA` already returned `category` — no schema change. The
+  prompt nudges the model to group items into short categories
+  (Starters/Mains/Drinks) when extracting for `"offers"`, feeding directly
+  into the Phase 4 category grouping on the public menu.
+- **`AIVisualImporter.jsx`** `importItems()`: importing into `"offers"` now
+  writes a complete canonical offer (`offerType: "product"`,
+  `pricingMode: "fixed"`, `fulfilmentMethods: ["pickup"]`, `available: true`,
+  extracted `durationMinutes` repurposed as `prepMinutes`) instead of the bare
+  `{name, price, description, category}` the products/services path writes —
+  an offer needs those fields to price and render correctly elsewhere in the
+  vertical. Header copy adapts to "Turn a menu photo into catalogue items".
+- **`ResourceManager.jsx`**: the import button reads "Import menu photo" and
+  is surfaced for `resource === "offers"` when `foodAware && aiEnabled`.
+- Tests: new `AIVisualImporter.test.jsx` (canonical-offer import shape) +
+  a `ResourceManager.test.jsx` case for the button's gating. 57 frontend / 50
+  functions tests total, all green.
+
 ### Added — Food-ordering vertical, Phase 5: Kitchen ticket / receipt printing (2026-09-05)
 
 Additive, builds on Phases 1–4. Frontend-only — no backend or routing changes.
