@@ -24,6 +24,35 @@ npm run deploy                    # build + firebase deploy (hosting + functions
 ```
 There is **no `npm run lint` script**. CRA runs ESLint during `start`/`build`; don't add a lint command until one is actually committed.
 
+### Manual merge/build/test/deploy pipeline (GitHub Actions quota exhausted)
+
+GitHub Actions on this account has run out of quota, so PRs cannot reliably
+merge through GitHub's required-checks UI and deploys often have to happen
+from a local checkout by hand. Until that's resolved, treat this as the
+standard flow instead of waiting on a GitHub-side merge/CI:
+
+1. Resolve any merge conflicts locally (`git merge`/`git rebase` as normal).
+2. `bash scripts/deploy.sh --skip-tests --only hosting` is **not** a
+   pre-check tool — use plain `npm run build` + `npm test -- --watchAll=false`
+   (and `cd functions && node --test`) to validate a branch *before* merging.
+3. Merge/push locally to `main` (git operations only — pushing to `main`,
+   merging, and deploying are all actions that need explicit confirmation
+   each time, not a standing autopilot).
+4. `git pull` to confirm the merge landed cleanly on `main`.
+5. Re-run build + tests on the post-merge `main` checkout.
+6. Deploy with `bash scripts/deploy.sh` (see below) — do not skip straight to
+   `firebase deploy` by hand under time pressure.
+
+`scripts/deploy.sh` refuses to build without a local `.env` (gitignored,
+per-checkout — copy it from a working checkout first), verifies the built
+bundle actually contains a non-trivial Firebase `apiKey` before deploying,
+installs `functions/` deps, runs both test suites, and then runs
+`firebase deploy --only <targets>` (defaults to
+`hosting,functions,firestore:rules,firestore:indexes,storage`). Pass
+`--only <targets>` to deploy a subset, or `--skip-tests` to skip the test
+run. It does not touch git itself — steps 1–4 above are separate, manual git
+operations.
+
 Cloud Functions (`functions/`):
 ```bash
 cd functions && npm install
