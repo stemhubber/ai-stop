@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/Home.jsx";
 import SiteEditor from "./components/SiteEditor";
-import SiteViewer from "./components/SiteViewer";
 import "./App.css";
 import PublishNewSite from "./components/PublishNewSite.jsx";
 import PublicSite from "./components/PublicSite.jsx";
@@ -43,7 +42,6 @@ function App() {
           <Route path="/login" element={<EntryRoute><Login /></EntryRoute>} />
           <Route path="/studio/new" element={<RequireAuth><CreateWebsiteFlow /></RequireAuth>} />
           <Route path="/studio/edit/:siteName" element={<RequireAuth><SiteEditor /></RequireAuth>} />
-          <Route path="/sites/:siteId" element={<RequireAuth><SiteViewer /></RequireAuth>} />
           <Route path="/publish" element={<RequireAuth><PublishNewSite /></RequireAuth>} />
           <Route path="/site/:siteName" element={<PublicSite />} />
 
