@@ -15,6 +15,7 @@ import VoiceInput from "../VoiceInput";
 import { FeatureGate, ProPrompt } from "../../features/plans/PlanUI";
 import { usePlan } from "../../context/PlanContext";
 import { buildLaunchPath, JOURNEY_RESOURCES } from "./businessJourney";
+import { BUSINESS_CATEGORIES } from "../../config/businessCategories";
 import {
   connectPaystackSubaccount,
   getPaymentConnection,
@@ -509,6 +510,14 @@ function BusinessProfile({ business, onSaved }) {
   const [state, setState] = useState("idle");
   const [feedback, setFeedback] = useState("");
   const change = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+  const categoryOptions = useMemo(() => {
+    const value = form.category;
+    if (!value) return [{ value: "", label: "Select a category" }, ...BUSINESS_CATEGORIES];
+    if (BUSINESS_CATEGORIES.some((option) => option.value === value)) return BUSINESS_CATEGORIES;
+    // Legacy free-text category not in the canonical list — keep it selectable
+    // rather than silently blanking it out.
+    return [{ value, label: value }, ...BUSINESS_CATEGORIES];
+  }, [form.category]);
 
   const save = async (event) => {
     event.preventDefault();
@@ -548,7 +557,7 @@ function BusinessProfile({ business, onSaved }) {
       <form className="wb-card product-profile-form" onSubmit={save}>
         <div className="product-form-grid">
           <label className="wb-field"><span className="wb-field-label">Business name</span><input className="wb-input" value={form.name} onChange={change("name")} /></label>
-          <label className="wb-field"><span className="wb-field-label">Category</span><input className="wb-input" value={form.category} onChange={change("category")} /></label>
+          <label className="wb-field"><span className="wb-field-label">Category</span><select className="wb-input wb-select" value={form.category} onChange={change("category")}>{categoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
           <label className="wb-field"><span className="wb-field-label">City or service area</span><input className="wb-input" value={form.city} onChange={change("city")} /></label>
           <div className="product-field--wide">
             <label className="wb-field"><span className="wb-field-label">What does the business offer?</span><textarea className="wb-input wb-textarea" rows="4" value={form.description} onChange={change("description")} /></label>
