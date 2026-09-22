@@ -144,7 +144,7 @@ export default function CreateWebsiteFlow() {
                     <strong>Connected to {activeBusiness.name}</strong>
                     <p>{activeBusiness.description}</p>
                   </div>
-                  <button onClick={() => navigate("/business?tab=profile")}>Edit business profile</button>
+                  <button onClick={() => navigate("/business?view=setup&section=profile")}>Edit business profile</button>
                 </div>
                 <fieldset className="wl-choice-group"><legend>Main customer outcome</legend>{["Get more enquiries", "Sell products or services", "Showcase my work", "Build trust and awareness"].map((value) => <label className={brief.goal === value ? "selected" : ""} key={value}><input type="radio" name="goal" checked={brief.goal === value} onChange={() => update("goal", value)} /><span><strong>{value}</strong><small>{value === "Get more enquiries" ? "Guide visitors towards contacting or booking you." : value === "Sell products or services" ? "Explain your offer and drive purchase intent." : value === "Showcase my work" ? "Lead with projects, proof, and visual impact." : "Tell a clear story and establish credibility."}</small></span><i><Icon name="check" size={14} /></i></label>)}</fieldset>
                 <fieldset className="wl-choice-group wl-choice-group--compact"><legend>Tone and style</legend>{["Warm and professional", "Bold and energetic", "Minimal and refined", "Friendly and playful"].map((value) => <label className={brief.tone === value ? "selected" : ""} key={value}><input type="radio" name="tone" checked={brief.tone === value} onChange={() => update("tone", value)} /><span><strong>{value}</strong></span><i><Icon name="check" size={14} /></i></label>)}</fieldset>

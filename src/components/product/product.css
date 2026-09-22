@@ -115,6 +115,50 @@
   transform: scale(.97);
 }
 
+/* Sub-nav for sections within Sell/Setup — deliberately lighter chrome
+   (no sticky position, blur, or shadow) than .product-tabs above it, so it
+   reads as "inside Sell/Setup" rather than a 4th nav layer. Unlike
+   .product-tabs it is not hidden on narrow viewports: on mobile the outer
+   Today/Sell/Setup switch happens via the bottom nav, but this sub-nav is
+   the only way to move between sections once inside a view. */
+.product-subtabs {
+  margin-top: 14px;
+  padding: 4px;
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  border-radius: 11px;
+  background: var(--product-accent-soft);
+  scrollbar-width: none;
+}
+
+.product-subtabs::-webkit-scrollbar {
+  display: none;
+}
+
+.product-subtab {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  color: #3f6a60;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+
+.product-subtab:hover {
+  background: rgba(255, 255, 255, .6);
+}
+
+.product-subtab.active {
+  color: #fff;
+  background: #176b5d;
+}
+
 .product-main {
   padding-top: 34px;
 }
