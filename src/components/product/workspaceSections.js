@@ -29,6 +29,7 @@ export const SELL_SECTIONS = [
 export const SETUP_SECTIONS = [
   { id: "profile", label: "Business profile", icon: "settings", description: "Your offer, audience, goals, and contact details" },
   { id: "ordering", label: "Ordering & Kitchen settings", icon: "clock", description: "Accepting orders, pause messaging, hours, and prep time" },
+  { id: "kiosk", label: "Self-service kiosk", icon: "grid", description: "In-store ordering device — direct link and downloadable QR code" },
   { id: "modules", label: "Modules", icon: "settings", description: "Choose the tools this business needs" },
 ];
 

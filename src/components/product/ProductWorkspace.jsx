@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import QRCode from "qrcode";
 import { useBusiness } from "../../context/BusinessContext";
 import { useWebsites } from "../../context/WebsiteContext";
 import { hasRecords, listModules, listRecords, setModuleEnabled, updateBusiness } from "../../services/businessRepository";
@@ -374,6 +375,7 @@ export default function ProductWorkspace() {
           {section === "ordering" && (
             <OrderingSettingsSection business={activeBusiness} onSaved={refreshBusinesses} />
           )}
+          {section === "kiosk" && <KioskSection business={activeBusiness} />}
           {section === "analytics" && <Analytics key={activeBusinessId} businessId={activeBusinessId} />}
           {section === "modules" && (
             <ModuleSettings
@@ -653,6 +655,56 @@ function OrderingSettingsSection({ business, onSaved }) {
         <p>Whether this business is accepting orders right now, and the food-ordering tools (Kitchen board, prep times, order tracker) other sections use.</p>
       </header>
       <OrderingSettingsCard business={business} onSaved={onSaved} />
+    </section>
+  );
+}
+
+// Setup's link/QR to the self-service kiosk route (/k/:slug, Ticket 6). QR
+// generation reuses the same qrcode-library pattern as BusinessAdvisor's
+// "Business QR code" quick output.
+function KioskSection({ business }) {
+  const [qr, setQr] = useState(null);
+  const [error, setError] = useState("");
+  const kioskUrl = `${window.location.origin}/k/${business.slug}`;
+
+  const createQr = async () => {
+    setError("");
+    try {
+      const dataUrl = await QRCode.toDataURL(kioskUrl, {
+        width: 720,
+        margin: 2,
+        color: { dark: "#15211e", light: "#ffffff" },
+      });
+      setQr(dataUrl);
+    } catch {
+      setError("The QR code could not be generated.");
+    }
+  };
+
+  return (
+    <section>
+      <header className="product-header">
+        <span className="wl-eyebrow">In-store ordering</span>
+        <h2>Self-service kiosk</h2>
+        <p>Point a tablet or in-store device at this link for full-screen, self-service ordering — no marketing chrome, customers pay at the counter.</p>
+      </header>
+      <div className="wb-card product-kiosk-card">
+        <label className="wb-field">
+          <span className="wb-field-label">Kiosk link</span>
+          <input className="wb-input" readOnly value={kioskUrl} onFocus={(event) => event.target.select()} />
+        </label>
+        <div className="wb-row">
+          <a className="wb-btn" href={kioskUrl} target="_blank" rel="noreferrer"><Icon name="external" size={16} /> Open kiosk</a>
+          <button className="wb-btn wb-btn-primary" type="button" onClick={createQr}>Generate QR code</button>
+        </div>
+        {error && <p className="product-feedback product-feedback--error" role="alert">{error}</p>}
+        {qr && (
+          <div className="product-kiosk-qr">
+            <img src={qr} alt={`QR code for ${business.name} kiosk`} />
+            <a className="wb-btn wb-btn-primary" href={qr} download={`${business.slug || "business"}-kiosk-qr.png`}>Download PNG</a>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

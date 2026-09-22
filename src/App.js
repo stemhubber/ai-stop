@@ -24,6 +24,7 @@ import ProPage from "./features/plans/ProPage";
 import UsagePage from "./features/plans/UsagePage";
 import CommerceCheckoutComplete from "./features/commerce/CommerceCheckoutComplete";
 import PublicOrderStatus from "./features/commerce/PublicOrderStatus";
+import KioskOrder from "./features/commerce/KioskOrder";
 import DeveloperApiPage from "./features/developerApi/DeveloperApiPage";
 
 function EntryRoute({ children }) {
@@ -64,6 +65,7 @@ function App() {
           <Route path="/usage" element={<RequireAuth><UsagePage /></RequireAuth>} />
           <Route path="/onboarding" element={<RequireAuth><BusinessOnboarding /></RequireAuth>} />
           <Route path="/b/:slug" element={<PublicBusinessPage />} />
+          <Route path="/k/:slug" element={<KioskOrder />} />
           <Route path="/studio" element={<RequireAuth><Navigate to="/websites" replace /></RequireAuth>} />
           <Route path="/legacy-studio" element={<RequireAuth><Dashboard /></RequireAuth>} />
 <Route

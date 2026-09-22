@@ -717,6 +717,33 @@
   white-space: nowrap;
 }
 
+.product-kiosk-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-kiosk-card input[readonly] {
+  color: var(--wb-ink-2);
+  background: var(--product-accent-soft);
+}
+
+.product-kiosk-qr {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--wb-border);
+  border-radius: 12px;
+}
+
+.product-kiosk-qr img {
+  width: 160px;
+  border-radius: 8px;
+}
+
 .product-advisor-history {
   grid-column: 1 / -1;
   padding: 13px 20px;
