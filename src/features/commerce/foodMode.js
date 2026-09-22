@@ -10,7 +10,26 @@ export const FOOD_CATEGORIES = new Set([
   "food",
 ]);
 
+const WORKSPACE_PROFILES = {
+  food: { offersLabel: "Menu", showKitchen: true },
+  retail: { offersLabel: "Catalog", showKitchen: false },
+  general: { offersLabel: "Offers", showKitchen: false },
+};
+
+// The single source of truth every vertical-aware screen (Sell/Setup nav,
+// ResourceManager labels, Kitchen section visibility) should read from.
+// isFoodBusiness() is defined in terms of this, not the other way around.
+export function resolveWorkspaceProfile(business) {
+  const category = String(business?.category || "").trim().toLowerCase();
+  const kind =
+    business?.foodOrdering === true || FOOD_CATEGORIES.has(category)
+      ? "food"
+      : category === "retail"
+      ? "retail"
+      : "general";
+  return { kind, ...WORKSPACE_PROFILES[kind] };
+}
+
 export function isFoodBusiness(business) {
-  if (business?.foodOrdering === true) return true;
-  return FOOD_CATEGORIES.has(String(business?.category || "").trim().toLowerCase());
+  return resolveWorkspaceProfile(business).kind === "food";
 }
