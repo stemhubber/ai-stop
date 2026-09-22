@@ -124,6 +124,14 @@ export function subscribeRecords(businessId, resource, constraints, onChange, on
   );
 }
 
+// Cheap existence check (limit 1) for whether a business has any records in
+// a subcollection at all — used to decide whether to surface legacy
+// Products/Services sections without scanning the full collection.
+export async function hasRecords(businessId, resource) {
+  const snap = await getDocs(query(subcollection(businessId, resource), limit(1)));
+  return !snap.empty;
+}
+
 export async function listActiveRecords(businessId, resource) {
   const snap = await getDocs(query(
     subcollection(businessId, resource),

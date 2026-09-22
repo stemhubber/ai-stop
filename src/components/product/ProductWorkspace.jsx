@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useBusiness } from "../../context/BusinessContext";
 import { useWebsites } from "../../context/WebsiteContext";
-import { listModules, listRecords, setModuleEnabled, updateBusiness } from "../../services/businessRepository";
+import { hasRecords, listModules, listRecords, setModuleEnabled, updateBusiness } from "../../services/businessRepository";
 import { AppLayout, Icon } from "../../features/websites/components/WebiloUI";
 import ResourceManager from "./ResourceManager";
 import BusinessAdvisor from "./BusinessAdvisor";
 import KitchenBoard from "../../features/commerce/KitchenBoard";
 import OrderingSettingsCard from "../../features/commerce/OrderingSettingsCard";
 import { PrintSurface } from "../../features/commerce/PrintableTicket";
-import { isFoodBusiness } from "../../features/commerce/foodMode";
+import { resolveWorkspaceProfile } from "../../features/commerce/foodMode";
 import WebiloAnimatedLogo from "../WebiloAnimatedLogo";
 import VoiceInput from "../VoiceInput";
 import { FeatureGate, ProPrompt } from "../../features/plans/PlanUI";
@@ -19,6 +19,7 @@ import { BUSINESS_CATEGORIES } from "../../config/businessCategories";
 import {
   deriveWorkspaceLocation,
   getLastSection,
+  isSellSectionAvailable,
   resolveTarget,
   RESOURCE_SECTION_IDS,
   sectionIdForModule,
@@ -115,19 +116,52 @@ export default function ProductWorkspace() {
     return () => { cancelled = true; };
   }, [activeBusinessId, view]);
 
+  // One small limit(1) existence check per legacy resource, loaded once
+  // alongside listModules — not a full collection scan. Defaults to hidden
+  // (false) while loading, so Products/Services never flash into the nav
+  // before we know whether this business actually has any.
+  const [legacyResources, setLegacyResources] = useState({ products: false, services: false });
+  const [legacyResourceState, setLegacyResourceState] = useState("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!activeBusinessId) return undefined;
+    setLegacyResourceState("loading");
+    setLegacyResources({ products: false, services: false });
+    Promise.all([
+      hasRecords(activeBusinessId, "products").catch(() => false),
+      hasRecords(activeBusinessId, "services").catch(() => false),
+    ]).then(([products, services]) => {
+      if (cancelled) return;
+      setLegacyResources({ products, services });
+      setLegacyResourceState("ready");
+    });
+    return () => { cancelled = true; };
+  }, [activeBusinessId]);
+
   const enabledModules = useMemo(
     () => new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId)),
     [modules]
   );
-  const foodAware = isFoodBusiness(activeBusiness);
+  // The single source of truth for what this business's item-management
+  // section is called (Offers/Menu/Catalog) and whether it sees Kitchen.
+  const workspaceProfile = useMemo(() => resolveWorkspaceProfile(activeBusiness), [activeBusiness]);
+  const foodAware = workspaceProfile.kind === "food";
+  const sectionAvailability = useMemo(
+    () => ({ enabledModules, foodAware, hasLegacyProducts: legacyResources.products, hasLegacyServices: legacyResources.services }),
+    [enabledModules, foodAware, legacyResources]
+  );
   // The single source of truth for which Sell sections this business can
   // reach — feeds the sub-nav, Today's "Connected tools" cards, and the Sell
-  // grid so food-only sections never leak into a non-food workspace.
+  // grid so food-only sections and legacy Products/Services records with
+  // nothing in them never leak into the workspace.
   const visibleSellSections = useMemo(
-    () => SELL_SECTIONS.filter((item) => (!item.foodOnly || foodAware) && (!item.module || enabledModules.has(item.module))),
-    [foodAware, enabledModules]
+    () => SELL_SECTIONS
+      .filter((item) => isSellSectionAvailable(item, sectionAvailability))
+      .map((item) => item.id === "offers" ? { ...item, label: workspaceProfile.offersLabel } : item),
+    [sectionAvailability, workspaceProfile]
   );
-  // Setup's own sections (profile, modules) are always available.
+  // Setup's own sections (profile, ordering, modules) are always available.
   const visibleSetupSections = SETUP_SECTIONS;
 
   const goTo = useCallback((nextView, nextSection, options = {}) => {
@@ -152,18 +186,24 @@ export default function ProductWorkspace() {
   }, [needsRedirect, view, section, goTo]);
 
   // If the currently open section's module gets disabled (or a food-only
-  // section is opened on a non-food business) elsewhere, bounce back to that
-  // view's grid instead of leaving a broken section on screen.
+  // section is opened on a non-food business, or a Products/Services deep
+  // link turns out to have no legacy records) elsewhere, bounce back to
+  // that view's grid instead of leaving a broken section on screen. Waits
+  // for the legacy-record check to finish before judging Products/Services,
+  // so a direct link to a section that *does* have data isn't yanked away
+  // while that check is still loading.
   useEffect(() => {
     if (moduleState !== "ready" || !section) return;
     const meta = sectionMeta(section);
     if (!meta) return;
-    const moduleOk = !meta.module || enabledModules.has(meta.module);
-    const foodOk = !meta.foodOnly || foodAware;
-    if (!moduleOk || !foodOk) {
+    const isLegacyGated = section === "products" || section === "services";
+    if (isLegacyGated && legacyResourceState !== "ready") return;
+    const isSellSection = SELL_SECTIONS.some((item) => item.id === section);
+    const available = isSellSection ? isSellSectionAvailable(meta, sectionAvailability) : true;
+    if (!available) {
       goTo(view, null, { replace: true, silent: true });
     }
-  }, [moduleState, section, view, enabledModules, foodAware, goTo]);
+  }, [moduleState, section, view, sectionAvailability, legacyResourceState, goTo]);
 
   const switchView = (nextView) => {
     if (nextView === "today") {
@@ -217,9 +257,9 @@ export default function ProductWorkspace() {
   }
   if (!activeBusiness) return <NavigateToOnboarding />;
 
-  const activeSectionMeta = section ? sectionMeta(section) : null;
-  const pageTitle = view === "today" ? "Today" : activeSectionMeta ? activeSectionMeta.label : VIEW_LABELS[view];
   const currentSections = view === "sell" ? visibleSellSections : view === "setup" ? [...visibleSetupSections, ...SETUP_EXTRAS] : [];
+  const activeSectionMeta = section ? currentSections.find((item) => item.id === section) || sectionMeta(section) : null;
+  const pageTitle = view === "today" ? "Today" : activeSectionMeta ? activeSectionMeta.label : VIEW_LABELS[view];
 
   return (
     <AppLayout>
@@ -305,7 +345,12 @@ export default function ProductWorkspace() {
           )}
           {section === "kitchen" && foodAware && (
             <div className="product-kitchen-tab">
-              <OrderingSettingsCard key={activeBusinessId} business={activeBusiness} onSaved={refreshBusinesses} />
+              <div className="product-kitchen-settings-note">
+                <p>Accepting-orders, pause messaging, hours, and prep time now live in Setup.</p>
+                <button className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => goTo("setup", "ordering")}>
+                  Open Ordering &amp; Kitchen settings <Icon name="chevron" size={14} />
+                </button>
+              </div>
               <KitchenBoard key={`board-${activeBusinessId}`} businessId={activeBusinessId} business={activeBusiness} />
             </div>
           )}
@@ -314,6 +359,7 @@ export default function ProductWorkspace() {
               key={`${activeBusinessId}:${section}`}
               businessId={activeBusinessId}
               resource={section}
+              sectionLabel={activeSectionMeta?.label}
               aiEnabled={enabledModules.has("ai")}
               foodAware={foodAware}
               business={activeBusiness}
@@ -324,6 +370,9 @@ export default function ProductWorkspace() {
               business={activeBusiness}
               onSaved={refreshBusinesses}
             />
+          )}
+          {section === "ordering" && (
+            <OrderingSettingsSection business={activeBusiness} onSaved={refreshBusinesses} />
           )}
           {section === "analytics" && <Analytics key={activeBusinessId} businessId={activeBusinessId} />}
           {section === "modules" && (
@@ -589,6 +638,20 @@ function BusinessProfile({ business, onSaved }) {
         {feedback && <p className={`product-feedback ${state === "error" ? "product-feedback--error" : "product-feedback--success"}`} role="status">{feedback}</p>}
         <div className="product-form-actions"><button className="wb-btn wb-btn-primary" disabled={state === "saving"}>{state === "saving" ? "Saving…" : "Save business profile"}</button></div>
       </form>
+    </section>
+  );
+}
+
+// Setup's single home for OrderingSettingsCard — previously mounted both
+// here and atop the Kitchen tab; Kitchen now just links back to this section.
+function OrderingSettingsSection({ business, onSaved }) {
+  return (
+    <section>
+      <header className="product-header">
+        <span className="wl-eyebrow">Operations</span>
+        <h2>Ordering &amp; kitchen settings</h2>
+        <p>Whether this business is accepting orders right now, and the food-ordering tools (Kitchen board, prep times, order tracker) other sections use.</p>
+      </header>
       <OrderingSettingsCard business={business} onSaved={onSaved} />
     </section>
   );

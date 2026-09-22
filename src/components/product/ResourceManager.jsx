@@ -117,9 +117,10 @@ const SELECT_FIELDS = {
   ],
 };
 
-export default function ResourceManager({ businessId, resource, aiEnabled = false, foodAware = false, business = null }) {
+export default function ResourceManager({ businessId, resource, aiEnabled = false, foodAware = false, business = null, sectionLabel = null }) {
   const printTicket = usePrintTicket();
   const config = CONFIG[resource];
+  const title = sectionLabel || capitalize(resource);
   const [records, setRecords] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState(() => ({ ...config.defaults }));
@@ -393,7 +394,7 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
       <header className="product-header product-header--actions">
         <div>
           <span className="wl-eyebrow">Manage</span>
-          <h2>{capitalize(resource)}</h2>
+          <h2>{title}</h2>
           <p>{config.description}</p>
         </div>
         <div className="product-header-actions">
@@ -521,7 +522,7 @@ export default function ResourceManager({ businessId, resource, aiEnabled = fals
       ) : records.length === 0 ? (
         <div className="wb-card product-empty">
           <span className="product-state-icon"><Icon name={resource === "messages" ? "site" : "grid"} /></span>
-          <h3>No {resource} yet</h3>
+          <h3>No {title.toLowerCase()} yet</h3>
           <p>Website activity will appear here automatically, or add the first {config.singular} yourself.</p>
           <button className="wb-btn wb-btn-primary" onClick={startNew}><Icon name="plus" size={16} /> Add {config.singular}</button>
         </div>
