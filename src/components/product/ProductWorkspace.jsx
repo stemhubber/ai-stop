@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useBusiness } from "../../context/BusinessContext";
 import { useWebsites } from "../../context/WebsiteContext";
@@ -17,47 +17,26 @@ import { usePlan } from "../../context/PlanContext";
 import { buildLaunchPath, JOURNEY_RESOURCES } from "./businessJourney";
 import { BUSINESS_CATEGORIES } from "../../config/businessCategories";
 import {
+  deriveWorkspaceLocation,
+  getLastSection,
+  resolveTarget,
+  RESOURCE_SECTION_IDS,
+  sectionIdForModule,
+  sectionMeta,
+  setLastSection,
+  SELL_SECTIONS,
+  SETUP_SECTIONS,
+  SETUP_EXTRAS,
+  VIEW_LABELS,
+} from "./workspaceSections";
+import {
   connectPaystackSubaccount,
   getPaymentConnection,
 } from "../../services/paymentConnectionService";
 import "./product.css";
 
-const TAB_MODULES = {
-  offers: "commerce",
-  products: "commerce",
-  services: "commerce",
-  customers: "customers",
-  orders: "orders",
-  kitchen: "orders",
-  bookings: "bookings",
-  messages: "messages",
-  campaigns: "marketing",
-  announcements: "marketing",
-  analytics: "analytics",
-};
-
-const TABS = [
-  ["overview", "Today"],
-  ["profile", "Business profile"],
-  ["offers", "Offers"],
-  ["products", "Products"],
-  ["services", "Services"],
-  ["customers", "Customers"],
-  ["orders", "Orders"],
-  ["kitchen", "Kitchen"],
-  ["bookings", "Bookings"],
-  ["messages", "Messages"],
-  ["campaigns", "Campaigns"],
-  ["announcements", "Announcements"],
-  ["analytics", "Analytics"],
-  ["modules", "Modules"],
-];
-
-// Tabs that only exist for businesses in the food-ordering vertical.
-const FOOD_TABS = new Set(["kitchen"]);
-
-const VIRTUAL_TABS = ["sell", "more"];
-
+// Per-module display metadata for the Modules configuration screen only —
+// unrelated to Sell/Setup navigation, kept separate from workspaceSections.js.
 const MODULE_DETAILS = {
   website: ["Website", "Public site and website builder", "site"],
   commerce: ["Offers", "Products, services, packages and quote requests", "grid"],
@@ -83,8 +62,11 @@ export default function ProductWorkspace() {
   } = useBusiness();
   const { projects } = useWebsites();
   const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get("tab") || "overview";
-  const tab = [...TABS.map(([id]) => id), ...VIRTUAL_TABS].includes(requestedTab) ? requestedTab : "overview";
+  const { view, section, needsRedirect } = deriveWorkspaceLocation({
+    view: searchParams.get("view"),
+    section: searchParams.get("section"),
+    tab: searchParams.get("tab"),
+  });
   const [modules, setModules] = useState([]);
   const [moduleState, setModuleState] = useState("loading");
   const [journeyRecords, setJourneyRecords] = useState({});
@@ -117,7 +99,7 @@ export default function ProductWorkspace() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!activeBusinessId || tab !== "overview") return undefined;
+    if (!activeBusinessId || view !== "today") return undefined;
     setJourneyState("loading");
     Promise.all(
       JOURNEY_RESOURCES.map((resource) =>
@@ -131,47 +113,77 @@ export default function ProductWorkspace() {
       setJourneyState("ready");
     });
     return () => { cancelled = true; };
-  }, [activeBusinessId, tab]);
+  }, [activeBusinessId, view]);
 
   const enabledModules = useMemo(
     () => new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId)),
     [modules]
   );
   const foodAware = isFoodBusiness(activeBusiness);
-  // The single source of truth for which tabs this business can reach — feeds the
-  // nav, the Today overview cards, and the "All tools" hub so food-only tabs
-  // never leak into a non-food workspace.
-  const availableTabs = useMemo(
-    () => TABS.filter(([id]) => !FOOD_TABS.has(id) || foodAware),
-    [foodAware]
+  // The single source of truth for which Sell sections this business can
+  // reach — feeds the sub-nav, Today's "Connected tools" cards, and the Sell
+  // grid so food-only sections never leak into a non-food workspace.
+  const visibleSellSections = useMemo(
+    () => SELL_SECTIONS.filter((item) => (!item.foodOnly || foodAware) && (!item.module || enabledModules.has(item.module))),
+    [foodAware, enabledModules]
   );
-  const visibleTabs = useMemo(
-    () => availableTabs.filter(([id]) => !TAB_MODULES[id] || enabledModules.has(TAB_MODULES[id])),
-    [availableTabs, enabledModules]
-  );
+  // Setup's own sections (profile, modules) are always available.
+  const visibleSetupSections = SETUP_SECTIONS;
 
+  const goTo = useCallback((nextView, nextSection, options = {}) => {
+    const params = {};
+    if (nextView && nextView !== "today") params.view = nextView;
+    if (nextSection) params.section = nextSection;
+    setSearchParams(params, options.replace ? { replace: true } : undefined);
+    if (nextSection && nextView && nextView !== "today") {
+      setLastSection(nextView, nextSection);
+    }
+    if (!options.silent) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [setSearchParams]);
+
+  // Corrects the URL when it arrived via a stale `?tab=` link or an
+  // unrecognised `view` — lands on that destination's grid rather than
+  // dead-ending, matching the old fallback-to-overview behavior.
   useEffect(() => {
-    if (moduleState !== "ready") return;
-    const requiredModule = TAB_MODULES[tab];
-    if (
-      (requiredModule && !enabledModules.has(requiredModule)) ||
-      (FOOD_TABS.has(tab) && !foodAware)
-    ) {
-      setSearchParams({ tab: "overview" }, { replace: true });
-    }
-  }, [enabledModules, foodAware, moduleState, setSearchParams, tab]);
+    if (!needsRedirect) return;
+    goTo(view, section, { replace: true, silent: true });
+  }, [needsRedirect, view, section, goTo]);
 
-  const setTab = (nextTab) => {
-    if (nextTab === "website") {
-      navigate("/websites");
+  // If the currently open section's module gets disabled (or a food-only
+  // section is opened on a non-food business) elsewhere, bounce back to that
+  // view's grid instead of leaving a broken section on screen.
+  useEffect(() => {
+    if (moduleState !== "ready" || !section) return;
+    const meta = sectionMeta(section);
+    if (!meta) return;
+    const moduleOk = !meta.module || enabledModules.has(meta.module);
+    const foodOk = !meta.foodOnly || foodAware;
+    if (!moduleOk || !foodOk) {
+      goTo(view, null, { replace: true, silent: true });
+    }
+  }, [moduleState, section, view, enabledModules, foodAware, goTo]);
+
+  const switchView = (nextView) => {
+    if (nextView === "today") {
+      goTo("today", null);
       return;
     }
-    if (nextTab === "createWebsite") {
-      navigate("/create");
+    const remembered = getLastSection(nextView);
+    const sections = nextView === "sell" ? visibleSellSections : visibleSetupSections;
+    const valid = remembered && sections.some((item) => item.id === remembered);
+    goTo(nextView, valid ? remembered : null);
+  };
+
+  const openTarget = (id) => {
+    const resolved = resolveTarget(id);
+    if (!resolved) return;
+    if (resolved.external) {
+      navigate(resolved.external);
       return;
     }
-    setSearchParams(nextTab === "overview" ? {} : { tab: nextTab });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    goTo(resolved.view, resolved.section);
   };
 
   const changeWorkspaceMode = (mode) => {
@@ -205,6 +217,10 @@ export default function ProductWorkspace() {
   }
   if (!activeBusiness) return <NavigateToOnboarding />;
 
+  const activeSectionMeta = section ? sectionMeta(section) : null;
+  const pageTitle = view === "today" ? "Today" : activeSectionMeta ? activeSectionMeta.label : VIEW_LABELS[view];
+  const currentSections = view === "sell" ? visibleSellSections : view === "setup" ? [...visibleSetupSections, ...SETUP_EXTRAS] : [];
+
   return (
     <AppLayout>
       <PrintSurface />
@@ -212,7 +228,7 @@ export default function ProductWorkspace() {
         <header className="product-workspace-header">
           <div>
             <span className="wl-eyebrow">Business workspace</span>
-            <h1>{tab === "overview" ? "Today" : TABS.find(([id]) => id === tab)?.[1] || "Business tools"}</h1>
+            <h1>{pageTitle}</h1>
             <p>{activeBusiness.name}</p>
           </div>
           <div className="product-workspace-actions">
@@ -227,67 +243,95 @@ export default function ProductWorkspace() {
           </div>
         </header>
 
-        <nav className="product-tabs" aria-label="Business tools">
-          {visibleTabs.map(([id, label]) => (
+        <nav className="product-tabs" aria-label="Business workspace">
+          {["today", "sell", "setup"].map((id) => (
             <button
-              className={`product-tab ${tab === id ? "active" : ""}`}
-              onClick={() => setTab(id)}
-              aria-current={tab === id ? "page" : undefined}
+              className={`product-tab ${view === id ? "active" : ""}`}
+              onClick={() => switchView(id)}
+              aria-current={view === id ? "page" : undefined}
               key={id}
             >
-              {label}
+              {VIEW_LABELS[id]}
             </button>
           ))}
         </nav>
 
+        {view !== "today" && (
+          <nav className="product-subtabs" aria-label={`${VIEW_LABELS[view]} sections`}>
+            <button
+              className={`product-subtab ${!section ? "active" : ""}`}
+              onClick={() => goTo(view, null)}
+              aria-current={!section ? "page" : undefined}
+            >
+              All {VIEW_LABELS[view].toLowerCase()}
+            </button>
+            {(view === "sell" ? visibleSellSections : visibleSetupSections).map((item) => (
+              <button
+                className={`product-subtab ${section === item.id ? "active" : ""}`}
+                onClick={() => goTo(view, item.id)}
+                aria-current={section === item.id ? "page" : undefined}
+                key={item.id}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        )}
+
         <main className="product-main">
-          {tab === "overview" && (
+          {view === "today" && (
             <Overview
               business={activeBusiness}
               businesses={businesses}
               activeBusinessId={activeBusinessId}
               modules={modules}
-              availableTabs={availableTabs}
+              sellSections={visibleSellSections}
               records={journeyRecords}
               journeyState={journeyState}
               projects={projects}
               workspaceMode={workspaceMode}
               onModeChange={changeWorkspaceMode}
-              onOpen={setTab}
+              onOpen={openTarget}
               onSwitch={setActiveBusinessId}
             />
           )}
-          {tab === "sell" && <SellHub modules={modules} onOpen={setTab} />}
-          {tab === "more" && <MoreHub modules={modules} availableTabs={availableTabs} onOpen={setTab} />}
-          {tab === "kitchen" && foodAware && (
+          {view !== "today" && !section && (
+            <SectionGrid
+              eyebrow={view === "sell" ? "Sell and serve" : "Business setup"}
+              title={view === "sell" ? "Customer transactions" : "Configure this business"}
+              items={currentSections}
+              onOpen={openTarget}
+            />
+          )}
+          {section === "kitchen" && foodAware && (
             <div className="product-kitchen-tab">
               <OrderingSettingsCard key={activeBusinessId} business={activeBusiness} onSaved={refreshBusinesses} />
               <KitchenBoard key={`board-${activeBusinessId}`} businessId={activeBusinessId} business={activeBusiness} />
             </div>
           )}
-          {Object.hasOwn(TAB_MODULES, tab) && tab !== "analytics" && tab !== "kitchen" && (
+          {section && RESOURCE_SECTION_IDS.has(section) && (
             <ResourceManager
-              key={`${activeBusinessId}:${tab}`}
+              key={`${activeBusinessId}:${section}`}
               businessId={activeBusinessId}
-              resource={tab}
+              resource={section}
               aiEnabled={enabledModules.has("ai")}
               foodAware={foodAware}
               business={activeBusiness}
             />
           )}
-          {tab === "profile" && (
+          {section === "profile" && (
             <BusinessProfile
               business={activeBusiness}
               onSaved={refreshBusinesses}
             />
           )}
-          {tab === "analytics" && <Analytics key={activeBusinessId} businessId={activeBusinessId} />}
-          {tab === "modules" && (
+          {section === "analytics" && <Analytics key={activeBusinessId} businessId={activeBusinessId} />}
+          {section === "modules" && (
             <ModuleSettings
               businessId={activeBusinessId}
               modules={modules}
               setModules={setModules}
-              onOpen={setTab}
+              onOpen={openTarget}
               onBusinessSaved={refreshBusinesses}
             />
           )}
@@ -308,7 +352,7 @@ function Overview({
   businesses,
   activeBusinessId,
   modules,
-  availableTabs,
+  sellSections,
   records,
   journeyState,
   projects,
@@ -319,11 +363,9 @@ function Overview({
 }) {
   const enabled = new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId));
   const cards = [
-    ["Business profile", "profile", "settings"],
-    ...(enabled.has("website") ? [["Website", "website", "site"]] : []),
-    ...availableTabs
-    .filter(([id]) => TAB_MODULES[id] && enabled.has(TAB_MODULES[id]))
-    .map(([id, title]) => [title, id, MODULE_DETAILS[TAB_MODULES[id]]?.[2] || "grid"]),
+    { id: "profile", label: "Business profile", icon: "settings", description: "Your offer, audience, goals, and contact details" },
+    ...(enabled.has("website") ? [{ id: "website", label: "Website", icon: "site", description: "Build, publish, and manage your public site" }] : []),
+    ...sellSections,
   ];
   const journeyProjects = projects.map((project) =>
     !project.settings?.businessId && businesses.length === 1
@@ -428,10 +470,10 @@ function Overview({
           <button onClick={() => onOpen("modules")}>Configure modules <Icon name="chevron" size={15} /></button>
         </div>
         <div className="product-tool-grid">
-          {cards.map(([title, id, icon]) => (
-            <button className="product-tool-card" onClick={() => onOpen(id)} key={id}>
-              <span><Icon name={icon} /></span>
-              <div><h3>{title}</h3><p>{id === "profile" ? "Your offer, audience, goals, and contact details" : id === "website" ? "Create and manage your connected online presence" : MODULE_DETAILS[TAB_MODULES[id]]?.[1] || `Manage ${id}`}</p></div>
+          {cards.map((card) => (
+            <button className="product-tool-card" onClick={() => onOpen(card.id)} key={card.id}>
+              <span><Icon name={card.icon || "grid"} /></span>
+              <div><h3>{card.label}</h3><p>{card.description}</p></div>
               <Icon name="chevron" size={18} />
             </button>
           ))}
@@ -441,53 +483,18 @@ function Overview({
   );
 }
 
-function SellHub({ modules, onOpen }) {
-  const enabled = new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId));
-  const actions = [
-    ["Offers", "offers", "Manage everything customers can order, book or request", "commerce"],
-    ["Products", "products", "Manage existing product records", "commerce"],
-    ["Services", "services", "Manage existing service records", "commerce"],
-    ["Orders", "orders", "Review and process customer orders", "orders"],
-    ["Bookings", "bookings", "Manage appointment requests", "bookings"],
-  ];
-  return (
-    <ToolHub
-      eyebrow="Sell and serve"
-      title="Customer transactions"
-      actions={actions.map(([title, target, description, moduleId]) => ({
-        title,
-        target: enabled.has(moduleId) ? target : "modules",
-        description: enabled.has(moduleId) ? description : `Enable the ${MODULE_DETAILS[moduleId]?.[0] || moduleId} module first`,
-      }))}
-      onOpen={onOpen}
-    />
-  );
-}
-
-function MoreHub({ modules, availableTabs, onOpen }) {
-  const enabled = new Set(modules.filter((item) => item.enabled).map((item) => item.moduleId));
-  const actions = [
-    { title: "Business profile", target: "profile", description: "Identity, audience, goals, and contact details" },
-    { title: "Website", target: "website", description: "Build, publish, and manage your public site" },
-    ...availableTabs.filter(([id]) => TAB_MODULES[id] && enabled.has(TAB_MODULES[id])).map(([id, title]) => ({
-      title,
-      target: id,
-      description: MODULE_DETAILS[TAB_MODULES[id]]?.[1] || `Manage ${title.toLowerCase()}`,
-    })),
-    { title: "Modules", target: "modules", description: "Choose the tools this business needs" },
-  ];
-  return <ToolHub eyebrow="All tools" title="Choose a business area" actions={actions} onOpen={onOpen} />;
-}
-
-function ToolHub({ eyebrow, title, actions, onOpen }) {
+// Card-grid landing view for the Sell/Setup destinations — picking a card
+// drills into that section (or, for SETUP_EXTRAS like "website", navigates
+// away). Shared by both views rather than one hub component per view.
+function SectionGrid({ eyebrow, title, items, onOpen }) {
   return (
     <section>
       <header className="product-header"><span className="wl-eyebrow">{eyebrow}</span><h2>{title}</h2></header>
       <div className="product-tool-grid">
-        {actions.map((item) => (
-          <button className="product-tool-card" onClick={() => onOpen(item.target)} key={`${item.target}:${item.title}`}>
-            <span><Icon name={item.target === "website" ? "site" : "grid"} /></span>
-            <div><h3>{item.title}</h3><p>{item.description}</p></div>
+        {items.map((item) => (
+          <button className="product-tool-card" onClick={() => onOpen(item.id)} key={item.id}>
+            <span><Icon name={item.icon || "grid"} /></span>
+            <div><h3>{item.label}</h3><p>{item.description}</p></div>
             <Icon name="chevron" size={18} />
           </button>
         ))}
@@ -695,8 +702,8 @@ function ModuleSettings({ businessId, modules, setModules, onOpen, onBusinessSav
                   )}
                 </div>
               )}
-              {module.enabled && TAB_MODULES && Object.values(TAB_MODULES).includes(module.moduleId) && (
-                <button onClick={() => onOpen(Object.keys(TAB_MODULES).find((tab) => TAB_MODULES[tab] === module.moduleId))}>Open</button>
+              {module.enabled && sectionIdForModule(module.moduleId) && (
+                <button onClick={() => onOpen(sectionIdForModule(module.moduleId))}>Open</button>
               )}
             </article>
           );

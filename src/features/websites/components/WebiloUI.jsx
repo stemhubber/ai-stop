@@ -157,16 +157,18 @@ export function AppLayout({ children }) {
     { to: "/websites", label: "Website", icon: "site" },
     { to: "/create", label: "Create website", icon: "sparkles" },
   ];
+  // Mapped 1:1 to ProductWorkspace's Today/Sell/Setup views — this used to be
+  // a separately-hardcoded 4-button nav with its own tab list, out of sync
+  // with the workspace's own tab strip (see docs/WEBILO_WORKSPACE_REDESIGN.md).
   const mobileLinks = [
-    { to: "/business", label: "Today", icon: "grid", tabs: ["overview", ""] },
-    { to: "/business?tab=sell", label: "Sell", icon: "site", tabs: ["sell", "products", "services", "orders", "bookings"] },
-    { to: "/business?tab=customers", label: "Customers", icon: "grid", tabs: ["customers"] },
-    { to: "/business?tab=more", label: "More", icon: "more", tabs: ["more", "profile", "messages", "campaigns", "analytics", "modules"] },
+    { to: "/business", label: "Today", icon: "grid", views: ["today"] },
+    { to: "/business?view=sell", label: "Sell", icon: "site", views: ["sell"] },
+    { to: "/business?view=setup", label: "Setup", icon: "settings", views: ["setup"] },
   ];
-  const activeMobileTab = location.pathname === "/business"
-    ? new URLSearchParams(location.search).get("tab") || "overview"
+  const activeMobileView = location.pathname === "/business"
+    ? new URLSearchParams(location.search).get("view") || "today"
     : location.pathname === "/websites" || location.pathname === "/create"
-      ? "more"
+      ? "setup"
       : "";
 
   return (
@@ -210,8 +212,8 @@ export function AppLayout({ children }) {
         {mobileLinks.map((link) => (
           <Link
             to={link.to}
-            className={link.tabs.includes(activeMobileTab) ? "active" : ""}
-            aria-current={link.tabs.includes(activeMobileTab) ? "page" : undefined}
+            className={link.views.includes(activeMobileView) ? "active" : ""}
+            aria-current={link.views.includes(activeMobileView) ? "page" : undefined}
             key={link.to}
           >
             <Icon name={link.icon} /><span>{link.label}</span>

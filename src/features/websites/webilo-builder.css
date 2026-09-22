@@ -440,7 +440,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .wl-sidebar { display: none; }
   .wl-mobile-topbar { height: 62px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--wl-border); background: rgba(255,255,255,.76); backdrop-filter: blur(20px); }
   .wl-mobile-create { padding: 8px 12px; display: flex; align-items: center; gap: 5px; color: #fff; border-radius: 8px; background: var(--wl-primary); font-size: 11px; font-weight: 750; text-decoration: none; }
-  .wl-mobile-nav { height: 66px; padding: 6px max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); position: fixed; z-index: 100; inset: auto 0 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--wl-border); background: rgba(255,255,255,.78); backdrop-filter: blur(20px); }
+  .wl-mobile-nav { height: 66px; padding: 6px max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); position: fixed; z-index: 100; inset: auto 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--wl-border); background: rgba(255,255,255,.78); backdrop-filter: blur(20px); }
   .wl-mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #687a75; font-size: 10px; font-weight: 650; text-decoration: none; }
   .wl-mobile-nav a.active { color: var(--wl-primary); }
   .wl-app-content > main { padding-bottom: 66px; }
