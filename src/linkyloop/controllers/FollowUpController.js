@@ -1,6 +1,5 @@
 // controllers/FollowUpController.js
-import { addDocument, getDocuments, updateDocument } from "../../services/firestore";
-import { MockSender } from "./MockSender";
+import { addDocument, getDocuments } from "../../services/firestore";
 import { where, Timestamp } from "firebase/firestore";
 
 const COLLECTION = "followups";
@@ -72,37 +71,6 @@ export const FollowUpController = {
     } catch (err) {
       console.error("Failed to fetch all follow-ups:", err);
       return [];
-    }
-  },
-
-  async runScheduler() {
-    try {
-      const now = Timestamp.now();
-
-      const pending = await getDocuments(COLLECTION, [
-        where("status", "==", "pending"),
-        where("scheduledAt", "<=", now),
-      ]);
-
-      for (const followup of pending) {
-        try {
-          await MockSender.send({
-            to: followup.contact.phone,
-            message: followup.message,
-          });
-
-          await updateDocument(COLLECTION, followup.id, {
-            status: "sent",
-            sentAt: Timestamp.now(),
-          });
-        } catch {
-          await updateDocument(COLLECTION, followup.id, {
-            status: "failed",
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Scheduler error:", err);
     }
   },
 };

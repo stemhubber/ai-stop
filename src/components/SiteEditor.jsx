@@ -268,11 +268,6 @@ export default function SiteStudio() {
               <i className="fa fa-rocket"></i><HelpTrigger help={{ text: "Share with the world" }}> Publish</HelpTrigger>
               
             </motion.button>
-
-            {/* <button className="studio2030-extra-btn" onClick={() => setExtraModal(true)}>
-              <i className="fa fa-puzzle-piece"></i>
-              Add more
-            </button> */}
           </>
         )}
 
