@@ -1,5 +1,6 @@
 import {
   deriveWorkspaceLocation,
+  isSellSectionAvailable,
   resolveTarget,
   sectionIdForModule,
   SELL_SECTIONS,
@@ -88,4 +89,36 @@ test("sectionIdForModule returns null for modules with no directly-tabbed sectio
   expect(sectionIdForModule("website")).toBeNull();
   expect(sectionIdForModule("ai")).toBeNull();
   expect(sectionIdForModule("payments")).toBeNull();
+});
+
+test("resolveTarget resolves the new Setup ordering section", () => {
+  expect(resolveTarget("ordering")).toEqual({ view: "setup", section: "ordering" });
+});
+
+const offers = SELL_SECTIONS.find((item) => item.id === "offers");
+const kitchen = SELL_SECTIONS.find((item) => item.id === "kitchen");
+const products = SELL_SECTIONS.find((item) => item.id === "products");
+const services = SELL_SECTIONS.find((item) => item.id === "services");
+const bookings = SELL_SECTIONS.find((item) => item.id === "bookings");
+
+test("isSellSectionAvailable gates Kitchen on food-awareness only", () => {
+  expect(isSellSectionAvailable(kitchen, { enabledModules: new Set(["orders"]), foodAware: false, hasLegacyProducts: false, hasLegacyServices: false })).toBe(false);
+  expect(isSellSectionAvailable(kitchen, { enabledModules: new Set(["orders"]), foodAware: true, hasLegacyProducts: false, hasLegacyServices: false })).toBe(true);
+});
+
+test("isSellSectionAvailable gates every section on its module regardless of food/legacy state", () => {
+  expect(isSellSectionAvailable(bookings, { enabledModules: new Set([]), foodAware: true, hasLegacyProducts: false, hasLegacyServices: false })).toBe(false);
+  expect(isSellSectionAvailable(bookings, { enabledModules: new Set(["bookings"]), foodAware: false, hasLegacyProducts: false, hasLegacyServices: false })).toBe(true);
+});
+
+test("isSellSectionAvailable hides Products/Services without a legacy record, even with commerce enabled", () => {
+  const ctx = { enabledModules: new Set(["commerce"]), foodAware: false, hasLegacyProducts: false, hasLegacyServices: false };
+  expect(isSellSectionAvailable(products, ctx)).toBe(false);
+  expect(isSellSectionAvailable(services, ctx)).toBe(false);
+  expect(isSellSectionAvailable(products, { ...ctx, hasLegacyProducts: true })).toBe(true);
+  expect(isSellSectionAvailable(services, { ...ctx, hasLegacyServices: true })).toBe(true);
+});
+
+test("isSellSectionAvailable never gates Offers on legacy records", () => {
+  expect(isSellSectionAvailable(offers, { enabledModules: new Set(["commerce"]), foodAware: false, hasLegacyProducts: false, hasLegacyServices: false })).toBe(true);
 });

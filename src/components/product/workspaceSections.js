@@ -28,6 +28,7 @@ export const SELL_SECTIONS = [
 // Sections with real content rendered inside the Setup view.
 export const SETUP_SECTIONS = [
   { id: "profile", label: "Business profile", icon: "settings", description: "Your offer, audience, goals, and contact details" },
+  { id: "ordering", label: "Ordering & Kitchen settings", icon: "clock", description: "Accepting orders, pause messaging, hours, and prep time" },
   { id: "modules", label: "Modules", icon: "settings", description: "Choose the tools this business needs" },
 ];
 
@@ -89,6 +90,20 @@ export function sectionMeta(id) {
 export function sectionIdForModule(moduleId) {
   const match = [...SELL_SECTIONS, ...SETUP_SECTIONS].find((item) => item.module === moduleId);
   return match ? match.id : null;
+}
+
+// Whether a Sell section should be reachable right now. Products/Services
+// additionally need a real legacy record to exist (Ticket 5) — the newer
+// canonical "offers" model doesn't need this, only the legacy records it's
+// superseding. `hasLegacyProducts`/`hasLegacyServices` should default to
+// `false` while that existence check is still loading (fail-safe: hidden,
+// not shown-then-yanked-away).
+export function isSellSectionAvailable(item, { enabledModules, foodAware, hasLegacyProducts, hasLegacyServices }) {
+  if (item.foodOnly && !foodAware) return false;
+  if (item.module && !enabledModules.has(item.module)) return false;
+  if (item.id === "products" && !hasLegacyProducts) return false;
+  if (item.id === "services" && !hasLegacyServices) return false;
+  return true;
 }
 
 const LAST_SECTION_KEY = (view) => `webilo.lastSection.${view}`;

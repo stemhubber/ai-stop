@@ -5,8 +5,9 @@ import "./orderingSettings.css";
 
 // Owner control for the food-ordering vertical: the accepting-orders switch, a
 // customer-facing paused reason + reopen time, opening hours, a default prep
-// estimate, and the `foodOrdering` escape hatch. Rendered both in the Business
-// profile tab (always reachable) and at the top of the Kitchen tab.
+// estimate, and the `foodOrdering` escape hatch. Rendered once, in Setup's
+// "Ordering & Kitchen settings" section — Kitchen links back to it instead of
+// embedding the form inline.
 export default function OrderingSettingsCard({ business, onSaved }) {
   const [form, setForm] = useState({
     foodOrdering: business.foodOrdering === true,
